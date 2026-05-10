@@ -82,7 +82,7 @@ export default function DashboardPage() {
     try {
       const district = visitedDistrict?.district || userProfile?.district;
       const type = activeTab === "trending" ? "trending" : activeTab === "my-district" ? "my-district" : "home";
-      const currentPage = reset ? 1 : page;
+      const currentPage = reset ? 1 : page || 1;
 
       const response = await fetch(
         `/api/districts/${encodeURIComponent(district)}/feed?page=${currentPage}&limit=10&type=${type}`
@@ -185,7 +185,7 @@ export default function DashboardPage() {
               </h1>
               {visitedDistrict && (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setVisitedDistrict(null)}
                   className="text-text-secondary hover:text-white"
@@ -195,7 +195,6 @@ export default function DashboardPage() {
               )}
             </div>
             <Button
-              variant="ghost"
               size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
@@ -266,7 +265,7 @@ export default function DashboardPage() {
                 
                 {!hasMore && posts.length > 0 && (
                   <div className="text-center py-4 text-text-secondary text-sm">
-                    You've reached the end of the feed
+                    You&apos;ve reached end of feed feed
                   </div>
                 )}
               </>

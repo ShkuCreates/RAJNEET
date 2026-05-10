@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger";
+  size?: "sm" | "md" | "lg";
   children: React.ReactNode;
 }
 
@@ -20,11 +21,17 @@ export const Button: React.FC<ButtonProps> = ({
     danger: "bg-danger text-white hover:opacity-90",
   };
 
+  const sizeStyles = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-6 py-2.5 text-base",
+    lg: "px-8 py-3 text-lg",
+  };
+
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.97 }}
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size as keyof typeof sizeStyles]} ${className}`}
       {...props}
     >
       {children}
