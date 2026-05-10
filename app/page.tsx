@@ -138,7 +138,7 @@ export default function LandingPage() {
           >
             <div className="px-4 py-2 rounded-full border border-gold-primary bg-bg-tertiary">
               <span className="text-gold-primary text-sm font-inter font-medium">
-                ⚡ India's First Political Social MMO
+                ⚡ India&apos;s First Political Social MMO
               </span>
             </div>
           </motion.div>

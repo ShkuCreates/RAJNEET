@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Users, Zap, Crown, Coins, TrendingUp, AlertTriangle, User, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -38,7 +38,7 @@ export function DistrictPulse({ district, isLive = true }: DistrictPulseProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch(`/api/districts/${encodeURIComponent(district)}/stats`);
       if (response.ok) {
@@ -51,7 +51,7 @@ export function DistrictPulse({ district, isLive = true }: DistrictPulseProps) {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [district]);
 
   useEffect(() => {
     if (district) {
