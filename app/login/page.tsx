@@ -99,7 +99,7 @@ export default function LoginPage() {
         <div className="px-4 py-2 rounded-full flex items-center gap-2" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.25)" }}>
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4AF37", animation: "pulse 2s ease-in-out infinite" }} />
           <span className="text-xs font-medium tracking-wide" style={{ color: "#D4AF37" }}>
-            ⚡ India's First Political Social MMO
+            ⚡ India&apos;s First Political Social MMO
           </span>
         </div>
       </motion.div>

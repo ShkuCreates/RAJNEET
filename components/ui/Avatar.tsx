@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { User } from "lucide-react";
+import Image from "next/image";
 
 interface AvatarProps {
   src?: string | null;
@@ -30,7 +31,13 @@ export const Avatar: React.FC<AvatarProps> = ({
       className={`rounded-full overflow-hidden flex items-center justify-center bg-bg-tertiary ${sizeStyles[size]} ${showBorder ? "border-2 border-gold-primary" : ""} ${className}`}
     >
       {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          width={96}
+          height={96}
+          className="w-full h-full object-cover"
+        />
       ) : (
         <User className="text-text-secondary" size={size === "xl" ? 48 : size === "lg" ? 32 : 20} />
       )}

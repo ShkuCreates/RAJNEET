@@ -63,7 +63,7 @@ export function DistrictPulse({ district, isLive = true }: DistrictPulseProps) {
       const interval = setInterval(fetchStats, 60000);
       return () => clearInterval(interval);
     }
-  }, [district, isLive]);
+  }, [district, isLive, fetchStats]);
 
   const handleRefresh = () => {
     setRefreshing(true);

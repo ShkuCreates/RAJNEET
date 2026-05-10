@@ -254,7 +254,7 @@ export default function LandingPage() {
                 RAJNEET is a gamified political social platform where citizens compete for influence, win elections, manage district governments, and shape public opinion — all inside a fictionalized India.
               </p>
               <p className="text-text-secondary text-lg font-inter mb-8">
-                Whether you're a Meme Creator spreading propaganda or an MP managing a district treasury — every action has political consequences.
+                Whether you&apos;re a Meme Creator spreading propaganda or an MP managing a district treasury — every action has political consequences.
               </p>
               <ul className="space-y-4">
                 {[
