@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { Landmark, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function BillTrackerPage() {
   const bills = await prisma.bill.findMany({
     orderBy: { created_at: "desc" },
