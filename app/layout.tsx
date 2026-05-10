@@ -1,34 +1,14 @@
 import type { Metadata } from "next";
-import { Cinzel, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import NextAuthSessionProvider from "@/components/providers/SessionProvider";
+import { NextAuthProvider } from "@/components/providers/session-provider";
+import { Toaster } from "sonner";
 
-const cinzel = Cinzel({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-cinzel",
-  display: "swap",
-});
-
-const inter = Inter({
-  weight: ["300", "400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "RAJNEET — Where Influence is Power",
-  description: "A browser-based political social simulation platform",
-  icons: {
-    icon: "/images/rajneet-logo.png",
-    apple: "/images/rajneet-logo.png",
-  },
-  openGraph: {
-    title: "RAJNEET — Where Influence is Power",
-    description: "A browser-based political social simulation platform",
-    images: [{ url: "/images/rajneet-logo.png" }],
-  },
+  title: "RAJNEET - Your Voice. Your Democracy.",
+  description: "Protected under Article 19(1)(a) of the Indian Constitution.",
 };
 
 export default function RootLayout({
@@ -37,11 +17,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${cinzel.variable} ${inter.variable}`}>
-        <NextAuthSessionProvider>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} min-h-screen bg-background antialiased`}>
+        <NextAuthProvider>
           {children}
-        </NextAuthSessionProvider>
+          <Toaster richColors position="top-center" />
+        </NextAuthProvider>
       </body>
     </html>
   );

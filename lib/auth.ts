@@ -1,66 +1,42 @@
 import { NextAuthOptions } from "next-auth";
-import { Adapter } from "next-auth/adapters";
-import GoogleProvider from "next-auth/providers/google";
-import DiscordProvider from "next-auth/providers/discord";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
-
-const baseAdapter = PrismaAdapter(prisma);
+import { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
-  adapter: {
-    ...baseAdapter,
-    createUser: async (data) => {
-      // Destructure to strip any unknown fields before passing to Prisma
-      const { name, email, image, emailVerified } = data as any;
-
-      return baseAdapter.createUser!({
-        name,
-        email,
-        image,
-        emailVerified,
-        provider: "unknown", // safe default — overwritten in signIn callback
-      } as any);
-    },
-  } as Adapter,
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID || "",
-      clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
-    }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider && user?.id) {
-        // Update provider to the real value ("google" or "discord")
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { provider: account.provider },
-        }).catch(() => null);
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role || "CITIZEN";
+        token.state = (user as any).state || null;
+        token.district = (user as any).district || null;
+        token.avatar_url = (user as any).avatar_url || user.image;
+        token.username = (user as any).username || null;
       }
-      // DO NOT attach any extra properties to the user object here
-      // NextAuth spreads user into Prisma — unknown fields will crash
-      return true;
+      return token;
     },
-
-    async redirect({ url, baseUrl }) {
-      // Always handled — never fall through to error
-      return url.startsWith(baseUrl) ? url : baseUrl + "/onboarding";
-    },
-
-    async session({ session, user }) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id;
-        session.user.username = (user as any).username || null;
-        session.user.role = (user as any).role || "CITIZEN";
-        session.user.subRole = (user as any).subRole || "Citizen";
-        session.user.provider = (user as any).provider || "unknown";
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.state = token.state as string | null;
+        session.user.district = token.district as string | null;
+        session.user.avatar_url = token.avatar_url as string | null;
+        session.user.username = token.username as string | null;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
   pages: {
@@ -68,7 +44,7 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   session: {
-    strategy: "database",
-    maxAge: 36000, // 10 hours in seconds
+    strategy: "jwt",
+    maxAge: 36000, // 10 hours
   },
 };
