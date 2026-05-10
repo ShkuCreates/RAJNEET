@@ -6,11 +6,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm exec next dev",
+    "build": "npm exec next build",
+    "start": "npm exec next start",
     "postinstall": "npm exec prisma generate",
-    "lint": "next lint",
+    "lint": "npm exec next lint",
     "audit:fix": "npm audit fix --force"
   },
   "dependencies": {
