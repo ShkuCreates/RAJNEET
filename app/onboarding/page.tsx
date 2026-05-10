@@ -23,7 +23,6 @@ type OnboardingData = {
   partyId?: string;
   partyName?: string;
   partyColor?: string;
-  partyLogo?: string;
 };
 
 export default function OnboardingPage() {
@@ -52,7 +51,6 @@ export default function OnboardingPage() {
     partyId?: string;
     partyName?: string;
     partyColor?: string;
-    partyLogo?: string;
   }) => {
     setData({ ...data, ...partyData });
     
@@ -66,7 +64,6 @@ export default function OnboardingPage() {
             name: partyData.partyName,
             tagline: "",
             color: partyData.partyColor,
-            logo: partyData.partyLogo,
             leaderId: session.user.id,
           }),
         });

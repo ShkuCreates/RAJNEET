@@ -7,18 +7,17 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 
 interface StepPartyProps {
-  onNext: (partyData: { action: "join" | "create" | "skip"; partyId?: string; partyName?: string; partyColor?: string; partyLogo?: string }) => void;
+  onNext: (partyData: { action: "join" | "create" | "skip"; partyId?: string; partyName?: string; partyColor?: string }) => void;
 }
 
 export function StepParty({ onNext }: StepPartyProps) {
   const [action, setAction] = useState<"join" | "create" | "skip" | null>(null);
   const [partyName, setPartyName] = useState("");
   const [partyColor, setPartyColor] = useState("#D4AF37");
-  const [partyLogo, setPartyLogo] = useState("");
-
+  
   const handleCreateParty = () => {
     if (partyName.trim()) {
-      onNext({ action: "create", partyName, partyColor, partyLogo });
+      onNext({ action: "create", partyName, partyColor });
     }
   };
 
@@ -82,13 +81,7 @@ export function StepParty({ onNext }: StepPartyProps) {
             onChange={(e) => setPartyName(e.target.value)}
           />
 
-          <Input
-            label="Party Logo URL (optional)"
-            placeholder="https://example.com/logo.png"
-            value={partyLogo}
-            onChange={(e) => setPartyLogo(e.target.value)}
-          />
-
+          
           <div className="space-y-2">
             <label className="text-text-secondary text-sm font-inter">Party Color</label>
             <div className="flex items-center gap-3">
