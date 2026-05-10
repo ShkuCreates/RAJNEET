@@ -1,14 +1,15 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger";
+interface ButtonProps extends HTMLMotionProps<"button"> {
+  variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
   children: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   variant = "primary",
+  size = "md",
   children,
   className = "",
   ...props
@@ -19,6 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-gold-gradient text-black hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]",
     secondary: "bg-transparent border border-gold-primary text-gold-primary hover:bg-gold-primary hover:text-black",
     danger: "bg-danger text-white hover:opacity-90",
+    ghost: "bg-transparent border-none hover:bg-white/5",
   };
 
   const sizeStyles = {

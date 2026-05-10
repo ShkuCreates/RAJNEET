@@ -25,18 +25,20 @@ export async function GET(req: NextRequest) {
 
     // Get district counts for each state
     const statesWithDistrictCounts = await Promise.all(
-      states.map(async (state) => {
-        const districts = await prisma.district.findMany({
-          where: { state: state.state },
-          select: { id: true },
-        });
+      states
+        .filter((s): s is typeof s & { state: string } => s.state !== null)
+        .map(async (state) => {
+          const districts = await prisma.district.findMany({
+            where: { state: state.state },
+            select: { id: true },
+          });
 
-        return {
-          name: state.state,
-          citizenCount: state._count.id,
-          districtCount: districts.length,
-        };
-      })
+          return {
+            name: state.state,
+            citizenCount: state._count.id,
+            districtCount: districts.length,
+          };
+        })
     );
 
     // Sort by citizen count (descending)

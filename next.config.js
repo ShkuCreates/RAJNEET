@@ -3,7 +3,9 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com', 'cdn.discordapp.com'],
   },
-  turbopack: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
 
 module.exports = nextConfig

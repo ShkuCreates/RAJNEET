@@ -18,14 +18,6 @@ export async function GET(
     // Get all districts in the state with their stats
     const districts = await prisma.district.findMany({
       where: { state },
-      include: {
-        _count: {
-          select: {
-            // Note: We need to add users relation to District model for this to work
-            // For now, we'll fetch user counts separately
-          },
-        },
-      },
       orderBy: { name: "asc" },
     });
 

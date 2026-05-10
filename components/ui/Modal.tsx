@@ -9,9 +9,10 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  size?: "sm" | "md" | "lg" | "large";
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, size = "md" }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -22,6 +23,13 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  const sizeStyles = {
+    sm: "max-w-sm",
+    md: "max-w-md",
+    lg: "max-w-lg",
+    large: "max-w-2xl",
+  };
 
   return (
     <AnimatePresence>
@@ -38,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-bg-secondary border border-[rgba(212,175,55,0.2)] rounded-12 p-6 max-w-md w-full relative"
+            className={`bg-bg-secondary border border-[rgba(212,175,55,0.2)] rounded-12 p-6 w-full relative ${sizeStyles[size as keyof typeof sizeStyles]}`}
             style={{ borderRadius: "12px" }}
           >
             {title && (

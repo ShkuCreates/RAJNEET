@@ -16,16 +16,19 @@ export default function LoginPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const safeCanvas = canvas;
+    const safeCtx = ctx;
+
+    safeCanvas.width = window.innerWidth;
+    safeCanvas.height = window.innerHeight;
 
     const particles: Array<{ x: number; y: number; radius: number; speedY: number; speedX: number; opacity: number }> = [];
 
     // Create 80 particles
     for (let i = 0; i < 80; i++) {
       particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: Math.random() * safeCanvas.width,
+        y: Math.random() * safeCanvas.height,
         radius: 0.4 + Math.random() * 1.8,
         speedY: 0.3 + Math.random() * 0.7,
         speedX: (Math.random() - 0.5) * 0.3,
@@ -34,21 +37,21 @@ export default function LoginPage() {
     }
 
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      safeCtx.clearRect(0, 0, safeCanvas.width, safeCanvas.height);
 
       // Draw radial glow
-      const gradient = ctx.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
+      const gradient = safeCtx.createRadialGradient(
+        safeCanvas.width / 2,
+        safeCanvas.height / 2,
         0,
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width * 0.5
+        safeCanvas.width / 2,
+        safeCanvas.height / 2,
+        safeCanvas.width * 0.5
       );
       gradient.addColorStop(0, "rgba(212, 175, 55, 0.06)");
       gradient.addColorStop(1, "transparent");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      safeCtx.fillStyle = gradient;
+      safeCtx.fillRect(0, 0, safeCanvas.width, safeCanvas.height);
 
       // Draw particles
       particles.forEach((particle) => {
@@ -57,17 +60,17 @@ export default function LoginPage() {
 
         // Reset particle when it goes off screen
         if (particle.y < -10) {
-          particle.y = canvas.height + 10;
-          particle.x = Math.random() * canvas.width;
+          particle.y = safeCanvas.height + 10;
+          particle.x = Math.random() * safeCanvas.width;
         }
-        if (particle.x < 0 || particle.x > canvas.width) {
-          particle.x = Math.random() * canvas.width;
+        if (particle.x < 0 || particle.x > safeCanvas.width) {
+          particle.x = Math.random() * safeCanvas.width;
         }
 
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(212, 175, 55, ${particle.opacity})`;
-        ctx.fill();
+        safeCtx.beginPath();
+        safeCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        safeCtx.fillStyle = `rgba(212, 175, 55, ${particle.opacity})`;
+        safeCtx.fill();
       });
 
       requestAnimationFrame(animate);
@@ -76,8 +79,8 @@ export default function LoginPage() {
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      safeCanvas.width = window.innerWidth;
+      safeCanvas.height = window.innerHeight;
     };
 
     window.addEventListener("resize", handleResize);

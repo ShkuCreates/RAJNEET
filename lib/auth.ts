@@ -1,4 +1,5 @@
 import { NextAuthOptions } from "next-auth";
+import { Adapter } from "next-auth/adapters";
 import GoogleProvider from "next-auth/providers/google";
 import DiscordProvider from "next-auth/providers/discord";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -21,7 +22,7 @@ export const authOptions: NextAuthOptions = {
         provider: "unknown", // safe default — overwritten in signIn callback
       } as any);
     },
-  },
+  } as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",

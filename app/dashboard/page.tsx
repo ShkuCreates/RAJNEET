@@ -85,7 +85,7 @@ export default function DashboardPage() {
       const currentPage = reset ? 1 : page || 1;
 
       const response = await fetch(
-        `/api/districts/${encodeURIComponent(district)}/feed?page=${currentPage}&limit=10&type=${type}`
+        `/api/districts/${encodeURIComponent(district as string)}/feed?page=${currentPage}&limit=10&type=${type}`
       );
 
       if (response.ok) {
