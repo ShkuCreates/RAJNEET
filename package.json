@@ -7,9 +7,9 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node_modules/.bin/prisma generate && next build",
+    "build": "npx --no-install prisma generate && next build",
     "start": "next start",
-    "postinstall": "node_modules/.bin/prisma generate",
+    "postinstall": "npx --no-install prisma generate",
     "lint": "next lint",
     "audit:fix": "npm audit fix --force"
   },
