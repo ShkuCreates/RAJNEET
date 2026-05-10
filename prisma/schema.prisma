@@ -20,6 +20,7 @@ model User {
   role          String    @default("CITIZEN")
   subRole       String    @default("Citizen")
   state         String?
+  district      String?
   bio           String?
   followerCount Int       @default(0)
   partyId       String?
@@ -29,6 +30,9 @@ model User {
   followers     Follow[]  @relation("Following")
   following     Follow[]  @relation("Follower")
   party         Party?    @relation(fields: [partyId], references: [id])
+  posts         Post[]
+  likes         Like[]
+  comments      Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,4 +93,51 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model District {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  state           String
+  treasury        Int       @default(0)
+  approvalRating  Float     @default(50)
+  corruptionScore Float     @default(0)
+  nextElection    DateTime?
+  rulingPartyId   String?
+  mlaId           String?
+  createdAt       DateTime  @default(now())
+}
+
+model Post {
+  id         String   @id @default(cuid())
+  content    String
+  type       String   @default("General")
+  authorId   String
+  district   String
+  state      String
+  likeCount  Int      @default(0)
+  author     User     @relation(fields: [authorId], references: [id])
+  comments   Comment[]
+  likes      Like[]
+  createdAt  DateTime @default(now())
+}
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  postId String
+  user   User   @relation(fields: [userId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
 }
