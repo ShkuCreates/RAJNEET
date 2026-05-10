@@ -15,7 +15,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles = "font-bold rounded-lg transition-all duration-200 font-inter";
-  
+
   const variantStyles = {
     primary: "bg-gold-gradient text-black hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]",
     secondary: "bg-transparent border border-gold-primary text-gold-primary hover:bg-gold-primary hover:text-black",

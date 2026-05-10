@@ -69,6 +69,6 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "database",
-    maxAge: 7200, // 2 hours in seconds
+    maxAge: 36000, // 10 hours in seconds
   },
 };

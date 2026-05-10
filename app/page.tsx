@@ -291,10 +291,10 @@ export default function LandingPage() {
                     <Crown className="text-black" size={24} />
                   </div>
                   <div>
-                    <h3 className="text-white font-cinzel text-lg">@RajNeeta_MP</h3>
+                    <h3 className="text-white font-cinzel text-lg">Shourya_PM</h3>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-1 rounded-full bg-gold-gradient text-black text-xs font-bold">
-                        MP
+                        CITIZEN
                       </span>
                     </div>
                   </div>
@@ -302,15 +302,15 @@ export default function LandingPage() {
 
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center">
-                    <CountUp end={847} />
+                    <CountUp end={100000} />
                     <p className="text-text-secondary text-xs font-inter">Followers</p>
                   </div>
                   <div className="text-center">
-                    <CountUp end={212} />
+                    <CountUp end={2} />
                     <p className="text-text-secondary text-xs font-inter">Following</p>
                   </div>
                   <div className="text-center">
-                    <CountUp end={134} />
+                    <CountUp end={45} />
                     <p className="text-text-secondary text-xs font-inter">Posts</p>
                   </div>
                 </div>
@@ -318,11 +318,11 @@ export default function LandingPage() {
                 <div className="space-y-2 mb-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Party:</span>
-                    <span className="text-white">🔶 Bharatiya Janta Dal</span>
+                    <span className="text-white">RAJNEET CITIZENS UNION</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-text-secondary">District:</span>
-                    <span className="text-white">Lucknow Central</span>
+                    <span className="text-text-secondary">State:</span>
+                    <span className="text-white">UTTAR PRADESH</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Approval Rating:</span>
@@ -405,11 +405,11 @@ export default function LandingPage() {
               WHO WILL YOU BECOME?
             </span>
             <h2 className="text-4xl md:text-5xl font-cinzel text-white mt-4">
-              8 Citizen Roles. Unlimited Ambition.
+              6 Citizen Roles. Unlimited Ambition.
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
             {[
               { emoji: "🏛️", name: "Citizen", description: "The foundation of democracy" },
               { emoji: "📰", name: "Journalist", description: "Break news. Shape narratives." },
@@ -417,8 +417,6 @@ export default function LandingPage() {
               { emoji: "📱", name: "Influencer", description: "Followers are your weapon" },
               { emoji: "✊", name: "Activist", description: "Lead protests. Drive change." },
               { emoji: "🎭", name: "Meme Creator", description: "Propaganda through humor" },
-              { emoji: "👨‍⚖️", name: "Judge", description: "Arbitrate. Decide. Rule." },
-              { emoji: "🚔", name: "Police Officer", description: "Enforce order. Hold power." },
             ].map((role, index) => (
               <SectionReveal key={index} delay={index * 0.05}>
                 <motion.div
