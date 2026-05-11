@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 3600;
 
-const BASE_URL = "https://rajneet.in";
+const getBaseUrl = () =>
+  (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://rajneet.in").replace(/\/+$/, "");
 
 const slugFromHeadline = (headline: string) =>
   headline
@@ -15,6 +16,7 @@ const slugFromHeadline = (headline: string) =>
     .slice(0, 60);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = getBaseUrl();
   const news = await prisma.news.findMany({
     where: { status: "PUBLISHED" },
     select: { slug: true, headline: true, created_at: true },
@@ -22,16 +24,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/`, lastModified: new Date() },
-    { url: `${BASE_URL}/dashboard`, lastModified: new Date() },
-    { url: `${BASE_URL}/parliament`, lastModified: new Date() },
-    { url: `${BASE_URL}/polls`, lastModified: new Date() },
+    { url: `${baseUrl}/`, lastModified: new Date() },
+    { url: `${baseUrl}/dashboard`, lastModified: new Date() },
+    { url: `${baseUrl}/parliament`, lastModified: new Date() },
+    { url: `${baseUrl}/polls`, lastModified: new Date() },
   ];
 
   const newsRoutes: MetadataRoute.Sitemap = news.map((article) => {
     const slug = article.slug || slugFromHeadline(article.headline || "article");
     return {
-      url: `${BASE_URL}/news/${slug}`,
+      url: `${baseUrl}/news/${slug}`,
       lastModified: article.created_at,
       changeFrequency: "hourly",
       priority: 0.8,
