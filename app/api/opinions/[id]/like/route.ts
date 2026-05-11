@@ -17,9 +17,9 @@ export async function POST(
   // Check if already liked
   const existing = await prisma.opinionLike.findUnique({
     where: {
-      userId_opinionId: {
-        userId: session.user.id,
-        opinionId
+      user_id_opinion_id: {
+        user_id: session.user.id,
+        opinion_id: opinionId
       }
     }
   })
@@ -27,21 +27,21 @@ export async function POST(
   if (existing) {
     // Unlike
     await prisma.opinionLike.delete({
-      where: { userId_opinionId: { userId: session.user.id, opinionId } }
+      where: { user_id_opinion_id: { user_id: session.user.id, opinion_id: opinionId } }
     })
     await prisma.opinion.update({
       where: { id: opinionId },
-      data: { likeCount: { decrement: 1 } }
+      data: { like_count: { decrement: 1 } }
     })
     return NextResponse.json({ liked: false })
   } else {
     // Like
     await prisma.opinionLike.create({
-      data: { userId: session.user.id, opinionId }
+      data: { user_id: session.user.id, opinion_id: opinionId }
     })
     await prisma.opinion.update({
       where: { id: opinionId },
-      data: { likeCount: { increment: 1 } }
+      data: { like_count: { increment: 1 } }
     })
     return NextResponse.json({ liked: true })
   }

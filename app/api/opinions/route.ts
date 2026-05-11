@@ -13,15 +13,15 @@ export async function GET(request: Request) {
   if (!newsId) return NextResponse.json([])
 
   const opinions = await prisma.opinion.findMany({
-    where: { newsId, parentId: null },
-    orderBy: { createdAt: 'desc' },
+    where: { news_id: newsId, parent_id: null },
+    orderBy: { created_at: 'desc' },
     include: {
       user: { select: { name: true, image: true, username: true } },
       replies: {
         include: {
           user: { select: { name: true, image: true, username: true } }
         },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { created_at: 'asc' }
       }
     }
   })
@@ -46,11 +46,11 @@ export async function POST(request: Request) {
 
   const opinion = await prisma.opinion.create({
     data: {
-      newsId,
-      userId: session.user.id,
+      news_id: newsId,
+      user_id: session.user.id,
       stance,
-      content,
-      parentId: parentId || null,
+      comment: content,
+      parent_id: parentId || null,
     },
     include: {
       user: { select: { name: true, image: true, username: true } }

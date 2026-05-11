@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     const articles = await prisma.news.findMany({
       where,
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
         author: {

@@ -118,39 +118,39 @@ model News {
 
 model Opinion {
   id               String   @id @default(cuid())
-  newsId          String
-  userId          String
+  news_id          String
+  user_id          String
   username         String?
   stance           String   // FOR, AGAINST, NEUTRAL
   comment          String   @db.Text
   tag              String   // FACT, OPINION, ALLEGATION, SATIRE
-  likeCount       Int      @default(0)
+  like_count       Int      @default(0)
   upvotes          Int      @default(0)
   downvotes        Int      @default(0)
-  insightfulCount Int      @default(0)
-  biasedCount     Int      @default(0)
-  misleadingCount Int      @default(0)
-  parentId        String?
+  insightful_count Int      @default(0)
+  biased_count     Int      @default(0)
+  misleading_count Int      @default(0)
+  parent_id        String?
   hashtags         String[]
-  isFactChecked  Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  is_fact_checked  Boolean  @default(false)
+  created_at       DateTime @default(now())
 
-  news       News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id])
-  parent     Opinion?  @relation("Thread", fields: [parentId], references: [id])
+  news       News      @relation(fields: [news_id], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [user_id], references: [id])
+  parent     Opinion?  @relation("Thread", fields: [parent_id], references: [id])
   replies    Opinion[] @relation("Thread")
   likes       OpinionLike[]
 }
 
 model OpinionLike {
   id        String   @id @default(cuid())
-  userId    String
-  opinionId String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  opinion   Opinion  @relation(fields: [opinionId], references: [id])
+  user_id    String
+  opinion_id String
+  created_at DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [id])
+  opinion   Opinion  @relation(fields: [opinion_id], references: [id])
 
-  @@unique([userId, opinionId])
+  @@unique([user_id, opinion_id])
 }
 
 model Poll {

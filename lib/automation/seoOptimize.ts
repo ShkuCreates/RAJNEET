@@ -13,7 +13,7 @@ async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string
             'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
           },
           body: JSON.stringify({
-            model: 'llama3-8b-8192',
+            model: 'llama-3.1-8b-instant',
             messages: [
               {
                 role: 'user',
