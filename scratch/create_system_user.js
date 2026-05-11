@@ -10,7 +10,7 @@ async function main() {
       create: {
         id: systemId,
         name: 'RAJNEET System',
-        email: 'system@rajneet.in',
+        email: 'system@rajneet.co.in',
         role: 'ADMIN',
         onboarding_complete: true,
         username: 'system'
