@@ -3,42 +3,13 @@
 import { useEffect, useState } from "react";
 import NewsCard from "./NewsCard";
 import { SkeletonCard } from "../dashboard/SkeletonCard";
-import { Newspaper, Bell } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
 
 export default function NewsFeed({ initialNews, currentUser }: { initialNews: any[], currentUser: any }) {
   const [newsList, setNewsList] = useState(initialNews);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState("28:45");
-
-  useEffect(() => {
-    // Real-time subscription
-    const channel = supabase
-      .channel("public:news")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "news", filter: "status=eq.PUBLISHED" },
-        (payload) => {
-          console.log("New article received:", payload);
-          setNewsList(prev => [payload.new, ...prev]);
-          toast("New article added to your feed!", {
-            icon: <Bell className="text-accent-blue" size={16} />,
-            description: payload.new.headline,
-            action: {
-              label: "View",
-              onClick: () => window.scrollTo({ top: 0, behavior: "smooth" })
-            }
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   useEffect(() => {
     // Dummy countdown logic for the UI
