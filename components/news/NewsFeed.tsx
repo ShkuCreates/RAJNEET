@@ -15,9 +15,13 @@ export default function NewsFeed({ initialNews, currentUser }: { initialNews: an
     feedItems.push(
       <motion.div
         key={news.id}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
+        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ 
+          delay: index * 0.05, 
+          duration: 0.6,
+          ease: "easeOut"
+        }}
       >
         <NewsCard news={news} currentUser={currentUser} />
       </motion.div>
