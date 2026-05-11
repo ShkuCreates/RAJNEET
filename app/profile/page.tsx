@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { ArrowLeft, Instagram, LogOut, Pen, Clock, MessageHeart, TrendingUp, Users } from 'lucide-react'
+import { ArrowLeft, Instagram, LogOut, Pen, Clock, Heart, TrendingUp, Users } from 'lucide-react'
 
 export default function ProfilePage() {
   const { data: session } = useSession()
@@ -274,7 +274,7 @@ export default function ProfilePage() {
             padding: '20px',
             textAlign: 'center'
           }}>
-            <MessageHeart size={24} style={{ color: '#3B82F6', marginBottom: '8px' }} />
+            <Heart size={24} style={{ color: '#3B82F6', marginBottom: '8px' }} />
             <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
               {stats.totalComments.toLocaleString()}
             </div>
