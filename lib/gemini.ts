@@ -13,11 +13,12 @@ export async function generateNewsSummary(content: string): Promise<string> {
     - Actionable insights
     - Keep it factual and objective
     - Use clear, concise language
+    - Make it detailed and comprehensive (aim for 800-1000 words)
     
     Article content:
     ${content}
     
-    Provide a comprehensive summary that captures the essence of the article while being informative and engaging.`;
+    Provide a comprehensive summary that captures the essence of the article while being informative and engaging. Ensure the summary is substantial and detailed.`;
 
     const result = await model.generateContent(prompt);
     const summary = result.response.text();
