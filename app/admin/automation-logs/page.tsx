@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play, CheckCircle2, AlertCircle, Loader2, Database, ShieldAlert, BarChart2, Activity } from "lucide-react";
 import { toast } from "sonner";
 
