@@ -122,8 +122,36 @@ export default function LandingPage() {
         </AnimatePresence>
       </div>
 
-      {/* SECTION 1 - HERO SECTION */}
-      <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 overflow-hidden">
+      {/* SECTION 1 - NEWS TICKER (TOP) */}
+      <div className="bg-surface/90 backdrop-blur-md border-b border-white/5 py-2 relative z-[100] overflow-hidden">
+        <div className="flex items-center">
+          <div className="px-6 bg-surface border-r border-white/10 shrink-0 flex items-center gap-2 relative z-10">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            <span className="text-xs font-bold text-white tracking-widest">LIVE</span>
+          </div>
+          <div className="flex animate-ticker whitespace-nowrap">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-12 px-6 items-center">
+                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-white/20" /> LOK SABHA SESSION LIVE
+                </span>
+                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-white/20" /> SUPREME COURT HEARING ON ELECTORAL BONDS RESUMES
+                </span>
+                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-white/20" /> UP BUDGET 2025 TABLED: FOCUS ON INFRASTRUCTURE
+                </span>
+                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-white/20" /> NEW CRIMINAL LAWS (BNS) IN EFFECT NATIONWIDE
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 2 - HERO SECTION */}
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-10 px-6 overflow-hidden">
         {/* Subtle Radial Glow */}
         <div className="absolute inset-0 z-0 hero-glow" />
         
@@ -213,25 +241,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 2 - NEWS TICKER */}
-      <div className="bg-surface border-y border-white/5 py-3 relative z-20 overflow-hidden">
-        <div className="flex items-center">
-          <div className="px-6 border-r border-white/10 shrink-0 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-accent-amber animate-pulse" />
-            <span className="text-xs font-bold text-white tracking-widest">LIVE</span>
-          </div>
-          <div className="flex animate-ticker whitespace-nowrap">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex gap-12 px-6 items-center">
-                <span className="text-sm font-medium text-white uppercase tracking-tight">• LOK SABHA SESSION LIVE</span>
-                <span className="text-sm font-medium text-white uppercase tracking-tight">• SUPREME COURT HEARING ON ELECTORAL BONDS RESUMES</span>
-                <span className="text-sm font-medium text-white uppercase tracking-tight">• UP BUDGET 2025 TABLED: FOCUS ON INFRASTRUCTURE</span>
-                <span className="text-sm font-medium text-white uppercase tracking-tight">• NEW CRIMINAL LAWS (BNS) IN EFFECT NATIONWIDE</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* SECTION 3 - FEATURES GRID */}
       <section className="py-32 px-6 relative z-10">
