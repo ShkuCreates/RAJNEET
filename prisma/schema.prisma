@@ -66,6 +66,8 @@ model User {
   pollVotes  PollVote[]
   polls      Poll[]
   mpLetters  MpLetter[]
+  newsUpvotes NewsUpvote[]
+  pageViews   PageView[]
 }
 
 model News {
@@ -99,6 +101,8 @@ model News {
   opinions   Opinion[]
   polls      Poll[]
   mpLetters  MpLetter[]
+  upvotes    NewsUpvote[]
+  pageViews  PageView[]
 }
 
 model Opinion {
@@ -171,6 +175,30 @@ model Bill {
   lok_sabha_votes   Json?
   rajya_sabha_votes Json?
   created_at        DateTime @default(now())
+}
+
+model NewsUpvote {
+  id         String   @id @default(cuid())
+  news_id    String
+  user_id    String
+  created_at DateTime @default(now())
+
+  news       News @relation(fields: [news_id], references: [id], onDelete: Cascade)
+  user       User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([news_id, user_id])
+}
+
+model PageView {
+  id         String   @id @default(cuid())
+  news_id    String?
+  path       String
+  user_id    String?
+  ip         String?
+  created_at DateTime @default(now())
+
+  news       News? @relation(fields: [news_id], references: [id], onDelete: Cascade)
+  user       User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
 }
 
 model TrendsCache {

@@ -13,7 +13,8 @@ import {
   Bell,
   MessageCircle,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import PollWidget from "@/components/polls/PollWidget";
@@ -57,6 +58,14 @@ export default async function DashboardLayout({
             <SidebarNavItem href="/dashboard/parliament" icon={<Landmark size={20} />} label="Parliament" comingSoon />
             <SidebarNavItem href="/dashboard/polls" icon={<BarChart2 size={20} />} label="Opinion Polls" badge="blue" badgeCount={3} />
             <SidebarNavItem href="/dashboard/profile" icon={<UserIcon size={20} />} label="My Profile" />
+            {user.role === "ADMIN" && (
+              <>
+                <div className="my-3 border-t border-white/5" />
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] px-3 mb-2">Admin</p>
+                <SidebarNavItem href="/admin/analytics" icon={<Activity size={20} />} label="Analytics" />
+                <SidebarNavItem href="/admin/automation-logs" icon={<ShieldCheck size={20} />} label="Automation" />
+              </>
+            )}
           </nav>
         </div>
 

@@ -40,8 +40,12 @@ export default async function DashboardPage({
         select: { name: true, avatar_url: true, role: true },
       },
       _count: {
-        select: { opinions: true },
+        select: { opinions: true, upvotes: true, pageViews: true },
       },
+      upvotes: user ? {
+        where: { user_id: user.id },
+        select: { user_id: true }
+      } : false,
     },
     orderBy: {
       created_at: "desc",
