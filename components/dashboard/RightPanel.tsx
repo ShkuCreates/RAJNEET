@@ -1,10 +1,46 @@
 "use client";
 
-import { MapPin, BarChart2, Landmark, Flame, TrendingUp, ChevronRight, Activity } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { MapPin, BarChart2, Landmark, Flame, TrendingUp, ChevronRight, Activity, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function RightPanel({ user }: { user: any }) {
+  const [poll, setPoll] = useState<any>(null);
+  const [isVoting, setIsVoting] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/polls/featured?state=${user?.state || ""}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setPoll(data.poll);
+      });
+  }, [user]);
+
+  const handleVote = async (option: string) => {
+    if (!poll) return;
+    setIsVoting(option);
+    try {
+      const res = await fetch("/api/polls/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pollId: poll.id, option })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Vote recorded!");
+        // Refresh poll results
+        const pRes = await fetch(`/api/polls/featured?state=${user?.state || ""}`);
+        const pData = await pRes.json();
+        if (pData.success) setPoll(pData.poll);
+      }
+    } catch (e) {
+      toast.error("Failed to vote");
+    } finally {
+      setIsVoting(null);
+    }
+  };
+
   return (
     <aside className="w-full md:w-80 bg-[#050A14] border-l border-white/5 p-6 overflow-y-auto sticky top-0 h-screen hidden lg:block custom-scrollbar">
       <div className="space-y-10">
@@ -47,36 +83,46 @@ export function RightPanel({ user }: { user: any }) {
             <span className="text-[10px] font-black text-white uppercase tracking-widest">LIVE POLL</span>
           </div>
           
-          <h4 className="text-sm font-heading font-bold text-white mb-6 leading-snug">
-            Should the government increase infrastructure spending in {user?.state || "your state"}?
-          </h4>
+          {poll ? (
+            <>
+              <h4 className="text-sm font-heading font-bold text-white mb-6 leading-snug">
+                {poll.question}
+              </h4>
 
-          <div className="space-y-3">
-            {[
-              { label: "Highly Necessary", progress: 65 },
-              { label: "Somewhat Necessary", progress: 25 },
-              { label: "Not a Priority", progress: 10 }
-            ].map((opt, i) => (
-              <button key={i} className="w-full relative group">
-                <div className="flex justify-between items-center mb-1.5 px-1">
-                  <span className="text-[10px] font-bold text-gray-300">{opt.label}</span>
-                  <span className="text-[10px] font-mono text-accent-blue font-black">{opt.progress}%</span>
-                </div>
-                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${opt.progress}%` }}
-                    transition={{ duration: 1, delay: i * 0.1 }}
-                    className="h-full bg-accent-blue shadow-[0_0_12px_rgba(59,130,246,0.4)]"
-                  />
-                </div>
-              </button>
-            ))}
-          </div>
+              <div className="space-y-3">
+                {poll.results.map((opt: any, i: number) => (
+                  <button 
+                    key={i} 
+                    onClick={() => handleVote(opt.label)}
+                    disabled={isVoting !== null}
+                    className="w-full relative group text-left"
+                  >
+                    <div className="flex justify-between items-center mb-1.5 px-1">
+                      <span className="text-[10px] font-bold text-gray-300">{opt.label}</span>
+                      <span className="text-[10px] font-mono text-accent-blue font-black">{opt.progress}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${opt.progress}%` }}
+                        transition={{ duration: 1, delay: i * 0.1 }}
+                        className="h-full bg-accent-blue shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+                      />
+                    </div>
+                  </button>
+                ))}
+              </div>
 
-          <p className="mt-6 text-[9px] text-gray-500 font-medium text-center uppercase tracking-widest">
-            Poll closes in 14 hours • 2,401 votes
-          </p>
+              <p className="mt-6 text-[9px] text-gray-500 font-medium text-center uppercase tracking-widest">
+                {poll.totalVotes.toLocaleString()} votes cast
+              </p>
+            </>
+          ) : (
+            <div className="py-10 text-center">
+              <Loader2 className="mx-auto text-accent-blue animate-spin mb-2" size={24} />
+              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Loading Live Poll...</p>
+            </div>
+          )}
         </section>
 
         {/* Parliament Today */}
