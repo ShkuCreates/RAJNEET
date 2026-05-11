@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
-  const limit = parseInt(searchParams.get('limit') || '20')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 50) // Max 50 articles per page
 
   try {
     const where: any = { status: 'PUBLISHED' }
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     const articles = await prisma.news.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit,
       include: {
         author: {
