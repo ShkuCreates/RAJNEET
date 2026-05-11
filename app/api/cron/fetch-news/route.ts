@@ -13,38 +13,21 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log("Fetching news...");
+    console.log("Fetching real news from NewsData API...");
     
-    // 1. Fetch news from NewsData API (Mocking for now as we don't have the key in env yet)
-    // In real implementation: 
-    // const response = await fetch(`https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en`);
-    // const data = await response.json();
+    const response = await fetch(
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en`
+    );
+    const data = await response.json();
     
-    // For demonstration, we'll create some mock articles
-    const mockArticles = [
-      {
-        title: "Supreme Court stays implementation of new rules on digital platforms",
-        link: "https://example.com/sc-stay",
-        description: "The Supreme Court of India today issued an interim stay on the implementation of recently notified rules for digital media platforms...",
-        category: "POLITICAL",
-        image_url: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1000",
-        source_id: "The Hindu",
-        pubDate: new Date().toISOString()
-      },
-      {
-        title: "New Infrastructure project announced for Uttar Pradesh worth ₹50,000 Cr",
-        link: "https://example.com/up-infra",
-        description: "The Central Government has approved a massive infrastructure package for Uttar Pradesh, focusing on new expressways and industrial corridors...",
-        category: "INFRASTRUCTURE",
-        image_url: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?auto=format&fit=crop&q=80&w=1000",
-        source_id: "Times of India",
-        pubDate: new Date().toISOString()
-      }
-    ];
+    if (!data.results) {
+      throw new Error(data.message || "Failed to fetch news from API");
+    }
 
+    const fetchedArticles = data.results;
     const savedArticles = [];
 
-    for (const art of mockArticles) {
+    for (const art of fetchedArticles) {
       // Check if article already exists
       const existing = await prisma.news.findFirst({
         where: { source_url: art.link }
@@ -54,11 +37,11 @@ export async function GET(req: Request) {
         // Enforce SEO Optimization step
         const seoData = await seoOptimize({
           headline: art.title,
-          summary: art.description,
-          category: art.category,
-          state_name: "National", // Default for now
+          summary: art.description || art.content || art.title,
+          category: "POLITICAL", // Default to political for this fetch
+          state_name: "National", 
           cover_image_url: art.image_url,
-          published_at: new Date().toISOString()
+          published_at: art.pubDate || new Date().toISOString()
         });
 
         // 1. Upload cover image to Cloudinary
@@ -117,7 +100,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      fetched: mockArticles.length, 
+      fetched: fetchedArticles.length, 
       saved: savedArticles.length,
       triggered_poll: count24h % 10 === 0
     });
