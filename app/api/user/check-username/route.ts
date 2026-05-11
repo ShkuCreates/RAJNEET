@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
     const username = searchParams.get("username")?.toLowerCase();
 
@@ -10,8 +13,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ available: false });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { username },
+    const existingUser = await prisma.user.findFirst({
+      where: { 
+        username,
+        NOT: {
+          email: session?.user?.email || undefined
+        }
+      },
     });
 
     return NextResponse.json({ available: !existingUser });

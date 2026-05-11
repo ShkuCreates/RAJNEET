@@ -83,9 +83,9 @@ export default function OnboardingPage() {
     mode: "onChange",
     defaultValues: {
       name: session?.user?.name || "",
-      username: "",
+      username: session?.user?.username || "",
       category: "",
-      state: "",
+      state: session?.user?.state || "",
       mobile: ""
     }
   });
