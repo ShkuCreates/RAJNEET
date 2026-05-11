@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "CITIZEN";
@@ -22,6 +22,15 @@ export const authOptions: NextAuthOptions = {
         token.avatar_url = (user as any).avatar_url || user.image;
         token.username = (user as any).username || null;
       }
+      
+      if (trigger === "update" && session) {
+        // Update token with new session data
+        if (session.name) token.name = session.name;
+        if (session.onboarding_complete !== undefined) token.onboarding_complete = session.onboarding_complete;
+        if (session.state) token.state = session.state;
+        if (session.username) token.username = session.username;
+      }
+      
       return token;
     },
     async session({ session, token }) {

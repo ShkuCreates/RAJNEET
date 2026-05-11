@@ -133,8 +133,18 @@ export default function OnboardingPage() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to save profile");
-      await update();
-      window.location.href = "/dashboard";
+      // Update session locally with new data so middleware recognizes it
+      await update({
+        ...data,
+        onboarding_complete: true
+      });
+      
+      toast.success("Profile completed! Redirecting...");
+      
+      // Force a full reload to ensure middleware catches the new token
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
     } finally {
