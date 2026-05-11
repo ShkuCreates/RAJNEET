@@ -4,31 +4,37 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, topicPreferences } = body;
+    const { userId, email, topicPreferences } = body;
 
     if (!email || !topicPreferences || topicPreferences.length === 0) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if email already exists
+    const user = userId
+      ? await prisma.user.findUnique({ where: { id: userId } })
+      : await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+    }
+
     const existing = await prisma.debateNotificationSubscriber.findUnique({
-      where: { user_id: email }, // Using email as user_id for non-logged-in users
+      where: { user_id: user.id },
     });
 
     if (existing) {
-      // Update existing subscription
       await prisma.debateNotificationSubscriber.update({
-        where: { user_id: email },
+        where: { user_id: user.id },
         data: {
           topic_preferences: topicPreferences,
           is_active: true,
+          email,
         },
       });
     } else {
-      // Create new subscription
       await prisma.debateNotificationSubscriber.create({
         data: {
-          user_id: email,
+          user_id: user.id,
           email,
           topic_preferences: topicPreferences,
           is_active: true,

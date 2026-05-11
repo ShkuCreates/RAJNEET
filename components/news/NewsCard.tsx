@@ -22,10 +22,10 @@ const categoryColors: Record<string, string> = {
   ENTERTAINMENT: "bg-pink-500",
   LIFESTYLE: "bg-teal-500",
   TOP: "bg-accent-blue",
-  OTHER: "bg-gray-500"
+  OTHER: "bg-gray-500",
 };
 
-export default function NewsCard({ news, currentUser }: { news: any, currentUser: any }) {
+export default function NewsCard({ news, currentUser }: { news: any; currentUser: any }) {
   const router = useRouter();
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   const normalizeImageUrl = (value?: string | null) => {
@@ -35,34 +35,44 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     return "";
   };
   const [liked, setLiked] = useState(
-    news.upvotes?.some((v: any) => v.user_id === currentUser?.id) || false
+    news.upvotes?.some((vote: any) => vote.user_id === currentUser?.id) || false
   );
   const [upvoteCount, setUpvoteCount] = useState(news._count?.upvotes || 0);
 
   const categoryKey = news.category?.toUpperCase() || "OTHER";
   const categoryColor = categoryColors[categoryKey] || "bg-gray-500";
   const isNew = differenceInHours(new Date(), new Date(news.created_at)) < 2;
+  const stances = Array.isArray(news.opinions) ? news.opinions : [];
+  const totalStances = stances.length;
+  const forCount = stances.filter((opinion: any) => opinion.stance === "FOR").length;
+  const neutralCount = stances.filter((opinion: any) => opinion.stance === "NEUTRAL").length;
+  const againstCount = stances.filter((opinion: any) => opinion.stance === "AGAINST").length;
+  const toPercent = (count: number) => (totalStances > 0 ? Math.round((count / totalStances) * 100) : 0);
+  const forPercent = toPercent(forCount);
+  const neutralPercent = toPercent(neutralCount);
+  const againstPercent = toPercent(againstCount);
 
-  const handleUpvote = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleUpvote = async (event: React.MouseEvent) => {
+    event.stopPropagation();
     if (!currentUser) {
       toast.error("Login to like articles");
       return;
     }
+
     try {
       const res = await fetch("/api/news/upvote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newsId: news.id })
+        body: JSON.stringify({ newsId: news.id }),
       });
       const data = await res.json();
       if (data.success) {
         setLiked(data.action === "added");
-        setUpvoteCount((prev: number) => data.action === "added" ? prev + 1 : prev - 1);
+        setUpvoteCount((prev: number) => (data.action === "added" ? prev + 1 : prev - 1));
         if (data.action === "added") toast.success("Liked!");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -71,7 +81,30 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
       .toLowerCase()
       .replace(/[^\w\s-]/g, "")
       .split(" ")
-      .filter((w) => !["a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from", "is", "was", "are", "were"].includes(w))
+      .filter(
+        (word) =>
+          ![
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "is",
+            "was",
+            "are",
+            "were",
+          ].includes(word)
+      )
       .join("-")
       .slice(0, 60);
 
@@ -83,7 +116,7 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     fetch("/api/admin/track-view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newsId: news.id, path: articleUrl })
+      body: JSON.stringify({ newsId: news.id, path: articleUrl }),
     }).catch(() => {});
   };
 
@@ -94,11 +127,11 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     "Click to read full article.";
   const previewWords = previewSource.split(" ");
   const previewText =
-    previewWords.length > 150
-      ? `${previewWords.slice(0, 150).join(" ")}...`
-      : previewSource;
-  const showContinueLink = previewWords.length > 150;
-  const ogFallbackUrl = `/api/og?title=${encodeURIComponent(news.seo_title || news.headline)}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
+    previewWords.length > 120 ? `${previewWords.slice(0, 120).join(" ")}...` : previewSource;
+  const showContinueLink = previewWords.length > 120;
+  const ogFallbackUrl = `/api/og?title=${encodeURIComponent(
+    news.seo_title || news.headline
+  )}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
   const isGenericCover =
     typeof news.cover_image_url === "string" &&
     (news.cover_image_url.includes("unsplash.com") ||
@@ -107,139 +140,146 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
   const displayCoverUrl = !normalizedCover || isGenericCover ? ogFallbackUrl : normalizedCover;
 
   return (
-    <>
-      <motion.article
-        whileHover={{ y: -4 }}
-        onClick={openArticle}
-        className="group relative bg-[#111827] border border-white/5 rounded-[28px] overflow-hidden shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/5 cursor-pointer"
-      >
-        {/* Cover Image */}
-        {displayCoverUrl ? (
-          <div className="relative aspect-video overflow-hidden">
-            <img
-              src={displayCoverUrl}
-              alt={news.headline}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                if (img.dataset.fallbackApplied === "1") return;
-                img.dataset.fallbackApplied = "1";
-                img.src = ogFallbackUrl;
-              }}
+    <motion.article
+      whileHover={{ y: -4 }}
+      onClick={openArticle}
+      className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-white/5 bg-[#111827] shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/5"
+    >
+      <div className="relative aspect-video overflow-hidden">
+        <img
+          src={displayCoverUrl}
+          alt={news.headline}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          referrerPolicy="no-referrer"
+          onError={(event) => {
+            const img = event.currentTarget as HTMLImageElement;
+            if (img.dataset.fallbackApplied === "1") return;
+            img.dataset.fallbackApplied = "1";
+            img.src = ogFallbackUrl;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
+
+        <div className="absolute left-4 top-4 flex gap-2">
+          <span
+            className={`rounded-lg px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white shadow-lg ${categoryColor}`}
+          >
+            {news.category}
+          </span>
+        </div>
+
+        {isNew ? (
+          <div className="absolute right-4 top-4">
+            <div className="flex items-center gap-1.5 rounded-lg bg-red-500 px-2.5 py-1 shadow-lg animate-pulse">
+              <div className="h-1 w-1 rounded-full bg-white" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-white">NEW</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-accent-blue">
+            <MapPin size={10} />
+            {news.state || "National"}
+          </div>
+          <div className="h-1 w-1 rounded-full bg-white/10" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            {formatDistanceToNow(new Date(news.created_at), { addSuffix: true })}
+          </span>
+        </div>
+
+        <h2 className="mb-3 line-clamp-2 text-lg font-heading font-black leading-tight text-white transition-colors group-hover:text-accent-blue md:text-xl">
+          {news.headline}
+        </h2>
+
+        <p className="mb-3 text-[14px] font-normal leading-[1.7] text-gray-400">{previewText}</p>
+
+        {showContinueLink ? (
+          <button
+            onClick={(event) => {
+              event.stopPropagation();
+              openArticle();
+            }}
+            className="mb-5 text-sm font-semibold text-accent-blue transition-colors hover:text-accent-blue/80"
+          >
+            Continue reading
+          </button>
+        ) : null}
+
+        <div className="mb-5">
+          <div className="mb-2 flex justify-between text-[9px] font-black uppercase tracking-widest">
+            <span className="text-green-500">For {forPercent}%</span>
+            <span className="text-gray-500">Neutral {neutralPercent}%</span>
+            <span className="text-red-500">Against {againstPercent}%</span>
+          </div>
+          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${forPercent}%` }}
+              transition={{ duration: 0.8 }}
+              className="bg-green-500/60"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
-
-            {/* Badges */}
-            <div className="absolute top-4 left-4 flex gap-2">
-              <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${categoryColor} text-white rounded-lg shadow-lg`}>
-                {news.category}
-              </span>
-            </div>
-
-            {isNew && (
-              <div className="absolute top-4 right-4">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500 rounded-lg shadow-lg animate-pulse">
-                  <div className="w-1 h-1 rounded-full bg-white" />
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest">LIVE</span>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="relative aspect-video overflow-hidden">
-            <img
-              src={ogFallbackUrl}
-              alt={news.headline}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${neutralPercent}%` }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="bg-gray-500/40"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
-          </div>
-        )}
-
-        <div className="p-6">
-          {/* Meta */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-accent-blue uppercase tracking-widest">
-              <MapPin size={10} />
-              {news.state || "National"}
-            </div>
-            <div className="w-1 h-1 rounded-full bg-white/10" />
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-              {formatDistanceToNow(new Date(news.created_at), { addSuffix: true })}
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h2 className="text-lg md:text-xl font-heading font-black text-white leading-tight mb-3 group-hover:text-accent-blue transition-colors line-clamp-2">
-            {news.headline}
-          </h2>
-
-          <p className="text-[14px] text-gray-400 leading-[1.7] mb-3 font-normal">
-            {previewText}
-          </p>
-
-          {showContinueLink && (
-            <button
-              onClick={(e) => { e.stopPropagation(); openArticle(); }}
-              className="text-accent-blue text-sm font-semibold hover:text-accent-blue/80 transition-colors mb-5"
-            >
-              Continue reading →
-            </button>
-          )}
-
-          {/* Stance Bar */}
-          <div className="mb-5">
-            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-2">
-              <span className="text-green-500">For 45%</span>
-              <span className="text-gray-500">Neutral 20%</span>
-              <span className="text-red-500">Against 35%</span>
-            </div>
-            <div className="h-1.5 w-full flex rounded-full overflow-hidden bg-white/5">
-              <motion.div initial={{ width: 0 }} animate={{ width: "45%" }} transition={{ duration: 0.8 }} className="bg-green-500/60" />
-              <motion.div initial={{ width: 0 }} animate={{ width: "20%" }} transition={{ duration: 0.8, delay: 0.1 }} className="bg-gray-500/40" />
-              <motion.div initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ duration: 0.8, delay: 0.2 }} className="bg-red-500/60" />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-5 border-t border-white/5">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleUpvote}
-                className={`flex items-center gap-1.5 transition-all ${liked ? "text-red-500 scale-110" : "text-gray-500 hover:text-red-400"}`}
-              >
-                <Heart size={15} fill={liked ? "currentColor" : "none"} />
-                <span className="text-[11px] font-black">{upvoteCount}</span>
-              </button>
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <MessageSquare size={15} />
-                <span className="text-[11px] font-black">{news._count?.opinions || 0}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <Eye size={15} />
-                <span className="text-[11px] font-black">{news._count?.pageViews || 0}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); openArticle(); }}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5"
-              >
-                Read
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); openArticle(); }}
-                className="flex items-center gap-2 px-4 py-2 bg-accent-blue hover:bg-accent-blue/90 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-accent-blue/20"
-              >
-                Debate
-                <ArrowRight size={13} />
-              </button>
-            </div>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${againstPercent}%` }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="bg-red-500/60"
+            />
           </div>
         </div>
-      </motion.article>
-    </>
+
+        <div className="flex items-center justify-between border-t border-white/5 pt-5">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleUpvote}
+              className={`flex items-center gap-1.5 transition-all ${
+                liked ? "scale-110 text-red-500" : "text-gray-500 hover:text-red-400"
+              }`}
+            >
+              <Heart size={15} fill={liked ? "currentColor" : "none"} />
+              <span className="text-[11px] font-black">{upvoteCount}</span>
+            </button>
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <MessageSquare size={15} />
+              <span className="text-[11px] font-black">{news._count?.opinions || 0}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Eye size={15} />
+              <span className="text-[11px] font-black">{news._count?.pageViews || 0}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                openArticle();
+              }}
+              className="rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 transition-all hover:bg-white/10"
+            >
+              Read
+            </button>
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                openArticle();
+              }}
+              className="flex items-center gap-2 rounded-xl bg-accent-blue px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-accent-blue/20 transition-all hover:bg-accent-blue/90"
+            >
+              Debate
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.article>
   );
 }

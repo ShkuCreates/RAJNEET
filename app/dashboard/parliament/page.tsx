@@ -8,37 +8,6 @@ export default async function BillTrackerPage() {
     orderBy: { created_at: "desc" },
   });
 
-  // Mock bills if database is empty for now
-  const displayBills = bills.length > 0 ? bills : [
-    {
-      id: "1",
-      title: "Digital Personal Data Protection Bill, 2024",
-      ministry: "Electronics and IT",
-      status: "PASSED",
-      lok_sabha_votes: { for: 350, against: 150 },
-      rajya_sabha_votes: { for: 130, against: 110 },
-      created_at: new Date(),
-    },
-    {
-      id: "2",
-      title: "Climate Action and Energy Transition Bill",
-      ministry: "Environment and Forest",
-      status: "COMMITTEE",
-      lok_sabha_votes: null,
-      rajya_sabha_votes: null,
-      created_at: new Date(Date.now() - 86400000 * 2),
-    },
-    {
-      id: "3",
-      title: "Uniform Civil Code Amendment",
-      ministry: "Law and Justice",
-      status: "INTRODUCED",
-      lok_sabha_votes: null,
-      rajya_sabha_votes: null,
-      created_at: new Date(Date.now() - 86400000 * 5),
-    }
-  ];
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "PASSED": return <CheckCircle2 size={16} className="text-green-500" />;
@@ -49,7 +18,7 @@ export default async function BillTrackerPage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="mx-auto max-w-[1200px] space-y-8 px-6 py-8">
       <div className="flex items-center gap-3 mb-6">
         <Landmark className="text-primary" size={32} />
         <div>
@@ -59,7 +28,7 @@ export default async function BillTrackerPage() {
       </div>
 
       <div className="grid gap-6">
-        {displayBills.map((bill: any) => (
+        {bills.length > 0 ? bills.map((bill: any) => (
           <div key={bill.id} className="bg-card border border-border rounded-xl p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div className="space-y-1">
@@ -115,7 +84,12 @@ export default async function BillTrackerPage() {
               </button>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-8 py-16 text-center">
+            <p className="text-lg font-semibold text-white">No parliament updates are available right now.</p>
+            <p className="mt-2 text-sm text-gray-500">Published bill data will appear here as soon as it is added to the database.</p>
+          </div>
+        )}
       </div>
     </div>
   );

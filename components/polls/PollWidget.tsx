@@ -17,13 +17,9 @@ export default function PollWidget({ poll }: { poll?: any }) {
   const [isVoting, setIsVoting] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  const stateKey = useMemo(() => {
-    // If you have state-specific widgets later, pass it in via query param and/or props.
-    return undefined;
-  }, []);
+  const stateKey = useMemo(() => undefined, []);
 
   useEffect(() => {
-    // If poll prop is provided, do not fetch.
     if (poll) return;
 
     let cancelled = false;
@@ -39,29 +35,27 @@ export default function PollWidget({ poll }: { poll?: any }) {
 
         if (cancelled) return;
 
-        if ("success" in data && (data as any).success === false) {
+        if ("success" in data && data.success === false) {
           setStatus("empty");
           return;
         }
 
-        const p = (data as any).poll;
-        if (!p) {
+        const live = (data as any).poll;
+        if (!live) {
           setStatus("empty");
           return;
         }
 
-        setPollData(p);
+        setPollData(live);
         setStatus("ready");
-      } catch (e: any) {
+      } catch {
         if (cancelled) return;
         setStatus("error");
       }
     };
 
-    // 3-second timeout: never show infinite spinner
     timeoutRef.current = window.setTimeout(() => {
-      if (cancelled) return;
-      setStatus("empty");
+      if (!cancelled) setStatus("empty");
     }, 3000);
 
     run().finally(() => {
@@ -74,35 +68,19 @@ export default function PollWidget({ poll }: { poll?: any }) {
     };
   }, [poll, stateKey]);
 
-  const mockPoll = useMemo(() => {
-    const fallback = {
-      id: "1",
-      question:
-        "Should local district councils have veto power over state infrastructure projects?",
-      options: [
-        { id: "A", text: "Yes, fully", votes: 450, percentage: 45 },
-        { id: "B", text: "No, states decide", votes: 300, percentage: 30 },
-        { id: "C", text: "Only on environmental grounds", votes: 250, percentage: 25 },
-      ],
-      totalVotes: 1000,
-    };
-
-    if (!pollData) return fallback;
+  const livePoll = useMemo(() => {
+    if (!pollData) return null;
 
     const optionsRaw = pollData.options;
-    // optionsRaw is stored in DB as Json; API casts it to string[].
     const optionsArr: any[] = Array.isArray(optionsRaw) ? optionsRaw : [];
-
     const resultsArr: Array<{ label: string; progress: number }> = Array.isArray(pollData.results)
       ? pollData.results
       : [];
 
-    // When API returns strings in optionsArr, treat those strings as option text.
-    // We use option text for voting because /api/polls/vote expects `selected_option` string.
     const normalizedOptions = optionsArr.map((opt: any, idx: number) => {
       const text = typeof opt === "string" ? opt : opt?.text ?? opt?.label ?? "";
       const id = typeof opt === "string" ? String.fromCharCode(65 + idx) : String(idx);
-      const match = resultsArr.find((r) => r.label === text);
+      const match = resultsArr.find((result) => result.label === text);
       return {
         id,
         text,
@@ -118,38 +96,31 @@ export default function PollWidget({ poll }: { poll?: any }) {
     };
   }, [pollData]);
 
-  // For vote submissions we must use the actual option label/text (API stores options as strings).
   const optionTextById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const opt of mockPoll.options) {
+    for (const opt of livePoll?.options ?? []) {
       map[opt.id] = opt.text;
     }
     return map;
-  }, [mockPoll.options]);
-
+  }, [livePoll?.options]);
 
   const handleRetry = () => {
-    // best-effort retry: just reload
     window.location.reload();
   };
 
   const handleVote = async (optionId: string) => {
-    if (isVoting) return;
-    if (!pollData?.id) return;
+    if (isVoting || !pollData?.id) return;
 
     if (!votedOption) setVotedOption(optionId);
 
     setIsVoting(true);
     try {
-      // Convert displayed option.id -> actual option text/label expected by API vote.
       const selectedOptionText = optionTextById[optionId] || optionId;
-
       const res = await fetch("/api/polls/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pollId: pollData.id, option: selectedOptionText }),
       });
-
 
       const data = await res.json();
       if (!res.ok || !data?.success) {
@@ -157,14 +128,9 @@ export default function PollWidget({ poll }: { poll?: any }) {
       }
 
       toast.success("Vote recorded!");
-
-      // Re-fetch to show updated bars.
-      // (Small delay to allow DB write.)
-      setTimeout(() => {
-        window.location.reload();
-      }, 600);
-    } catch (e: any) {
-      toast.error(e?.message || "Vote unavailable");
+      window.setTimeout(() => window.location.reload(), 600);
+    } catch (error: any) {
+      toast.error(error?.message || "Vote unavailable");
       setVotedOption(null);
     } finally {
       setIsVoting(false);
@@ -172,9 +138,8 @@ export default function PollWidget({ poll }: { poll?: any }) {
   };
 
   if (status === "loading") {
-    // Render nothing but keep UI stable; requirement says never infinite spinner.
     return (
-      <div className="border border-border rounded-lg p-4 bg-background">
+      <div className="rounded-lg border border-border bg-background p-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CalendarClock size={16} /> Checking active poll...
         </div>
@@ -184,14 +149,14 @@ export default function PollWidget({ poll }: { poll?: any }) {
 
   if (status === "error") {
     return (
-      <div className="border border-border rounded-lg p-4 bg-background">
-        <h4 className="text-sm font-semibold mb-2">Poll unavailable</h4>
-        <p className="text-sm text-muted-foreground mb-4">
-          We couldn’t load the current poll. Try again.
+      <div className="rounded-lg border border-border bg-background p-4">
+        <h4 className="mb-2 text-sm font-semibold">Poll unavailable</h4>
+        <p className="mb-4 text-sm text-muted-foreground">
+          We could not load the current poll. Try again.
         </p>
         <button
           onClick={handleRetry}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-accent-blue/30 bg-accent-blue/10 text-accent-blue text-sm font-black hover:bg-accent-blue/20"
+          className="inline-flex items-center gap-2 rounded-md border border-accent-blue/30 bg-accent-blue/10 px-4 py-2 text-sm font-black text-accent-blue hover:bg-accent-blue/20"
         >
           <RotateCcw size={16} /> Retry
         </button>
@@ -199,28 +164,28 @@ export default function PollWidget({ poll }: { poll?: any }) {
     );
   }
 
-  if (status === "empty" || !pollData) {
+  if (status === "empty" || !pollData || !livePoll) {
     return (
-      <div className="border border-border rounded-lg p-6 bg-background">
-        <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="rounded-lg border border-border bg-background p-6">
+        <div className="mb-3 flex items-center justify-center gap-3">
           <CalendarClock size={18} className="text-accent-blue" />
-          <h4 className="text-sm font-semibold text-center">No active poll right now. Check back soon.</h4>
+          <h4 className="text-center text-sm font-semibold">No active poll right now. Check back soon.</h4>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="border border-border rounded-lg p-4 bg-background">
-      <h4 className="text-sm font-semibold mb-4 leading-tight">{mockPoll.question}</h4>
+    <div className="rounded-lg border border-border bg-background p-4">
+      <h4 className="mb-4 text-sm font-semibold leading-tight">{livePoll.question}</h4>
 
       <div className="space-y-3">
-        {mockPoll.options.map((option: any) => (
+        {livePoll.options.map((option: any) => (
           <div key={option.id} className="relative">
             <button
               onClick={() => handleVote(option.id)}
               disabled={!!votedOption || isVoting}
-              className={`w-full text-left p-3 rounded-md text-sm font-medium border transition-all z-10 relative ${
+              className={`relative z-10 w-full rounded-md border p-3 text-left text-sm font-medium transition-all ${
                 votedOption === option.id
                   ? "border-primary bg-primary/10 text-primary"
                   : votedOption
@@ -228,32 +193,30 @@ export default function PollWidget({ poll }: { poll?: any }) {
                     : "border-border hover:border-primary hover:bg-secondary/5"
               }`}
             >
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span>{option.text}</span>
-                {votedOption && <span className="font-bold">{option.percentage}%</span>}
+                {votedOption ? <span className="font-bold">{option.percentage}%</span> : null}
               </div>
             </button>
 
-            {/* Animated Bar Background (shows only after voting) */}
-            {votedOption && (
+            {votedOption ? (
               <div
-                className={`absolute top-0 left-0 h-full rounded-md -z-0 opacity-20 transition-all duration-1000 ease-out ${
+                className={`absolute left-0 top-0 -z-0 h-full rounded-md opacity-20 transition-all duration-1000 ease-out ${
                   votedOption === option.id ? "bg-primary" : "bg-muted-foreground"
                 }`}
                 style={{ width: `${option.percentage}%` }}
               />
-            )}
+            ) : null}
           </div>
         ))}
       </div>
 
-      {votedOption && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-green-500 bg-green-500/10 py-1.5 rounded-md animate-in fade-in zoom-in">
+      {votedOption ? (
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-md bg-green-500/10 py-1.5 text-xs font-bold text-green-500 animate-in fade-in zoom-in">
           <CheckCircle2 size={14} />
           Vote recorded!
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
-
