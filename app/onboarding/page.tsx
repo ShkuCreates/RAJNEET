@@ -319,6 +319,10 @@ export default function OnboardingPage() {
                       if (!isStateOpen) setIsStateOpen(true);
                     }}
                     onFocus={() => setIsStateOpen(true)}
+                    onBlur={() => {
+                      // Small timeout to allow onMouseDown to fire on items
+                      setTimeout(() => setIsStateOpen(false), 200);
+                    }}
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-12 pr-10 text-white placeholder:text-gray-500 focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
                   />
                   <ChevronDown size={18} className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition-transform ${isStateOpen ? "rotate-180" : ""}`} />
@@ -417,9 +421,6 @@ export default function OnboardingPage() {
           </form>
         </div>
       </motion.div>
-      
-      {/* Click outside to close state dropdown */}
-      {isStateOpen && <div className="fixed inset-0 z-[50]" onClick={() => setIsStateOpen(false)} />}
     </div>
   );
 }
