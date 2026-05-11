@@ -69,7 +69,7 @@ export async function GET(req: Request) {
             status: status,
             geo_level: "NATIONAL",
             state: "National",
-            posted_by: "ADMIN_SYSTEM", 
+            posted_by: session?.user?.id || "ADMIN_SYSTEM", 
             
             // SEO Fields
             seo_title: seoData.seo_title,
