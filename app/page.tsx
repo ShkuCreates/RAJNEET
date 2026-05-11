@@ -61,6 +61,7 @@ export default function LandingPage() {
   const [previewNews, setPreviewNews] = useState<PreviewNews[]>([]);
   const [newsPopups, setNewsPopups] = useState<{ id: number; text: string }[]>([]);
   const [currentNewsSet, setCurrentNewsSet] = useState(0);
+  const [showCreatorsPopup, setShowCreatorsPopup] = useState(true);
   const newsIndex = useRef(0);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function LandingPage() {
       setTimeout(() => {
         setNewsPopups(prev => prev.filter(p => p.id !== id));
       }, 5000);
-    }, 8000);
+    }, 12000);
 
     return () => clearInterval(interval);
   }, [tickerItems]);
@@ -140,7 +141,7 @@ export default function LandingPage() {
               <div className="flex-1 space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-accent-blue uppercase tracking-widest">LIVE_NEWS</span>
-                  <button 
+                  <button
                     onClick={() => setNewsPopups(prev => prev.filter(p => p.id !== news.id))}
                     className="text-muted-foreground hover:text-white"
                   >
@@ -155,6 +156,50 @@ export default function LandingPage() {
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Meet the Creators Popup */}
+      <AnimatePresence>
+        {showCreatorsPopup && status !== "authenticated" && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 right-6 z-[99] bg-surface/95 backdrop-blur-md border border-accent-amber/30 rounded-xl shadow-2xl p-5 max-w-sm"
+          >
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-white">Meet the Creators</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
+                  <img
+                    src="https://i.ibb.co/JRTRH2wz/kumar-shourya.jpg"
+                    alt="Kumar Shourya"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">Kumar Shourya</p>
+                  <p className="text-xs text-muted-foreground">Co-Founder</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
+                  <img
+                    src="https://i.ibb.co/Vpz344P8/devanshu-bhardwaj.jpg"
+                    alt="Devanshu Bhardwaj"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">Devanshu Bhardwaj</p>
+                  <p className="text-xs text-muted-foreground">Co-Founder</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* SECTION 1 - NEWS TICKER (TOP) */}
       <div className="bg-surface/90 backdrop-blur-md border-b border-white/5 py-2 relative z-[100] overflow-hidden">
