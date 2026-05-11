@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as z from "zod";
+import { generateNewsSummary } from "@/lib/gemini";
 
 const newsSchema = z.object({
   headline: z.string().min(1),
@@ -32,9 +33,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid data", details: result.error.format() }, { status: 400 });
     }
 
+    // Generate AI summary if not provided
+    let summary = result.data.summary;
+    if (!summary && result.data.body) {
+      try {
+        summary = await generateNewsSummary(result.data.body);
+      } catch (error) {
+        console.error('Failed to generate AI summary:', error);
+        // Use first 300 characters of body as fallback
+        summary = result.data.body.substring(0, 300) + '...';
+      }
+    }
+
     const news = await prisma.news.create({
       data: {
         ...result.data,
+        summary,
         posted_by: session.user.id,
       },
     });
