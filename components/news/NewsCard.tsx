@@ -120,15 +120,11 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
     }).catch(() => {});
   };
 
-  const previewSource =
-    stripHtml(news.seo_body || "") ||
-    stripHtml(news.summary || "") ||
-    stripHtml(news.body || "") ||
-    "Click to read full article.";
-  const previewWords = previewSource.split(" ");
-  const previewText =
-    previewWords.length > 120 ? `${previewWords.slice(0, 120).join(" ")}...` : previewSource;
-  const showContinueLink = previewWords.length > 120;
+  const briefContent = news.seo_body
+    ? `${stripHtml(news.seo_body).split(" ").slice(0, 40).join(" ")}...`
+    : news.summary
+      ? `${stripHtml(news.summary).substring(0, 200)}...`
+      : null;
   const ogFallbackUrl = `/api/og?title=${encodeURIComponent(
     news.seo_title || news.headline
   )}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
@@ -194,18 +190,10 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
           {news.headline}
         </h2>
 
-        <p className="mb-3 text-[14px] font-normal leading-[1.7] text-gray-400">{previewText}</p>
-
-        {showContinueLink ? (
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              openArticle();
-            }}
-            className="mb-5 text-sm font-semibold text-accent-blue transition-colors hover:text-accent-blue/80"
-          >
-            Continue reading
-          </button>
+        {briefContent ? (
+          <p className="mb-5 line-clamp-3 text-[14px] font-normal leading-[1.7] text-[#9CA3AF]">
+            {briefContent}
+          </p>
         ) : null}
 
         <div className="mb-5">

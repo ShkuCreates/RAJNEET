@@ -9,10 +9,8 @@ export default async function DashboardLivePage() {
 
   return (
     <DashboardHomeClient
-      news={[]}
       currentUser={session?.user}
       selectedCategory={null}
-      latestFetchAt={null}
       showLiveOnly
     />
   );
