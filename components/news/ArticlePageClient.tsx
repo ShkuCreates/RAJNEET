@@ -229,17 +229,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
             />
           </div>
 
-          {/* Quick Summary */}
-          <div className="mb-8 p-5 bg-accent-blue/5 border border-accent-blue/20 rounded-2xl">
-            <p className="text-[10px] font-black text-accent-blue uppercase tracking-[0.22em] mb-2">
-              Quick Summary
-            </p>
-            <p className="text-gray-200 leading-relaxed text-base">
-              {summaryText || article.headline || "Read the full article for more details."}
-            </p>
-          </div>
-
-          {/* Full Article Body */}
+          {/* Full Article Body (800-1000 words) */}
           {(article.seo_body || article.body) ? (
             <div className="mb-16">
               {(article.seo_body || article.body)

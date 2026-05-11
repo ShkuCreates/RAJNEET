@@ -110,8 +110,8 @@ export default async function DashboardLayout({
           {children}
         </div>
 
-        {/* Right Panel - Desktop & Mobile */}
-        <div className="w-full lg:w-80 bg-[#050A14] border-l border-white/5 overflow-y-auto sticky top-0 lg:h-screen pt-16 lg:pt-0">
+        {/* Right Panel - Desktop Only */}
+        <div className="hidden lg:block w-80 bg-[#050A14] border-l border-white/5 overflow-y-auto sticky top-0 h-screen">
           <RightPanel user={user} />
         </div>
       </main>
