@@ -228,6 +228,15 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
             </div>
           </div>
 
+          {/* Live News Tape Animation */}
+          <div className="absolute left-1/2 top-full z-10">
+            <div className="h-1 bg-red-500 animate-pulse" style={{
+              animation: 'live-tape 2s linear infinite',
+              width: '100%',
+              transformOrigin: 'left'
+            }} />
+          </div>
+
           {/* Right - Date Time + Profile */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-4 md:flex">
             <div className="flex items-center gap-2 text-right">
@@ -238,6 +247,40 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
             </div>
             <div className="h-7 w-px bg-white/10" />
             <UserLink user={user} />
+          </div>
+
+          {/* Navigation Bar */}
+          <div className="absolute left-1/2 top-full z-10 hidden md:flex">
+            <button
+              onClick={() => router.push('/dashboard/live')}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
+            >
+              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              LIVE
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
+            >
+              <span className="text-xl">📰</span>
+              NEWS
+            </button>
+            <button
+              onClick={() => router.push('/debates')}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
+            >
+              <span className="text-xl">🗳️</span>
+              DEBATE
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
+              >
+                <span className="text-xl">⚙️</span>
+                ADMIN
+              </button>
+            )}
           </div>
 
           <button
