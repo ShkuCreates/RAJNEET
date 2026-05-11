@@ -1,13 +1,19 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export async function generateNewsSummary(content: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    
-    const prompt = `Summarize this news article in 800-1000 words. Focus on:
+    const response = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
+        },
+        body: JSON.stringify({
+          model: 'llama3-8b-8192',
+          messages: [
+            {
+              role: 'user',
+              content: `Summarize this news article in 800-1000 words. Focus on:
     - Key facts and information
     - Important context and implications
     - Actionable insights
@@ -18,14 +24,25 @@ export async function generateNewsSummary(content: string): Promise<string> {
     Article content:
     ${content}
     
-    Provide a comprehensive summary that captures the essence of the article while being informative and engaging. Ensure the summary is substantial and detailed.`;
+    Provide a comprehensive summary that captures the essence of the article while being informative and engaging. Ensure the summary is substantial and detailed.`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      }
+    )
 
-    const result = await model.generateContent(prompt);
-    const summary = result.response.text();
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`Groq error ${response.status}: ${err}`)
+    }
+
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content?.trim() || ''
     
-    return summary;
   } catch (error) {
-    console.error('Error generating summary with Gemini:', error);
+    console.error('Error generating summary with Groq:', error);
     throw new Error('Failed to generate summary');
   }
 }

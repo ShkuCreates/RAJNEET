@@ -4,37 +4,52 @@ import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<string> {
+async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
+            model: 'llama3-8b-8192',
+            messages: [
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
           })
         }
       )
 
       if (response.status === 429) {
-        const waitTime = attempt * 45000 // 45s, 90s, 135s
-        console.log(`Rate limited. Waiting ${waitTime/1000}s before retry ${attempt}/${maxRetries}`)
+        const waitTime = attempt * 5000 // only 5s wait, Groq recovers fast
+        console.log(`Groq rate limited. Waiting ${waitTime/1000}s`)
         await new Promise(resolve => setTimeout(resolve, waitTime))
         continue
       }
 
       if (!response.ok) {
-        throw new Error(`Gemini error: ${response.status}`)
+        const err = await response.text()
+        throw new Error(`Groq error ${response.status}: ${err}`)
       }
 
       const data = await response.json()
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      return data.choices?.[0]?.message?.content?.trim() || ''
 
     } catch (err) {
-      if (attempt === maxRetries) throw err
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      if (attempt === maxRetries) {
+        console.error('Groq failed after retries:', err)
+        return ''
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000))
     }
   }
   return ''
@@ -109,8 +124,8 @@ export async function GET(req: Request) {
     }
 
     const fetchedArticles = data.results;
-    // Limit to 5 articles per run to stay within free tier limits
-    const articlesToProcess = fetchedArticles.slice(0, 5);
+    // Limit to 15 articles per run since Groq can handle it
+    const articlesToProcess = fetchedArticles.slice(0, 15);
     const savedArticles = [];
     const skipped = [];
 
@@ -154,7 +169,7 @@ Headline: ${art.title}
 Category: ${category}
 Raw source content: ${rawSummary}`;
 
-        const seo_body = await callGeminiWithRetry(bodyPrompt);
+        const seo_body = await callGroqWithRetry(bodyPrompt);
         
         // Generate other SEO fields with minimal Gemini usage
         const seoData = await seoOptimize({
@@ -199,8 +214,8 @@ Raw source content: ${rawSummary}`;
         savedArticles.push(newArt);
         console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
         
-        // Wait 3 seconds between each Gemini call to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait 0.5 seconds between each Groq call since Groq handles volume much better
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (articleError: any) {
         console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
         // Continue to next article even if one fails

@@ -2,21 +2,56 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
+          },
+          body: JSON.stringify({
+            model: 'llama3-8b-8192',
+            messages: [
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          })
+        }
+      )
 
-async function callGemini(systemPrompt: string, userMessage: string) {
-  try {
-    const fullPrompt = `${systemPrompt}\n\nUser: ${userMessage}`;
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    return response.text().trim();
-  } catch (e) {
-    console.error("Gemini API Error:", e);
-    return userMessage.slice(0, 55);
+      if (response.status === 429) {
+        const waitTime = attempt * 5000 // only 5s wait, Groq recovers fast
+        console.log(`Groq rate limited. Waiting ${waitTime/1000}s`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+
+      if (!response.ok) {
+        const err = await response.text()
+        throw new Error(`Groq error ${response.status}: ${err}`)
+      }
+
+      const data = await response.json()
+      return data.choices?.[0]?.message?.content?.trim() || ''
+
+    } catch (err) {
+      if (attempt === maxRetries) {
+        console.error('Groq failed after retries:', err)
+        return ''
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
   }
+  return ''
 }
 
 export async function POST(req: Request) {
@@ -70,7 +105,7 @@ Headline: ${article.headline}
 Category: ${article.category}
 Raw source content: ${article.summary}`;
 
-        const generatedBody = await callGemini(summaryPrompt, "");
+        const generatedBody = await callGroqWithRetry(summaryPrompt);
 
         // Validate the generated body
         const isValid = generatedBody.length >= 800 && 
