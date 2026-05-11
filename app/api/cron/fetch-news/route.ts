@@ -56,19 +56,20 @@ export async function GET(req: Request) {
         }
 
         const status = seoData.seo_score < 60 ? "DRAFT" : "PUBLISHED";
+        const description = art.description || art.content || art.title || "";
         
         const newArt = await prisma.news.create({
           data: {
             headline: art.title,
-            summary: art.description.substring(0, 200) + "...",
-            body: seoData.seo_body || art.description,
-            category: art.category,
+            summary: description.substring(0, 200) + "...",
+            body: seoData.seo_body || description,
+            category: Array.isArray(art.category) ? art.category[0].toUpperCase() : (art.category?.toUpperCase() || "POLITICAL"),
             source_url: art.link,
             cover_image_url: cover_image_url,
             status: status,
             geo_level: "NATIONAL",
             state: "National",
-            posted_by: "ADMIN_SYSTEM", // Placeholder for system user
+            posted_by: "ADMIN_SYSTEM", 
             
             // SEO Fields
             seo_title: seoData.seo_title,
