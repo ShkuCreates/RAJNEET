@@ -92,7 +92,7 @@ model News {
   state           String?
   district        String?
   status          String   @default("DRAFT") // DRAFT, PUBLISHED
-  posted_by       String
+  posted_by       String?
   created_at      DateTime @default(now())
 
   // SEO Fields
@@ -107,7 +107,7 @@ model News {
   is_trending     Boolean  @default(false)
   priority        String   @default("normal") // normal, high
 
-  author     User       @relation(fields: [posted_by], references: [id])
+  author     User?      @relation(fields: [posted_by], references: [id])
   opinions   Opinion[]
   polls      Poll[]
   mpLetters  MpLetter[]
