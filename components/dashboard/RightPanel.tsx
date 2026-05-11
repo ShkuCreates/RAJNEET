@@ -61,7 +61,7 @@ export function RightPanel({ user }: { user: any }) {
   };
 
   return (
-    <aside className="w-full md:w-80 bg-[#050A14] border-l border-white/5 p-6 overflow-y-auto sticky top-0 h-screen hidden lg:block custom-scrollbar">
+    <aside className="w-full lg:w-80 bg-[#050A14] border-l border-white/5 p-6 overflow-y-auto custom-scrollbar">
       <div className="space-y-10">
         {/* Trending Section */}
         <section>
