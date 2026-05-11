@@ -199,7 +199,7 @@ export default function OnboardingPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-2xl bg-[#0D1B3E]/75 backdrop-blur-[20px] saturate-[180%] border border-white/10 rounded-[20px] shadow-[0_25px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] relative z-10 overflow-hidden"
+        className="w-full max-w-2xl bg-[#0D1B3E]/75 backdrop-blur-[20px] saturate-[180%] border border-white/10 rounded-[20px] shadow-[0_25px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] relative z-10"
       >
         {/* Card Accent Line */}
         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-accent-blue to-transparent" />
@@ -326,10 +326,10 @@ export default function OnboardingPage() {
                   <AnimatePresence>
                     {isStateOpen && (
                       <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute bottom-full mb-3 left-0 w-full max-h-60 overflow-y-auto bg-[#0D1B3E]/95 backdrop-blur-xl border border-white/10 rounded-[15px] z-[100] shadow-2xl p-2 custom-scrollbar"
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full mt-2 left-0 w-full max-h-60 overflow-y-auto bg-[#0D1B3E] backdrop-blur-2xl border border-white/10 rounded-[15px] z-[100] shadow-2xl p-2 custom-scrollbar"
                       >
                         {filteredStates.length > 0 ? (
                           filteredStates.map(s => (
