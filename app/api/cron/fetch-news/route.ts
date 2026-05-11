@@ -181,7 +181,7 @@ Raw source content: ${rawSummary}`;
           published_at: art.pubDate || new Date().toISOString()
         });
 
-        const status = seoData.seo_score < 50 ? "DRAFT" : "PUBLISHED";
+        const status = "PUBLISHED"; // Post all articles irrespective of SEO score
 
         const newArt = await prisma.news.create({
           data: {
