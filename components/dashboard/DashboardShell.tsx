@@ -186,42 +186,49 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
       `}</style>
 
       <header className="border-b border-[rgba(59,130,246,0.15)] bg-[#0A0F1E] shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
-        <div className="mx-auto flex h-[60px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <img
-              src="/images/rajneet-logo.png"
-              alt="RAJNEET"
-              className="h-8 w-auto rounded-full shadow-[0_0_12px_rgba(245,158,11,0.3)]"
-            />
-            <span className="text-2xl font-heading font-black tracking-tight text-accent-amber">
-              RAJNEET
-            </span>
-          </Link>
-
-          <div className="hidden rounded-[25px] border border-white/5 bg-[#1F2937] p-1 md:flex">
-            <button
-              onClick={() => setSection("news")}
-              className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
-                section === "news"
-                  ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_2px_10px_rgba(59,130,246,0.4)]"
-                  : "text-gray-400"
-              }`}
-            >
-              NEWS
-            </button>
-            <button
-              onClick={() => setSection("article")}
-              className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
-                section === "article"
-                  ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_2px_10px_rgba(59,130,246,0.4)]"
-                  : "text-gray-400"
-              }`}
-            >
-              ARTICLE
-            </button>
+        <div className="mx-auto relative h-[60px] w-full max-w-[1400px] px-4 sm:px-6">
+          {/* Left - Logo */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
+              <img
+                src="/images/rajneet-logo.png"
+                alt="RAJNEET"
+                className="h-8 w-auto rounded-full shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+              />
+              <span className="text-2xl font-heading font-black tracking-tight text-accent-amber">
+                RAJNEET
+              </span>
+            </Link>
           </div>
 
-          <div className="hidden items-center gap-4 md:flex">
+          {/* Center - Switcher - absolutely centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+            <div className="hidden rounded-[25px] border border-white/5 bg-[#1F2937] p-1 md:flex">
+              <button
+                onClick={() => setSection("news")}
+                className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                  section === "news"
+                    ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_2px_10px_rgba(59,130,246,0.4)]"
+                    : "text-gray-400"
+                }`}
+              >
+                NEWS
+              </button>
+              <button
+                onClick={() => setSection("article")}
+                className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                  section === "article"
+                    ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_2px_10px_rgba(59,130,246,0.4)]"
+                    : "text-gray-400"
+                }`}
+              >
+                ARTICLE
+              </button>
+            </div>
+          </div>
+
+          {/* Right - Date Time + Profile */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-4 md:flex">
             <div className="flex items-center gap-2 text-right">
               <span className="text-[13px] font-medium text-[#6B7280]">{`${weekday}, ${month} ${day}`}</span>
               <span className="text-[#374151]">-</span>
@@ -235,7 +242,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] md:hidden"
+            className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] md:hidden"
             aria-label="Open navigation"
           >
             <Menu size={18} />

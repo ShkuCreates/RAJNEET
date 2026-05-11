@@ -1,34 +1,31 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic'
 
-const VALID_CATEGORIES = ["Politics", "Finance", "Sports", "World"] as const;
-
-// Map query category → legacy DB category aliases
-const CATEGORY_FILTERS: Record<(typeof VALID_CATEGORIES)[number], string[]> = {
-  Politics: ["POLITICAL", "POLITICS"],
-
-  Finance: ["FINANCE", "FINANCE", "BUSINESS", "CORPORATE", "ECONOMY"],
-  Sports: ["SPORTS", "SPORT", "CRICKET", "FOOTBALL", "IPL", "OLYMPICS", "FIFA"],
-  World: ["WORLD", "INTERNATIONAL", "FOREIGN", "GLOBAL", "DIPLOMACY"],
-};
-
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category");
-  const limit = Number.parseInt(searchParams.get("limit") || "12", 10);
-
-  const categoryValues = category && (VALID_CATEGORIES as readonly string[]).includes(category)
-    ? CATEGORY_FILTERS[category as (typeof VALID_CATEGORIES)[number]]
-    : null;
-
+  const { searchParams } = new URL(request.url)
+  const category = searchParams.get('category')
+  const limit = parseInt(searchParams.get('limit') || '20')
 
   try {
-    const news = await prisma.news.findMany({
-      where: {
-        status: "PUBLISHED",
-        ...(categoryValues ? { category: { in: categoryValues } } : {}),
-      },
+    const where: any = { status: 'PUBLISHED' }
+    
+    if (category && ['Politics', 'Finance', 'Sports', 'World'].includes(category)) {
+      // Map category names to database values
+      const categoryMap: Record<string, string> = {
+        'Politics': 'POLITICAL',
+        'Finance': 'FINANCE',
+        'Sports': 'SPORTS',
+        'World': 'WORLD'
+      }
+      where.category = categoryMap[category] || category
+    }
+
+    const articles = await prisma.news.findMany({
+      where,
+      orderBy: { created_at: 'desc' },
+      take: limit,
       include: {
         author: {
           select: { name: true, avatar_url: true, role: true },
@@ -40,22 +37,15 @@ export async function GET(request: Request) {
           select: { stance: true },
         },
       },
-      orderBy: { created_at: "desc" },
-      take: Number.isNaN(limit) ? 12 : limit,
-    });
+    })
 
-    const latestArticle = await prisma.news.findFirst({
-      where: { status: "PUBLISHED" },
-      orderBy: { created_at: "desc" },
-      select: { created_at: true },
-    });
-
+    // Return in the expected format for the dashboard
     return NextResponse.json({
-      news,
-      latestFetchAt: latestArticle?.created_at.toISOString() ?? null,
-    });
+      news: articles,
+      latestFetchAt: articles.length > 0 ? articles[0].created_at.toISOString() : null
+    })
   } catch (error) {
-    console.error("News fetch error:", error);
-    return NextResponse.json({ news: [], latestFetchAt: null });
+    console.error('News API error:', error)
+    return NextResponse.json({ news: [], latestFetchAt: null })
   }
 }

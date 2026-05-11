@@ -41,9 +41,18 @@ export default function DashboardHomeClient({
         ? `/api/news?category=${encodeURIComponent(category)}&limit=12`
         : "/api/news?limit=12";
 
+      console.log('Fetching news from:', query);
       const res = await fetch(query, { cache: "no-store" });
-      const data = (await res.json()) as NewsResponse | any[];
+      
+      if (!res.ok) {
+        console.error('News fetch failed:', res.status, res.statusText);
+        return { news: [], latestFetchAt: null };
+      }
+      
+      const data = await res.json();
+      console.log('News response:', data);
 
+      // Handle both formats: { news: [], latestFetchAt: null } or direct array
       if (Array.isArray(data)) {
         return { news: data, latestFetchAt: null };
       }
