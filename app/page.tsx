@@ -35,33 +35,57 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const LIVE_NEWS_ITEMS = [
-  "Finance Minister signals major GST overhaul in upcoming council meet.",
-  "Supreme Court seeks response from Center on new digital media regulations.",
-  "Opposition parties to hold joint rally in Mumbai over unemployment.",
-  "Indian Space Agency successfully launches 3rd generation climate satellite.",
-  "Local bodies election dates announced for Karnataka and Telangana.",
-  "New education policy implementation reaches 70% of rural districts."
-];
+interface TickerItem {
+  headline: string;
+  category: string;
+  geo_level: string;
+}
+
+interface PreviewNews {
+  id: string;
+  headline: string;
+  summary: string;
+  cover_image_url: string | null;
+  category: string;
+  geo_level: string;
+  state: string | null;
+  created_at: Date;
+  slug: string | null;
+}
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
+  const [previewNews, setPreviewNews] = useState<PreviewNews[]>([]);
   const [newsPopups, setNewsPopups] = useState<{ id: number; text: string }[]>([]);
+  const [currentNewsSet, setCurrentNewsSet] = useState(0);
   const newsIndex = useRef(0);
 
   useEffect(() => {
     setMounted(true);
+    // Fetch ticker data
+    fetch('/api/public/ticker')
+      .then(res => res.json())
+      .then(data => setTickerItems(data))
+      .catch(err => console.error('Failed to fetch ticker:', err));
+    // Fetch preview news
+    fetch('/api/public/preview-news')
+      .then(res => res.json())
+      .then(data => setPreviewNews(data))
+      .catch(err => console.error('Failed to fetch preview news:', err));
   }, []);
 
   useEffect(() => {
-    // News popup logic
+    // News popup logic using real news
     const interval = setInterval(() => {
+      if (tickerItems.length === 0) return;
       const id = Date.now();
-      const text = LIVE_NEWS_ITEMS[newsIndex.current];
+      const news = tickerItems[newsIndex.current % tickerItems.length];
+      const text = `${news.category} — ${news.headline}`;
       setNewsPopups(prev => [...prev.slice(-2), { id, text }]);
-      newsIndex.current = (newsIndex.current + 1) % LIVE_NEWS_ITEMS.length;
+      newsIndex.current = (newsIndex.current + 1) % tickerItems.length;
 
       // Auto remove after 5 seconds
       setTimeout(() => {
@@ -70,7 +94,18 @@ export default function LandingPage() {
     }, 8000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [tickerItems]);
+
+  useEffect(() => {
+    // Auto-rotate news cards every 5 seconds
+    const interval = setInterval(() => {
+      if (previewNews.length >= 3) {
+        setCurrentNewsSet(prev => (prev + 1) % Math.floor(previewNews.length / 3));
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [previewNews]);
 
   if (!mounted) return null;
 
@@ -88,7 +123,7 @@ export default function LandingPage() {
       />
 
       {/* Live News Popups Container */}
-      <div className="fixed bottom-10 right-6 z-[100] flex flex-col gap-4 w-full max-w-sm">
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-4 w-full max-w-[380px]">
         <AnimatePresence>
           {newsPopups.map((news) => (
             <motion.div
@@ -131,18 +166,15 @@ export default function LandingPage() {
           <div className="flex animate-ticker whitespace-nowrap">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-12 px-6 items-center">
-                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-white/20" /> LOK SABHA SESSION LIVE
-                </span>
-                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-white/20" /> SUPREME COURT HEARING ON ELECTORAL BONDS RESUMES
-                </span>
-                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-white/20" /> UP BUDGET 2025 TABLED: FOCUS ON INFRASTRUCTURE
-                </span>
-                <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-white/20" /> NEW CRIMINAL LAWS (BNS) IN EFFECT NATIONWIDE
-                </span>
+                {tickerItems.length > 0 ? tickerItems.map((item, idx) => (
+                  <span key={idx} className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-white/20" /> {item.category} — {item.headline}
+                  </span>
+                )) : (
+                  <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-white/20" /> Loading live news...
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -150,133 +182,171 @@ export default function LandingPage() {
       </div>
 
       {/* SECTION 2 - HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-10 px-6 overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center pt-10 px-6 overflow-hidden">
         {/* Subtle Radial Glow */}
         <div className="absolute inset-0 z-0 hero-glow" />
         
-        <div className="container mx-auto text-center relative z-10 max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col items-center space-y-8"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-blue/10 rounded-full text-xs font-semibold text-accent-blue border border-accent-blue/20">
-              🇮🇳 India&apos;s Political Debate Platform
-            </div>
-            
-            <div className="space-y-4">
-              <img 
-                src="/images/rajneet-logo.png" 
-                alt="RAJNEET Logo" 
-                className="h-12 md:h-16 w-auto mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-              />
-              <p className="text-4xl md:text-5xl font-heading font-bold text-white">
-                Your Voice. Your Democracy.
-              </p>
-            </div>
-            
-            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
-              Read real political news. Debate your stance. Hold power accountable.
-            </p>
-            
-            <div className="flex flex-col items-center justify-center gap-4 pt-4">
-              {status === "authenticated" ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
-                  >
-                    Go to Your Feed
-                    <ArrowRight size={20} />
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
-                  >
-                    <GoogleIcon />
-                    Login with Google to Continue Reading
-                  </Link>
-                  <p className="text-sm text-muted-foreground -mt-2">
-                    Free forever. No credit card. Protected under Article 19(1)(a).
-                  </p>
-                </>
-              )}
-              <button className="inline-flex h-14 items-center justify-center rounded-full border border-white/20 bg-transparent px-10 text-base font-bold text-white transition-all hover:bg-white/5 hover:scale-[1.03]">
-                See How It Works
-              </button>
-            </div>
-
-            
-            <div className="flex flex-wrap items-center justify-center gap-6 pt-12">
-              {[
-                { label: "12K+ Citizens", icon: Users },
-                { label: "4,800+ Debates", icon: MessageSquare },
-                { label: "Protected under Article 19(1)(a)", icon: ShieldCheck }
-              ].map((chip, i) => (
-                <div key={i} className="flex items-center gap-2 px-4 py-2 bg-surface/80 backdrop-blur-sm rounded-full border border-white/5 shadow-sm transition-transform hover:scale-105">
-                  <chip.icon size={16} className="text-accent-blue" />
-                  <span className="text-sm font-medium text-white">{chip.label}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Animated News Card Mockup */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 1 }}
-            className="mt-24 max-w-2xl mx-auto animate-float"
-          >
-            <div className="bg-surface/90 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl text-left relative overflow-hidden group">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-[10px] font-bold text-accent-amber uppercase tracking-widest bg-accent-amber/10 px-2 py-0.5 rounded">BREAKING_NEWS</span>
-                <span className="text-xs text-muted-foreground font-mono tracking-widest uppercase">02:14:45_IST</span>
+        <div className="container mx-auto relative z-10 max-w-[1200px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column - Text Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="flex flex-col space-y-8 text-left"
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-blue/10 rounded-full text-xs font-semibold text-accent-blue border border-accent-blue/20 w-fit">
+                🇮🇳 India&apos;s Political Debate Platform
               </div>
-              <h3 className="text-2xl font-heading font-bold text-white mb-8 group-hover:text-accent-blue transition-colors">
-                Parliament passes new Data Protection Bill with 350 votes in Lok Sabha.
-              </h3>
               
               <div className="space-y-4">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                  <span className="text-success-green">64% FOR</span>
-                  <span className="text-danger-red">36% AGAINST</span>
-                </div>
-                <div className="h-3 w-full bg-midnight rounded-full flex overflow-hidden p-0.5 border border-white/5">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: "64%" }}
-                    transition={{ duration: 1.5, ease: "easeOut", delay: 1.2 }}
-                    className="h-full bg-success-green rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
-                  />
-                </div>
+                <img 
+                  src="/images/rajneet-logo.png" 
+                  alt="RAJNEET Logo" 
+                  className="h-12 md:h-16 w-auto drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                />
+                <p className="text-4xl md:text-5xl font-heading font-bold text-white">
+                  Your Voice. Your Democracy.
+                </p>
+              </div>
+              
+              <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
+                Read real political news. Debate your stance. Hold power accountable.
+              </p>
+              
+              <div className="flex flex-col items-start gap-4 pt-4">
+                {status === "authenticated" ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
+                    >
+                      Go to Your Feed
+                      <ArrowRight size={20} />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
+                    >
+                      <GoogleIcon />
+                      Login with Google to Continue Reading
+                    </Link>
+                    <p className="text-sm text-muted-foreground -mt-2">
+                      Free forever. No credit card. Protected under Article 19(1)(a).
+                    </p>
+                  </>
+                )}
+                <button className="inline-flex h-14 items-center justify-center rounded-full border border-white/20 bg-transparent px-10 text-base font-bold text-white transition-all hover:bg-white/5 hover:scale-[1.03]">
+                  See How It Works
+                </button>
               </div>
 
-              {/* Login gate overlay (only when logged out) */}
-              {status !== "authenticated" && (
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-midnight/35 backdrop-blur-md border-t border-white/10 flex items-center">
-                  <div className="px-6 py-6">
-                    <p className="text-sm font-bold text-white">
-                      Login with Google to read full articles and join the debate.
-                    </p>
-                    <div className="mt-3">
-                      <Link
-                        href="/login"
-                        className="inline-flex h-10 items-center justify-center rounded-full bg-accent-blue px-5 text-xs font-black text-white uppercase tracking-widest hover:bg-accent-blue/90 transition-all"
-                      >
-                        Login
-                      </Link>
-                    </div>
+              
+              <div className="flex flex-wrap items-center gap-6 pt-12">
+                {[
+                  { label: "12K+ Citizens", icon: Users },
+                  { label: "4,800+ Debates", icon: MessageSquare },
+                  { label: "Protected under Article 19(1)(a)", icon: ShieldCheck }
+                ].map((chip, i) => (
+                  <div key={i} className="flex items-center gap-2 px-4 py-2 bg-surface/80 backdrop-blur-sm rounded-full border border-white/5 shadow-sm transition-transform hover:scale-105">
+                    <chip.icon size={16} className="text-accent-blue" />
+                    <span className="text-sm font-medium text-white">{chip.label}</span>
                   </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                ))}
+              </div>
+            </motion.div>
 
+            {/* Right Column - News Preview Cards (Desktop) */}
+            <div className="hidden lg:block relative h-[500px]">
+              <AnimatePresence mode="wait">
+                {previewNews.length >= 3 && (
+                  <motion.div
+                    key={currentNewsSet}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative w-full h-full"
+                  >
+                    {previewNews.slice(currentNewsSet * 3, currentNewsSet * 3 + 3).map((news, index) => {
+                      const isRecent = new Date(news.created_at).getTime() > Date.now() - 2 * 60 * 60 * 1000;
+                      const rotations = [0, 2, -2];
+                      const offsets = [0, 20, -20];
+                      const zIndices = [10, 5, 1];
+                      
+                      return (
+                        <motion.div
+                          key={news.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className={`absolute w-[320px] bg-surface/90 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-2xl cursor-pointer group`}
+                          style={{
+                            transform: `rotate(${rotations[index]}deg) translateY(${offsets[index]}px)`,
+                            zIndex: zIndices[index],
+                            left: `${index * 40}px`,
+                            top: `${index * 30}px`,
+                          }}
+                          whileHover={{
+                            scale: 1.05,
+                            zIndex: 50,
+                            transition: { duration: 0.2 }
+                          }}
+                        >
+                          {/* Cover Image */}
+                          <div className="relative h-48 w-full">
+                            <img
+                              src={news.cover_image_url || `/api/og?title=${encodeURIComponent(news.headline)}&category=${news.category}`}
+                              alt={news.headline}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = `/api/og?title=${encodeURIComponent(news.headline)}&category=${news.category}`;
+                              }}
+                            />
+                            {/* Category Badge */}
+                            <div className="absolute top-3 left-3">
+                              <span className="px-3 py-1 bg-accent-blue/90 text-white text-[10px] font-bold uppercase tracking-wider rounded-full">
+                                {news.category}
+                              </span>
+                            </div>
+                            {/* LIVE/NEW Badge */}
+                            {isRecent && (
+                              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500/90 px-2 py-1 rounded-full">
+                                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                <span className="text-[10px] font-bold text-white uppercase">LIVE</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="p-4">
+                            <h3 className="text-white font-semibold text-base leading-snug line-clamp-2 mb-2">
+                              {news.headline}
+                            </h3>
+                            <p className="text-muted-foreground text-xs line-clamp-1">
+                              {news.summary}
+                            </p>
+                          </div>
+
+                          {/* Login Overlay */}
+                          {status !== "authenticated" && (
+                            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-midnight/80 backdrop-blur-md border-t border-white/10 flex items-center justify-center">
+                              <p className="text-xs font-bold text-white text-center px-4">
+                                Login to read and debate
+                              </p>
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -408,10 +478,8 @@ export default function LandingPage() {
             <div className="space-y-6">
               <h4 className="text-xs font-bold text-white uppercase tracking-widest">Platform</h4>
               <nav className="flex flex-col gap-3 text-sm text-muted-foreground">
-                <Link href="#" className="hover:text-accent-blue transition-colors">About</Link>
-                <Link href="#" className="hover:text-accent-blue transition-colors">Privacy Policy</Link>
-                <Link href="#" className="hover:text-accent-blue transition-colors">Terms of Service</Link>
-                <Link href="#" className="hover:text-accent-blue transition-colors">Grievance Officer</Link>
+                <Link href="/privacy" className="hover:text-accent-blue transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="hover:text-accent-blue transition-colors">Terms of Service</Link>
               </nav>
             </div>
             
