@@ -334,12 +334,13 @@ export default function OnboardingPage() {
                             <button
                               key={s}
                               type="button"
-                              onClick={() => {
+                              onMouseDown={(e) => {
+                                e.preventDefault();
                                 setValue("state", s, { shouldValidate: true });
                                 setIsStateOpen(false);
                                 setStateSearch("");
                               }}
-                              className="w-full text-left px-4 py-2.5 hover:bg-accent-blue/10 rounded-[8px] text-sm text-gray-300 hover:text-white flex items-center justify-between group transition-colors"
+                              className="w-full text-left px-4 py-2.5 hover:bg-accent-blue/10 rounded-[8px] text-sm text-gray-300 hover:text-white flex items-center justify-between group transition-colors cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-1 h-0 bg-accent-blue group-hover:h-4 transition-all duration-200" />
