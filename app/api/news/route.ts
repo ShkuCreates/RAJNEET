@@ -1,18 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const CATEGORY_FILTERS: Record<string, string[]> = {
-  Politics: ["POLITICS", "POLITICAL"],
-  Finance: ["FINANCE"],
-  Sports: ["SPORTS"],
-  World: ["WORLD", "INTERNATIONAL"],
+const VALID_CATEGORIES = ["Politics", "Finance", "Sports", "World"] as const;
+
+// Map query category → legacy DB category aliases
+const CATEGORY_FILTERS: Record<(typeof VALID_CATEGORIES)[number], string[]> = {
+  Politics: ["POLITICAL", "POLITICS"],
+
+  Finance: ["FINANCE", "FINANCE", "BUSINESS", "CORPORATE", "ECONOMY"],
+  Sports: ["SPORTS", "SPORT", "CRICKET", "FOOTBALL", "IPL", "OLYMPICS", "FIFA"],
+  World: ["WORLD", "INTERNATIONAL", "FOREIGN", "GLOBAL", "DIPLOMACY"],
 };
+
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
   const limit = Number.parseInt(searchParams.get("limit") || "12", 10);
-  const categoryValues = category ? CATEGORY_FILTERS[category] ?? [category.toUpperCase()] : null;
+
+  const categoryValues = category && (VALID_CATEGORIES as readonly string[]).includes(category)
+    ? CATEGORY_FILTERS[category as (typeof VALID_CATEGORIES)[number]]
+    : null;
+
 
   try {
     const news = await prisma.news.findMany({

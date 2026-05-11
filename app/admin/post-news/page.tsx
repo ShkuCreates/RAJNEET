@@ -74,6 +74,7 @@ export default function PostNewsPage() {
       <h1 className="text-2xl font-bold mb-6">Post New News Article</h1>
       
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card border border-border p-6 rounded-xl shadow-sm">
+
         <div className="space-y-2">
           <label className="text-sm font-semibold">Headline</label>
           <input
@@ -98,17 +99,12 @@ export default function PostNewsPage() {
           <div className="space-y-2">
             <label className="text-sm font-semibold">Category</label>
             <select {...form.register("category")} className="w-full p-2 border border-input bg-background rounded-md">
-              <option value="POLITICAL">Political</option>
-              <option value="CRIMINAL">Criminal</option>
-              <option value="FINANCE">Finance and Economy</option>
-              <option value="CORPORATE">Corporate and Business</option>
-              <option value="INFRASTRUCTURE">Infrastructure</option>
-              <option value="SOCIAL">Social Issues</option>
-              <option value="ENVIRONMENT">Environment</option>
-              <option value="HEALTH">Health</option>
-              <option value="EDUCATION">Education</option>
-              <option value="INTERNATIONAL">International</option>
+              <option value="Politics">Politics</option>
+              <option value="Finance">Finance</option>
+              <option value="Sports">Sports</option>
+              <option value="World">World</option>
             </select>
+
           </div>
 
           <div className="space-y-2">
