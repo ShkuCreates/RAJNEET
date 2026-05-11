@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 3600;
 
 const getBaseUrl = () =>
-  (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://rajneet.in").replace(/\/+$/, "");
+  (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://rajneet.co.in").replace(/\/+$/, "");
 
 const slugFromHeadline = (headline: string) =>
   headline

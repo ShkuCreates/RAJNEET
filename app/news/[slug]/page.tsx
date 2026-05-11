@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const slug = article.slug || slugFromHeadline(article.headline || "article");
   const title = article.seo_title || article.headline;
   const description = article.meta_description || article.summary;
-  const coverImage = article.cover_image_url || `https://rajneet.in/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
+  const coverImage = article.cover_image_url || `https://rajneet.co.in/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
   const keywords = Array.isArray(article.focus_keywords) ? article.focus_keywords : [];
 
   return {
@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     openGraph: {
       title,
       description,
-      url: `https://rajneet.in/news/${slug}`,
+      url: `https://rajneet.co.in/news/${slug}`,
       type: "article",
       images: [coverImage],
     },
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       images: [coverImage],
     },
     alternates: {
-      canonical: `https://rajneet.in/news/${slug}`,
+      canonical: `https://rajneet.co.in/news/${slug}`,
     },
   };
 }

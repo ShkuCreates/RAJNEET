@@ -175,7 +175,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
     toast.success("Link copied");
   };
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : `https://rajneet.in/news/${article.slug || article.id}`;
+  const shareUrl = typeof window !== "undefined" ? window.location.href : `https://rajneet.co.in/news/${article.slug || article.id}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl}`)}`;
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`;
 

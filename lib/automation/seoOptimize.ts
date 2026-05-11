@@ -141,10 +141,10 @@ RULES:
     "publisher": {
       "@type": "Organization",
       "name": "RAJNEET",
-      "url": "https://rajneet.in",
-      "logo": { "@type": "ImageObject", "url": "https://rajneet.in/logo.png" }
+      "url": "https://rajneet.co.in",
+      "logo": { "@type": "ImageObject", "url": "https://rajneet.co.in/logo.png" }
     },
-    "mainEntityOfPage": { "@type": "WebPage", "@id": `https://rajneet.in/news/${slug}` },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": `https://rajneet.co.in/news/${slug}` },
     "articleSection": article.category,
     "contentLocation": { "@type": "Place", "name": article.state_name || "India" },
     "image": article.cover_image_url
