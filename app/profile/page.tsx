@@ -25,43 +25,43 @@ export default function ProfilePage() {
 
     const fetchProfileData = async () => {
       try {
-        // Fetch stats
+        // Fetch stats with real-time updates
         const [totalComments, totalLikesResult, totalArticles] = await Promise.all([
           prisma.opinion.count({
             where: { userId: session.user.id }
           }),
           prisma.opinion.aggregate({
             where: { userId: session.user.id },
-            _sum: { likeCount: true }
+            _sum: { like_count: true }
           }),
           prisma.news.count({
-            where: { postedBy: session.user.id }
+            where: { posted_by: session.user.id }
           })
         ])
 
-        const totalLikes = totalLikesResult._sum.likeCount || 0
+        const totalLikes = totalLikesResult._sum.like_count || 0
         const totalEngagement = totalComments + totalLikes
 
-        // Fetch activities
+        // Fetch activities with real-time updates
         const userActivities = await prisma.opinion.findMany({
-          where: { userId: session.user.id },
-          orderBy: { createdAt: 'desc' },
+          where: { user_id: session.user.id },
+          orderBy: { created_at: 'desc' },
           take: 20,
           include: { 
             news: { select: { headline: true, slug: true } } 
           }
         })
 
-        // Fetch user articles
+        // Fetch user articles with real-time updates
         const userArticles = await prisma.news.findMany({
-          where: { postedBy: session.user.id },
-          orderBy: { createdAt: 'desc' },
+          where: { posted_by: session.user.id },
+          orderBy: { created_at: 'desc' },
           take: 50,
           select: {
             id: true,
             headline: true,
             slug: true,
-            createdAt: true,
+            created_at: true,
             status: true,
             _count: {
               select: {
@@ -79,7 +79,7 @@ export default function ProfilePage() {
           totalArticles
         })
 
-        // Format activities
+        // Format activities with real-time updates
         const formattedActivities = userActivities.map(activity => {
           const activityType = activity.news ? 'comment' : 'debate'
           const color = activityType === 'comment' ? '#3B82F6' : '#8B5CF6'
@@ -89,7 +89,7 @@ export default function ProfilePage() {
             id: activity.id,
             type: activityType,
             description: `You ${activityType === 'comment' ? 'commented on' : 'participated in'} "${activity.news?.headline || 'Article'}"`,
-            timestamp: new Date(activity.createdAt).toLocaleDateString('en-IN'),
+            timestamp: new Date(activity.created_at).toLocaleDateString('en-IN'),
             color,
             icon,
             articleSlug: activity.news?.slug
@@ -104,6 +104,11 @@ export default function ProfilePage() {
     }
 
     fetchProfileData()
+    
+    // Set up real-time updates every 30 seconds
+    const interval = setInterval(fetchProfileData, 30000)
+    
+    return () => clearInterval(interval)
   }, [session?.user?.id])
 
   const handleSignOut = async () => {

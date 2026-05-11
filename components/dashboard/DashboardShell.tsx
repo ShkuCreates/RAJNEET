@@ -24,6 +24,7 @@ const NEWS_OPTIONS = ["Politics", "Finance", "Sports", "World"] as const;
 const DEBATE_OPTIONS = [
   { label: "Live", href: "/debates" },
   { label: "Calendar", href: "/debates/calendar" },
+  { label: "Creators", href: "/creators" },
 ] as const;
 const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
