@@ -215,6 +215,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
               >
                 NEWS
               </button>
+              <div className="w-px h-6 bg-white/20" />
               <button
                 onClick={() => setSection("article")}
                 className={`rounded-[20px] px-3 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
