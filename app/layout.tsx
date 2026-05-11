@@ -20,6 +20,27 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "RAJNEET - Your Voice. Your Democracy.",
   description: "India's Civic Tech Platform. Read real news, debate your stance, and hold power accountable.",
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: "RAJNEET - Your Voice. Your Democracy.",
+    description: "India's Civic Tech Platform. Read real news, debate your stance, and hold power accountable.",
+    url: "https://rajneet.co.in",
+    siteName: "RAJNEET",
+    images: [
+      {
+        url: "https://rajneet.co.in/images/rajneet-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "RAJNEET - India's Political Debate Platform",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

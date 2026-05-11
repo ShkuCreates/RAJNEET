@@ -164,14 +164,14 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 right-6 z-[99] bg-surface/95 backdrop-blur-md border border-accent-amber/30 rounded-xl shadow-2xl p-5 max-w-sm"
+            className="fixed top-20 right-2 md:right-6 z-[99] bg-surface/95 backdrop-blur-md border border-accent-amber/30 rounded-xl shadow-2xl p-3 md:p-5 max-w-[280px] md:max-w-sm"
           >
-            <div className="mb-4">
-              <h3 className="text-lg font-bold text-white">Meet the Creators</h3>
+            <div className="mb-3">
+              <h3 className="text-sm md:text-lg font-bold text-white">Meet the Creators</h3>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
+            <div className="space-y-2 md:space-y-4">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="w-10 h-10 md:w-16 md:h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
                   <img
                     src="https://i.ibb.co/JRTRH2wz/kumar-shourya.jpg"
                     alt="Kumar Shourya"
@@ -179,12 +179,12 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Kumar Shourya</p>
-                  <p className="text-xs text-muted-foreground">Co-Founder</p>
+                  <p className="text-white font-semibold text-xs md:text-sm">Kumar Shourya</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground">Co-Founder</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="w-10 h-10 md:w-16 md:h-16 rounded-full border-2 border-accent-amber overflow-hidden flex-shrink-0">
                   <img
                     src="https://i.ibb.co/Vpz344P8/devanshu-bhardwaj.jpg"
                     alt="Devanshu Bhardwaj"
@@ -192,8 +192,8 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Devanshu Bhardwaj</p>
-                  <p className="text-xs text-muted-foreground">Co-Founder</p>
+                  <p className="text-white font-semibold text-xs md:text-sm">Devanshu Bhardwaj</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground">Co-Founder</p>
                 </div>
               </div>
             </div>
