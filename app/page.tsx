@@ -53,10 +53,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (status === "authenticated") {
-      router.push("/dashboard");
-    }
-  }, [status, router]);
+  }, []);
 
   useEffect(() => {
     // News popup logic
@@ -184,13 +181,23 @@ export default function LandingPage() {
             </p>
             
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <Link
-                href="/login"
-                className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)]"
-              >
-                <GoogleIcon />
-                Get Started with Google
-              </Link>
+              {status === "authenticated" ? (
+                <Link
+                  href="/dashboard"
+                  className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
+                >
+                  Start Reading
+                  <ArrowRight size={20} />
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+                >
+                  <GoogleIcon />
+                  Get Started with Google
+                </Link>
+              )}
               <button className="inline-flex h-14 items-center justify-center rounded-full border border-white/20 bg-transparent px-10 text-base font-bold text-white transition-all hover:bg-white/5 hover:scale-[1.03]">
                 See How It Works
               </button>

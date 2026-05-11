@@ -41,7 +41,7 @@ export default async function DashboardLayout({
       <aside className="w-full md:w-64 border-r border-border bg-card flex flex-col justify-between sticky top-0 md:h-screen z-10">
         <div>
           <div className="p-6">
-            <Link href="/dashboard" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 bg-accent-amber/10 rounded-xl flex items-center justify-center border border-accent-amber/20 group-hover:scale-110 transition-transform">
                 <Landmark size={24} className="text-accent-amber" />
               </div>
