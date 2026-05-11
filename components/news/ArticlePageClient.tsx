@@ -1,0 +1,301 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapPin, Clock, ExternalLink, Copy, MessageSquare, Share2, X, Landmark } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { useSession, signIn } from "next-auth/react";
+import DebateSection from "@/components/news/DebateSection";
+import WriteToMpModal from "@/components/mp/WriteToMpModal";
+import { toast } from "sonner";
+
+const SESSION_DISMISS_KEY = "article-login-modal-dismissed";
+
+function LoginPromptModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="relative w-full max-w-md rounded-2xl bg-[#111827] p-7 border border-white/10 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 p-2 text-gray-400 hover:text-white"
+          aria-label="Close"
+        >
+          <X size={18} />
+        </button>
+        <div className="flex items-center justify-center mb-5">
+          <img src="/images/rajneet-logo.png" alt="RAJNEET" className="h-8 w-auto" />
+        </div>
+        <h3 className="text-white text-2xl font-heading font-bold mb-2 text-center">
+          Join the debate on RAJNEET
+        </h3>
+        <p className="text-gray-400 text-sm text-center mb-6">
+          Login to share your stance, comment, and debate this article. Free forever.
+        </p>
+        <button
+          onClick={() => signIn("google")}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-4 w-4" />
+          Login with Google
+        </button>
+        <p className="text-xs text-gray-500 text-center mt-3">
+          Protected under Article 19(1)(a) of the Indian Constitution
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function ArticlePageClient({ article }: { article: any }) {
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated";
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [hasScrolledEnough, setHasScrolledEnough] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
+  const [stanceCounts, setStanceCounts] = useState({ FOR: 0, NEUTRAL: 0, AGAINST: 0 });
+  const [showWriteToMp, setShowWriteToMp] = useState(false);
+  const modalShownByIntent = useRef(false);
+
+  const title = article.seo_title || article.headline;
+  const ogUrl = `/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
+  const isGenericCover =
+    typeof article.cover_image_url === "string" &&
+    (article.cover_image_url.includes("unsplash.com") ||
+      article.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
+  const coverUrl = !article.cover_image_url || isGenericCover ? ogUrl : article.cover_image_url;
+  const sourceName = useMemo(() => {
+    if (!article.source_url) return "Original Source";
+    try {
+      const host = new URL(article.source_url).hostname.replace("www.", "");
+      return host.charAt(0).toUpperCase() + host.slice(1);
+    } catch {
+      return "Original Source";
+    }
+  }, [article.source_url]);
+  const bodyHtml = article.seo_body || article.summary || "";
+  const hasReadableBody = Boolean((article.seo_body || article.summary || "").trim());
+
+  useEffect(() => {
+    if (document.readyState === "complete") {
+      setPageLoaded(true);
+      return;
+    }
+    const onLoad = () => setPageLoaded(true);
+    window.addEventListener("load", onLoad);
+    return () => window.removeEventListener("load", onLoad);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY >= 100) setHasScrolledEnough(true);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!showLoginModal) return;
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+        setShowLoginModal(false);
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [showLoginModal]);
+
+  useEffect(() => {
+    if (isLoggedIn || !hasScrolledEnough || !pageLoaded) return;
+    if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "1") return;
+    const timer = window.setTimeout(() => {
+      if (!modalShownByIntent.current) setShowLoginModal(true);
+    }, 20000);
+    return () => window.clearTimeout(timer);
+  }, [isLoggedIn, hasScrolledEnough, pageLoaded]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchOpinions = async () => {
+      try {
+        const res = await fetch(`/api/news/opinion?newsId=${article.id}`);
+        const data = await res.json();
+        const opinions = Array.isArray(data.opinions) ? data.opinions : [];
+        const counts = opinions.reduce(
+          (acc: { FOR: number; NEUTRAL: number; AGAINST: number }, item: any) => {
+            if (item.stance === "FOR" || item.stance === "NEUTRAL" || item.stance === "AGAINST") acc[item.stance] += 1;
+            return acc;
+          },
+          { FOR: 0, NEUTRAL: 0, AGAINST: 0 }
+        );
+        if (mounted) setStanceCounts(counts);
+      } catch {
+        // no-op
+      }
+    };
+    fetchOpinions();
+    const id = window.setInterval(fetchOpinions, 7000);
+    return () => {
+      mounted = false;
+      window.clearInterval(id);
+    };
+  }, [article.id]);
+
+  const total = stanceCounts.FOR + stanceCounts.NEUTRAL + stanceCounts.AGAINST;
+  const forPct = total ? Math.round((stanceCounts.FOR / total) * 100) : 0;
+  const neutralPct = total ? Math.round((stanceCounts.NEUTRAL / total) * 100) : 0;
+  const againstPct = total ? 100 - forPct - neutralPct : 0;
+
+  const openLoginModal = () => {
+    modalShownByIntent.current = true;
+    setShowLoginModal(true);
+  };
+
+  const closeLoginModal = () => {
+    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+    setShowLoginModal(false);
+  };
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    toast.success("Link copied");
+  };
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : `https://rajneet.in/news/${article.slug || article.id}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl}`)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`;
+
+  return (
+    <main className="min-h-screen bg-[#050A14] text-white">
+      {showLoginModal && !isLoggedIn && <LoginPromptModal onClose={closeLoginModal} />}
+      {showWriteToMp && (
+        <WriteToMpModal
+          newsHeadline={title}
+          userDistrict={(session as any)?.user?.district || "Your"}
+          onClose={() => setShowWriteToMp(false)}
+        />
+      )}
+
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <article>
+          <header className="mb-10">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
+              <span className="px-3 py-1 bg-accent-blue/10 text-accent-blue text-[10px] font-black rounded-full uppercase tracking-widest border border-accent-blue/20">
+                {article.category}
+              </span>
+              <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                <MapPin size={14} />
+                {article.state || "National"}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Clock size={14} />
+                {formatDistanceToNow(new Date(article.created_at), { addSuffix: true })}
+              </div>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-heading font-bold leading-tight mb-5 text-white">
+              {title}
+            </h1>
+
+            {article.source_url && (
+              <a
+                href={article.source_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-3"
+              >
+                Source: {sourceName}
+                <ExternalLink size={14} />
+              </a>
+            )}
+            <p className="text-sm text-gray-500">
+              Posted by RAJNEET Editorial • {formatDistanceToNow(new Date(article.created_at), { addSuffix: true })}
+            </p>
+          </header>
+
+          <div className="aspect-video rounded-3xl overflow-hidden mb-12 border border-white/10">
+            <img
+              src={coverUrl}
+              alt={title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = `/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
+              }}
+            />
+          </div>
+
+          <div className="mb-10">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
+              <span className="text-green-500">For {forPct}%</span>
+              <span className="text-gray-400">Neutral {neutralPct}%</span>
+              <span className="text-red-500">Against {againstPct}%</span>
+            </div>
+            <div className="h-2 w-full flex rounded-full overflow-hidden bg-white/10">
+              <div className="bg-green-500 transition-all duration-700" style={{ width: `${forPct}%` }} />
+              <div className="bg-gray-500 transition-all duration-700" style={{ width: `${neutralPct}%` }} />
+              <div className="bg-red-500 transition-all duration-700" style={{ width: `${againstPct}%` }} />
+            </div>
+          </div>
+
+          {hasReadableBody ? (
+            <div
+              className="prose prose-invert max-w-none mb-16 prose-p:text-gray-200 prose-p:leading-[1.8] prose-p:text-[1.05rem]"
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
+            />
+          ) : (
+            <div className="mb-16 text-gray-300 text-lg leading-[1.8]">
+              Full article available at source{" "}
+              {article.source_url ? (
+                <a href={article.source_url} target="_blank" rel="noreferrer" className="text-accent-blue underline">
+                  Open source article
+                </a>
+              ) : null}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3 mb-8">
+            <button onClick={handleCopyLink} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
+              <Copy size={14} /> Copy Link
+            </button>
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm">
+              WhatsApp
+            </a>
+            <a href={twitterUrl} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm">
+              Twitter/X
+            </a>
+            <button
+              onClick={() => {
+                if (!isLoggedIn) return openLoginModal();
+                setShowWriteToMp(true);
+              }}
+              className="px-4 py-2 rounded-xl bg-accent-blue hover:bg-accent-blue/90 text-sm inline-flex items-center gap-2"
+            >
+              <Landmark size={14} /> Write to MP
+            </button>
+            {!isLoggedIn && (
+              <button onClick={openLoginModal} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
+                <Share2 size={14} /> Join debate
+              </button>
+            )}
+          </div>
+
+          <section className="pt-10 border-t border-white/10">
+            <div className="flex items-center gap-3 mb-8">
+              <MessageSquare size={24} className="text-accent-blue" />
+              <h2 className="text-3xl font-heading font-black uppercase tracking-tight">Public Debate</h2>
+            </div>
+            <DebateSection
+              newsId={article.id}
+              currentUser={session?.user || null}
+              onRequireLogin={openLoginModal}
+              allowInteraction={isLoggedIn}
+            />
+          </section>
+        </article>
+      </div>
+    </main>
+  );
+}

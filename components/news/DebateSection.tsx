@@ -2,10 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { ThumbsUp, ThumbsDown, Flag, AlertTriangle, ShieldCheck, Loader2 } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Flag, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-export default function DebateSection({ newsId, currentUser }: { newsId: string; currentUser: any }) {
+export default function DebateSection({
+  newsId,
+  currentUser,
+  onRequireLogin,
+  allowInteraction = true
+}: {
+  newsId: string;
+  currentUser: any;
+  onRequireLogin?: () => void;
+  allowInteraction?: boolean;
+}) {
   const [stance, setStance] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [tag, setTag] = useState("OPINION");
@@ -30,6 +40,10 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!allowInteraction || !currentUser) {
+      onRequireLogin?.();
+      return;
+    }
     if (!stance) {
       toast.error("You must select a stance before commenting.");
       return;
@@ -93,9 +107,9 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
           <div className="mb-4">
             <p className="text-sm font-semibold mb-2">Select your stance to enter the debate:</p>
             <div className="flex gap-2">
-              <button onClick={() => setStance("FOR")} className="flex-1 py-2 text-sm font-bold bg-green-500/10 text-green-600 border border-green-500/20 rounded hover:bg-green-500 hover:text-white transition-colors">FOR</button>
-              <button onClick={() => setStance("NEUTRAL")} className="flex-1 py-2 text-sm font-bold bg-gray-500/10 text-gray-600 border border-gray-500/20 rounded hover:bg-gray-500 hover:text-white transition-colors">NEUTRAL</button>
-              <button onClick={() => setStance("AGAINST")} className="flex-1 py-2 text-sm font-bold bg-red-500/10 text-red-600 border border-red-500/20 rounded hover:bg-red-500 hover:text-white transition-colors">AGAINST</button>
+              <button onClick={() => allowInteraction ? setStance("FOR") : onRequireLogin?.()} className="flex-1 py-2 text-sm font-bold bg-green-500/10 text-green-600 border border-green-500/20 rounded hover:bg-green-500 hover:text-white transition-colors">FOR</button>
+              <button onClick={() => allowInteraction ? setStance("NEUTRAL") : onRequireLogin?.()} className="flex-1 py-2 text-sm font-bold bg-gray-500/10 text-gray-600 border border-gray-500/20 rounded hover:bg-gray-500 hover:text-white transition-colors">NEUTRAL</button>
+              <button onClick={() => allowInteraction ? setStance("AGAINST") : onRequireLogin?.()} className="flex-1 py-2 text-sm font-bold bg-red-500/10 text-red-600 border border-red-500/20 rounded hover:bg-red-500 hover:text-white transition-colors">AGAINST</button>
             </div>
           </div>
         )}
@@ -114,10 +128,14 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="State your argument..."
+              onClick={() => {
+                if (!allowInteraction || !currentUser) onRequireLogin?.();
+              }}
+              placeholder={allowInteraction ? "State your argument..." : "Login to join this debate"}
               className="w-full p-3 text-sm bg-background border border-input rounded resize-none focus:ring-1 focus:ring-primary"
               rows={3}
               required
+              readOnly={!allowInteraction || !currentUser}
             />
             
             <div className="flex items-center justify-between">
@@ -136,7 +154,7 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
               </div>
               <button 
                 type="submit" 
-                disabled={isSubmitting}
+                disabled={isSubmitting || !allowInteraction || !currentUser}
                 className="bg-primary text-primary-foreground px-4 py-1.5 text-sm font-medium rounded hover:bg-primary/90 disabled:opacity-50"
               >
                 {isSubmitting ? "Posting..." : "Post Opinion"}
@@ -178,10 +196,20 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
             </p>
             
             <div className="flex items-center gap-4 text-xs text-muted-foreground pl-4">
-              <button className="flex items-center gap-1 hover:text-green-500 transition-colors">
+              <button
+                onClick={() => {
+                  if (!allowInteraction || !currentUser) onRequireLogin?.();
+                }}
+                className="flex items-center gap-1 hover:text-green-500 transition-colors"
+              >
                 <ThumbsUp size={14} /> {c.upvotes}
               </button>
-              <button className="flex items-center gap-1 hover:text-red-500 transition-colors">
+              <button
+                onClick={() => {
+                  if (!allowInteraction || !currentUser) onRequireLogin?.();
+                }}
+                className="flex items-center gap-1 hover:text-red-500 transition-colors"
+              >
                 <ThumbsDown size={14} /> {c.downvotes}
               </button>
               <button className="flex items-center gap-1 hover:text-primary transition-colors ml-2">

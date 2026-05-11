@@ -4,8 +4,8 @@ import { useState } from "react";
 import { MessageSquare, MapPin, Eye, ArrowRight, Heart } from "lucide-react";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
 import { motion } from "framer-motion";
-import { ArticlePanel } from "../dashboard/ArticlePanel";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const categoryColors: Record<string, string> = {
   POLITICAL: "bg-accent-blue",
@@ -26,7 +26,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function NewsCard({ news, currentUser }: { news: any, currentUser: any }) {
-  const [showPanel, setShowPanel] = useState(false);
+  const router = useRouter();
   const [liked, setLiked] = useState(
     news.upvotes?.some((v: any) => v.user_id === currentUser?.id) || false
   );
@@ -59,32 +59,57 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     }
   };
 
-  const openPanel = () => {
-    setShowPanel(true);
+  const slugFromHeadline = (headline: string) =>
+    headline
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .split(" ")
+      .filter((w) => !["a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from", "is", "was", "are", "were"].includes(w))
+      .join("-")
+      .slice(0, 60);
+
+  const articleSlug = news.slug || slugFromHeadline(news.headline || "article");
+  const articleUrl = `/news/${articleSlug}`;
+
+  const openArticle = () => {
+    router.push(articleUrl);
     fetch("/api/admin/track-view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newsId: news.id, path: `/news/${news.slug}` })
+      body: JSON.stringify({ newsId: news.id, path: articleUrl })
     }).catch(() => {});
   };
+
+  const previewSource =
+    news.seo_body ||
+    news.summary ||
+    news.body ||
+    "Click to read full article.";
+  const previewText =
+    previewSource.length > 120 ? `${previewSource.slice(0, 120).trim()}...` : previewSource;
+  const ogFallbackUrl = `/api/og?title=${encodeURIComponent(news.seo_title || news.headline)}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
+  const isGenericCover =
+    typeof news.cover_image_url === "string" &&
+    (news.cover_image_url.includes("unsplash.com") ||
+      news.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
+  const displayCoverUrl = !news.cover_image_url || isGenericCover ? ogFallbackUrl : news.cover_image_url;
 
   return (
     <>
       <motion.article
         whileHover={{ y: -4 }}
-        onClick={openPanel}
+        onClick={openArticle}
         className="group relative bg-[#111827] border border-white/5 rounded-[28px] overflow-hidden shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/5 cursor-pointer"
       >
         {/* Cover Image */}
-        {news.cover_image_url ? (
+        {displayCoverUrl ? (
           <div className="relative aspect-video overflow-hidden">
             <img
-              src={news.cover_image_url}
+              src={displayCoverUrl}
               alt={news.headline}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1000";
+                (e.currentTarget as HTMLImageElement).src = ogFallbackUrl;
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
@@ -106,13 +131,13 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
             )}
           </div>
         ) : (
-          /* No image placeholder with category color */
-          <div className={`relative h-24 ${categoryColor} opacity-20`}>
-            <div className="absolute top-4 left-4">
-              <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${categoryColor} text-white rounded-lg opacity-100`}>
-                {news.category}
-              </span>
-            </div>
+          <div className="relative aspect-video overflow-hidden">
+            <img
+              src={ogFallbackUrl}
+              alt={news.headline}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
           </div>
         )}
 
@@ -134,9 +159,8 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
             {news.headline}
           </h2>
 
-          {/* Summary - shows 4 lines now */}
-          <p className="text-sm text-gray-400 leading-relaxed line-clamp-4 mb-5">
-            {news.summary}
+          <p className="text-sm text-gray-400 leading-relaxed line-clamp-3 mb-5">
+            {previewText}
           </p>
 
           {/* Stance Bar */}
@@ -175,13 +199,13 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
 
             <div className="flex items-center gap-2">
               <button
-                onClick={(e) => { e.stopPropagation(); openPanel(); }}
+                onClick={(e) => { e.stopPropagation(); openArticle(); }}
                 className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5"
               >
                 Read
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); openPanel(); }}
+                onClick={(e) => { e.stopPropagation(); openArticle(); }}
                 className="flex items-center gap-2 px-4 py-2 bg-accent-blue hover:bg-accent-blue/90 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-accent-blue/20"
               >
                 Debate
@@ -191,13 +215,6 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
           </div>
         </div>
       </motion.article>
-
-      <ArticlePanel
-        news={news}
-        isOpen={showPanel}
-        onClose={() => setShowPanel(false)}
-        currentUser={currentUser}
-      />
     </>
   );
 }

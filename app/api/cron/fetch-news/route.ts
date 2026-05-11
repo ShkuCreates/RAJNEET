@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
-import { generateBrandedCoverImage } from "@/lib/automation/cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
+function extractArticleImage(art: any) {
+  if (art.image_url) return art.image_url;
+  if (art.enclosure?.url) return art.enclosure.url;
+  if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.url) return art["media:content"][0].url;
+  if (art["media:content"]?.url) return art["media:content"].url;
+  if (art.og_image) return art.og_image;
+  if (Array.isArray(art.images) && art.images[0]) return art.images[0];
+  return null;
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -55,16 +64,11 @@ export async function GET(req: Request) {
           published_at: art.pubDate || new Date().toISOString()
         });
 
-        // Generate a branded RAJNEET cover image (no copyright issues)
-        const cover_image_url = await generateBrandedCoverImage(
-          art.title,
-          Array.isArray(art.category) ? art.category[0] : (art.category || "POLITICAL"),
-          seoData.slug
-        );
-
         const category = Array.isArray(art.category)
           ? art.category[0].toUpperCase()
           : (art.category?.toUpperCase() || "POLITICAL");
+        const sourceImage = extractArticleImage(art);
+        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(seoData.seo_title || art.title)}&category=${encodeURIComponent(category)}`;
 
         const status = seoData.seo_score < 50 ? "DRAFT" : "PUBLISHED";
 
