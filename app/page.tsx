@@ -201,8 +201,32 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
+      {/* Navigation Header */}
+      <nav className="fixed top-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-b border-white/5 z-[100] px-6 py-4">
+        <div className="container mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-accent-amber/10 rounded-xl flex items-center justify-center border border-accent-amber/20 group-hover:scale-110 transition-transform">
+              <Landmark size={24} className="text-accent-amber" />
+            </div>
+            <span className="text-2xl font-heading font-black text-accent-amber tracking-tighter">RAJNEET</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            {status === "authenticated" && (
+              <button onClick={() => router.push('/dashboard')} className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors">
+                <Bell size={20} />
+              </button>
+            )}
+            {status === "authenticated" && (
+              <Link href="/dashboard" className="px-4 py-2 bg-accent-blue text-white text-sm font-bold rounded-lg hover:bg-accent-blue/90 transition-colors">
+                Dashboard
+              </Link>
+            )}
+          </div>
+        </div>
+      </nav>
+
       {/* SECTION 1 - NEWS TICKER (TOP) */}
-      <div className="bg-surface/90 backdrop-blur-md border-b border-white/5 py-2 relative z-[100] overflow-hidden">
+      <div className="bg-surface/90 backdrop-blur-md border-b border-white/5 py-2 relative z-[100] overflow-hidden mt-16">
         <div className="flex items-center">
           <div className="px-6 bg-surface border-r border-white/10 shrink-0 flex items-center gap-2 relative z-10">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
@@ -223,11 +247,20 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          {/* Date and Time Display */}
+          <div className="ml-auto px-6 bg-surface border-l border-white/10 shrink-0 flex items-center gap-2 relative z-10">
+            <span className="text-sm font-bold text-white tracking-wider">
+              {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+            </span>
+            <span className="text-sm font-bold text-accent-amber">
+              {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* SECTION 2 - HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center pt-10 px-6 overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center px-6 overflow-hidden">
         {/* Subtle Radial Glow */}
         <div className="absolute inset-0 z-0 hero-glow" />
         
@@ -264,7 +297,7 @@ export default function LandingPage() {
                       href="/dashboard"
                       className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
                     >
-                      Go to Your Feed
+                      Continue Reading
                       <ArrowRight size={20} />
                     </Link>
                   </>
@@ -351,7 +384,7 @@ export default function LandingPage() {
                             />
                             {/* Category Badge */}
                             <div className="absolute top-3 left-3">
-                              <span className="px-3 py-1 bg-accent-blue/90 text-white text-[10px] font-bold uppercase tracking-wider rounded-full">
+                              <span className="px-2 py-0.5 bg-accent-blue/90 text-white text-[8px] font-bold uppercase tracking-wider rounded-full">
                                 {news.category}
                               </span>
                             </div>
