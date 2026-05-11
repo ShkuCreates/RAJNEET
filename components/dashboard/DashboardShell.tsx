@@ -228,15 +228,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
             </div>
           </div>
 
-          {/* Live News Tape Animation */}
-          <div className="absolute left-1/2 top-full z-10">
-            <div className="h-1 bg-red-500 animate-pulse" style={{
-              animation: 'live-tape 2s linear infinite',
-              width: '100%',
-              transformOrigin: 'left'
-            }} />
-          </div>
-
+          
           {/* Right - Date Time + Profile */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-4 md:flex">
             <div className="flex items-center gap-2 text-right">

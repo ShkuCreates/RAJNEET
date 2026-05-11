@@ -151,6 +151,8 @@ model OpinionLike {
   opinion   Opinion  @relation(fields: [opinion_id], references: [id])
 
   @@unique([user_id, opinion_id])
+  @@index([user_id])
+  @@index([opinion_id])
 }
 
 model Poll {
