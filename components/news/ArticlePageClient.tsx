@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Clock, ExternalLink, Copy, MessageSquare, Share2, X, Landmark } from "lucide-react";
+import { MapPin, Clock, ExternalLink, Copy, MessageSquare, Share2, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useSession, signIn } from "next-auth/react";
 import DebateSection from "@/components/news/DebateSection";
-import WriteToMpModal from "@/components/mp/WriteToMpModal";
 import { toast } from "sonner";
 
 const SESSION_DISMISS_KEY = "article-login-modal-dismissed";
@@ -56,7 +55,6 @@ export default function ArticlePageClient({ article }: { article: any }) {
   const [hasScrolledEnough, setHasScrolledEnough] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [stanceCounts, setStanceCounts] = useState({ FOR: 0, NEUTRAL: 0, AGAINST: 0 });
-  const [showWriteToMp, setShowWriteToMp] = useState(false);
   const modalShownByIntent = useRef(false);
 
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -69,12 +67,8 @@ export default function ArticlePageClient({ article }: { article: any }) {
 
   const title = article.seo_title || article.headline;
   const ogUrl = `/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
-  const isGenericCover =
-    typeof article.cover_image_url === "string" &&
-    (article.cover_image_url.includes("unsplash.com") ||
-      article.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
   const normalizedCover = normalizeImageUrl(article.cover_image_url);
-  const coverUrl = !normalizedCover || isGenericCover ? ogUrl : normalizedCover;
+  const coverUrl = normalizedCover || ogUrl;
   const sourceName = useMemo(() => {
     if (!article.source_url) return "Original Source";
     try {
@@ -84,9 +78,9 @@ export default function ArticlePageClient({ article }: { article: any }) {
       return "Original Source";
     }
   }, [article.source_url]);
-  const bodyHtml = article.seo_body || "";
-  const summaryText = stripHtml(article.summary || "");
-  const hasReadableBody = Boolean(stripHtml(article.seo_body || "").trim());
+  const bodyHtml = article.seo_body || article.body || "";
+  const summaryText = stripHtml(article.summary || article.body || "");
+  const hasReadableBody = Boolean(stripHtml(article.seo_body || article.body || "").trim());
 
   useEffect(() => {
     if (document.readyState === "complete") {
@@ -182,13 +176,6 @@ export default function ArticlePageClient({ article }: { article: any }) {
   return (
     <main className="min-h-screen bg-[#050A14] text-white">
       {showLoginModal && authResolved && !isLoggedIn && <LoginPromptModal onClose={closeLoginModal} />}
-      {showWriteToMp && (
-        <WriteToMpModal
-          newsHeadline={title}
-          userDistrict={(session as any)?.user?.district || "Your"}
-          onClose={() => setShowWriteToMp(false)}
-        />
-      )}
 
       <div className="max-w-4xl mx-auto px-6 py-12">
         <article>
@@ -289,18 +276,6 @@ export default function ArticlePageClient({ article }: { article: any }) {
             <a href={whatsappUrl} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm">
               WhatsApp
             </a>
-            <a href={twitterUrl} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm">
-              Twitter/X
-            </a>
-            <button
-              onClick={() => {
-                if (!authResolved || !isLoggedIn) return openLoginModal();
-                setShowWriteToMp(true);
-              }}
-              className="px-4 py-2 rounded-xl bg-accent-blue hover:bg-accent-blue/90 text-sm inline-flex items-center gap-2"
-            >
-              <Landmark size={14} /> Write to MP
-            </button>
             {authResolved && !isLoggedIn && (
               <button onClick={openLoginModal} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
                 <Share2 size={14} /> Join debate
