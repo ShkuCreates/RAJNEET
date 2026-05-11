@@ -88,13 +88,17 @@ const config: Config = {
   			"progress-fill": {
   				"0%": { width: "0%" },
   				"100%": { width: "var(--progress-width)" }
+  			},
+  			"shimmer": {
+  				"100%": { transform: "translateX(100%)" }
   			}
   		},
   		animation: {
   			"ticker": "ticker 30s linear infinite",
   			"float": "float 3s ease-in-out infinite",
   			"fade-in-up": "fade-in-up 0.6s ease-out forwards",
-  			"progress-fill": "progress-fill 1s ease-out forwards"
+  			"progress-fill": "progress-fill 1s ease-out forwards",
+  			"shimmer": "shimmer 2.5s infinite"
   		}
   	}
   },
