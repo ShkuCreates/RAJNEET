@@ -137,15 +137,15 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
 
   return (
     <motion.article
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -4, scale: 1.02 }}
       onClick={openArticle}
-      className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-white/5 bg-[#111827] shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/5"
+      className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-white/5 bg-[#111827] shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/20 hover:shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
     >
       <div className="relative aspect-video overflow-hidden">
         <img
           src={displayCoverUrl}
           alt={news.headline}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:brightness-110"
           referrerPolicy="no-referrer"
           onError={(event) => {
             const img = event.currentTarget as HTMLImageElement;
@@ -186,7 +186,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
           </span>
         </div>
 
-        <h2 className="mb-3 line-clamp-2 text-lg font-heading font-black leading-tight text-white transition-colors group-hover:text-accent-blue md:text-xl">
+        <h2 className="mb-3 line-clamp-2 text-lg font-heading font-black leading-tight text-white transition-all duration-300 group-hover:text-accent-blue group-hover:brightness-125 md:text-xl">
           {news.headline}
         </h2>
 
@@ -228,19 +228,19 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
           <div className="flex items-center gap-4">
             <button
               onClick={handleUpvote}
-              className={`flex items-center gap-1.5 transition-all ${
-                liked ? "scale-110 text-red-500" : "text-gray-500 hover:text-red-400"
+              className={`flex items-center gap-1.5 transition-all duration-250 transform hover:scale-105 hover:-translate-y-0.5 ${
+                liked ? "scale-110 text-red-500 shadow-red-500/20" : "text-gray-500 hover:text-red-400 hover:shadow-gray-500/10"
               }`}
             >
               <Heart size={15} fill={liked ? "currentColor" : "none"} />
               <span className="text-[11px] font-black">{upvoteCount}</span>
             </button>
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <MessageSquare size={15} />
+            <div className="flex items-center gap-1.5 text-gray-500 transition-all duration-200 hover:text-accent-blue group-hover:scale-110">
+              <MessageSquare size={15} className="transition-transform duration-300 group-hover:rotate-12" />
               <span className="text-[11px] font-black">{news._count?.opinions || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <Eye size={15} />
+            <div className="flex items-center gap-1.5 text-gray-500 transition-all duration-200 hover:text-accent-blue group-hover:scale-110">
+              <Eye size={15} className="transition-transform duration-300 group-hover:scale-120" />
               <span className="text-[11px] font-black">{news._count?.pageViews || 0}</span>
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
                 event.stopPropagation();
                 openArticle();
               }}
-              className="rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 transition-all hover:bg-white/10"
+              className="rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 transition-all duration-250 transform hover:scale-105 hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-lg hover:shadow-accent-blue/20"
             >
               Read
             </button>
@@ -260,7 +260,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
                 event.stopPropagation();
                 openArticle();
               }}
-              className="flex items-center gap-2 rounded-xl bg-accent-blue px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-accent-blue/20 transition-all hover:bg-accent-blue/90"
+              className="rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 transition-all duration-250 transform hover:scale-105 hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-lg hover:shadow-accent-blue/20"
             >
               Debate
               <ArrowRight size={13} />
