@@ -40,9 +40,9 @@ const config: Config = {
   				DEFAULT: "hsl(var(--destructive))",
   				foreground: "hsl(var(--destructive-foreground))"
   			},
-  			border: "hsl(var(--border))",
+  			border: "rgba(255,255,255,0.05)",
   			input: "hsl(var(--input))",
-  			ring: "hsl(var(--ring))",
+  			ring: "#C0392B",
   			chart: {
   				"1": "hsl(var(--chart-1))",
   				"2": "hsl(var(--chart-2))",
@@ -50,46 +50,45 @@ const config: Config = {
   				"4": "hsl(var(--chart-4))",
   				"5": "hsl(var(--chart-5))"
   			},
-  			navy: {
-  				primary: "#0B1F4B",
-  				secondary: "#0D2557"
-  			},
-  			saffron: "#FF6B00",
-  			gold: "#F5C518"
+  			"dark-black": "#080C14",
+  			"dark-slate": "#0F1520",
+  			"dark-charcoal": "#141C2B",
+  			"blood-red": "#C0392B",
+  			"dark-crimson": "#8B0000",
+  			"muted-saffron": "#D4820A",
+  			"off-white": "#E8E8E8",
+  			"grey-blue": "#6B7A99",
+  			"meta-blue": "#3D4F6B",
+  			"alert-gold": "#B8860B"
   		},
   		borderRadius: {
-  			lg: "var(--radius)",
-  			md: "calc(var(--radius) - 2px)",
-  			sm: "calc(var(--radius) - 4px)"
+  			lg: "0",
+  			md: "0",
+  			sm: "0"
   		},
   		fontFamily: {
+  			bebas: ["var(--font-bebas)", "sans-serif"],
   			editorial: ["var(--font-playfair)", "serif"],
-  			body: ["var(--font-dm-sans)", "sans-serif"],
-  			mono: ["var(--font-space-mono)", "monospace"]
+  			mono: ["var(--font-jetbrains)", "monospace"]
   		},
   		keyframes: {
   			"ticker": {
   				"0%": { transform: "translateX(0)" },
   				"100%": { transform: "translateX(-50%)" }
   			},
-  			"float": {
-  				"0%, 100%": { transform: "translateY(0)" },
-  				"50%": { transform: "translateY(-15px)" }
-  			},
-  			"rotate-slow": {
-  				"0%": { transform: "rotate(0deg)" },
-  				"100%": { transform: "rotate(360deg)" }
-  			},
-  			"fade-up": {
-  				"0%": { opacity: "0", transform: "translateY(20px)" },
+  			"fade-in-line": {
+  				"0%": { opacity: "0", transform: "translateY(10px)" },
   				"100%": { opacity: "1", transform: "translateY(0)" }
+  			},
+  			"blink": {
+  				"0%, 100%": { opacity: "1" },
+  				"50%": { opacity: "0" }
   			}
   		},
   		animation: {
-  			"ticker": "ticker 30s linear infinite",
-  			"float": "float 4s ease-in-out infinite",
-  			"rotate-slow": "rotate-slow 12s linear infinite",
-  			"fade-up": "fade-up 0.5s ease-out forwards"
+  			"ticker": "ticker 20s linear infinite",
+  			"fade-in-line": "fade-in-line 0.4s ease-out forwards",
+  			"blink": "blink 1s step-end infinite"
   		}
   	}
   },
