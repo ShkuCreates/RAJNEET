@@ -3,6 +3,7 @@ import { Sora, Inter } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner";
+import Script from "next/script";
 
 const sora = Sora({ 
   subsets: ["latin"],
@@ -28,6 +29,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sora.variable} ${inter.variable} dark`}>
+      <head>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4497767570737848"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className="min-h-screen bg-midnight font-body antialiased">
         <NextAuthProvider>
           {children}

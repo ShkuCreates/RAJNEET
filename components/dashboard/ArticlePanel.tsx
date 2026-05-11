@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Share2, MessageSquare, Landmark, BookOpen, Clock, MapPin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import DebateSection from "../news/DebateSection";
+import AdBanner from "@/components/ads/AdBanner";
 
 interface ArticlePanelProps {
   news: any;
@@ -206,6 +207,14 @@ export function ArticlePanel({ news, isOpen, onClose, currentUser }: ArticlePane
                     <Share2 size={16} className="text-accent-amber" />
                     Share
                   </button>
+                </div>
+
+                {/* Ad between article and debate */}
+                <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-white/[0.02] mt-8">
+                  <span className="absolute top-2 left-3 text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] z-10">
+                    Advertisement
+                  </span>
+                  <AdBanner slot="3892741056" format="rectangle" className="min-h-[250px] pt-6" />
                 </div>
 
                 {/* Debate Section */}

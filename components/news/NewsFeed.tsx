@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import NewsCard from "./NewsCard";
 import { SkeletonCard } from "../dashboard/SkeletonCard";
 import { Newspaper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdBanner from "@/components/ads/AdBanner";
 
 export default function NewsFeed({ initialNews, currentUser }: { initialNews: any[], currentUser: any }) {
   const [newsList, setNewsList] = useState(initialNews);
@@ -46,19 +47,45 @@ export default function NewsFeed({ initialNews, currentUser }: { initialNews: an
     );
   }
 
+  // Insert ad every 4 cards (after index 3, 7, 11...)
+  const AD_SLOT = "3892741056"; // Replace with your actual AdSense ad slot ID
+  const feedItems: React.ReactNode[] = [];
+
+  newsList.forEach((news, index) => {
+    feedItems.push(
+      <motion.div
+        key={news.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+      >
+        <NewsCard news={news} currentUser={currentUser} />
+      </motion.div>
+    );
+
+    // Insert a full-width ad after every 4th card
+    if ((index + 1) % 4 === 0 && index < newsList.length - 1) {
+      feedItems.push(
+        <div key={`ad-${index}`} className="col-span-1 md:col-span-2 my-2">
+          <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-white/[0.02]">
+            <span className="absolute top-2 left-3 text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] z-10">
+              Advertisement
+            </span>
+            <AdBanner
+              slot={AD_SLOT}
+              format="horizontal"
+              className="min-h-[90px] pt-6"
+            />
+          </div>
+        </div>
+      );
+    }
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <AnimatePresence mode="popLayout">
-        {newsList.map((news, index) => (
-          <motion.div
-            key={news.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <NewsCard news={news} currentUser={currentUser} />
-          </motion.div>
-        ))}
+        {feedItems}
       </AnimatePresence>
     </div>
   );
