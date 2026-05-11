@@ -5,6 +5,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+function isValidArticleBody(text: string): boolean {
+  if (!text) return false;
+  if (text.length < 800) return false; // Minimum 800 characters
+  if (text.split(' ').length < 150) return false; // Minimum 150 words
+  if (text.toLowerCase().startsWith('original news')) return false;
+  if (text.toLowerCase().startsWith('original:')) return false;
+  if (text.split('\n\n').length < 3) return false; // Minimum 3 paragraphs
+  return true;
+}
+
 interface SEOData {
   headline: string;
   summary: string;
@@ -76,26 +86,25 @@ export async function seoOptimize(article: SEOData) {
     `Original news: ${article.summary}\nHeadline: ${article.headline}\nState: ${article.state_name}`
   );
 
-  // STEP 4 — FULL ORIGINAL ARTICLE BODY (SEO-optimized, 700-900 words)
+  // STEP 4 — FULL ORIGINAL ARTICLE BODY (300-400 words with 4 paragraphs)
   const full_body = await callGemini(
-    `You are a senior political journalist at RAJNEET, India's civic engagement platform. Write a complete, ORIGINAL news article based on the information provided. 
+    `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
 
-RULES:
-- Write entirely in YOUR OWN WORDS. Do NOT copy the original text.
-- 700 to 900 words total
-- Structure it like a premium news article with HTML tags:
-  * Start with <p class="lead-para"><strong>[2-sentence engaging intro with primary keyword]</strong></p>
-  * Use <h2> for section headings (3-4 sections)
-  * Use <p> for body paragraphs (2-3 sentences each)
-  * Use <ul><li> for key facts or bullet points where relevant
-  * End with <div class="debate-hook"><p><strong>What does this mean for you?</strong> [1 sentence connecting to citizens] Share your stance in the debate below.</p></div>
-- Include primary keyword naturally in first paragraph and at least 2 more times
-- Include at least 2 focus keywords naturally
-- Write for an Indian audience; reference Indian context where relevant
-- Tone: factual, clear, slightly opinionated — like The Wire or Scroll but punchier
-- Do NOT use words: delve, crucial, realm, landscape, furthermore, moreover, it is worth noting, in conclusion
-- Return ONLY the HTML article content, nothing else`,
-    `Original news: ${article.summary}\nHeadline: ${article.headline}\nPrimary keyword: ${primary_keyword}\nFocus keywords: ${risingQueries.join(", ") || primary_keyword}\nCategory: ${article.category}\nState: ${article.state_name}`
+Write a DETAILED news article for this story. This is NOT a summary. This is a full article.
+
+STRICT REQUIREMENTS:
+- Minimum 300 words, maximum 400 words
+- Write exactly 4 paragraphs
+- Paragraph 1 (Lead): What happened, who was involved, when and where. Most important facts first. 4-5 sentences.
+- Paragraph 2 (Background): Context and background. Why did this happen. What led to this moment. 4-5 sentences.
+- Paragraph 3 (Impact): How does this affect Indian citizens directly. What changes for common people. What are experts or opposition saying. 4-5 sentences.
+- Paragraph 4 (Debate): What are the two sides of this issue. End with a question inviting readers to share their stance on RAJNEET.
+- Write in simple clear English that any Indian citizen can understand
+- Do NOT use: "delve", "crucial", "realm", "furthermore", "moreover", "it is worth noting", "in conclusion"
+- Do NOT start with "Original news:" or any wire service attribution
+- Do NOT copy text from the source
+- Return ONLY the article text with paragraph breaks. Nothing else.`,
+    `Headline: ${article.headline}\nCategory: ${article.category}\nRaw source content: ${article.summary}`
   );
 
   // STEP 5 — META DESCRIPTION

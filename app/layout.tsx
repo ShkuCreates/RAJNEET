@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   description: "India's Civic Tech Platform. Read real news, debate your stance, and hold power accountable.",
   icons: {
     icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },
+  manifest: '/manifest.json',
   openGraph: {
     title: "RAJNEET - Your Voice. Your Democracy.",
     description: "India's Civic Tech Platform. Read real news, debate your stance, and hold power accountable.",
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
     siteName: "RAJNEET",
     images: [
       {
-        url: "https://rajneet.co.in/images/rajneet-logo.png",
-        width: 1200,
-        height: 630,
+        url: "https://rajneet.co.in/favicon.ico",
+        width: 512,
+        height: 512,
         alt: "RAJNEET - India's Political Debate Platform",
       },
     ],

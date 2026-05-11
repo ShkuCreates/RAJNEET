@@ -93,7 +93,7 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     stripHtml(news.body || "") ||
     "Click to read full article.";
   const previewText =
-    previewSource.length > 120 ? `${previewSource.slice(0, 120).trim()}...` : previewSource;
+    previewSource.length > 180 ? `${previewSource.slice(0, 180).trim()}...` : previewSource;
   const ogFallbackUrl = `/api/og?title=${encodeURIComponent(news.seo_title || news.headline)}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
   const isGenericCover =
     typeof news.cover_image_url === "string" &&
