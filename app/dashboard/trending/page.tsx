@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import NewsFeed from "@/components/news/NewsFeed";
 import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar";
-import { FilterTabs } from "@/components/news/FilterTabs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
