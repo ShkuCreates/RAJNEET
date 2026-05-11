@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -43,12 +45,17 @@ const LIVE_NEWS_ITEMS = [
 ];
 
 export default function LandingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [newsPopups, setNewsPopups] = useState<{ id: number; text: string }[]>([]);
   const newsIndex = useRef(0);
 
   useEffect(() => {
     setMounted(true);
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
     
     // News popup logic
     const interval = setInterval(() => {
