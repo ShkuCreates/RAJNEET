@@ -196,7 +196,7 @@ export default function LandingPage() {
               className="flex flex-col space-y-8 text-left"
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-blue/10 rounded-full text-xs font-semibold text-accent-blue border border-accent-blue/20 w-fit">
-                🇮🇳 India&apos;s Political Debate Platform
+                🇮🇳 RAJNEET - India's Political Debate Platform
               </div>
               
               <div className="space-y-4">
