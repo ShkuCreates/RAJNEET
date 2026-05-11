@@ -54,7 +54,7 @@ export default function NewsFeed({ initialNews, currentUser }: { initialNews: an
   });
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:gap-8 md:grid-cols-2 xl:grid-cols-3">
       <AnimatePresence mode="popLayout">
         {feedItems}
       </AnimatePresence>

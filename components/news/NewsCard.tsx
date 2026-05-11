@@ -174,7 +174,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
         ) : null}
       </div>
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-accent-blue">
             <MapPin size={10} />

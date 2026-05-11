@@ -203,11 +203,11 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
           </div>
 
           {/* Center - Switcher - absolutely centered */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20">
             <div className="hidden rounded-[25px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
               <button
                 onClick={() => setSection("news")}
-                className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[20px] px-3 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
                   section === "news"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -217,7 +217,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
               </button>
               <button
                 onClick={() => setSection("article")}
-                className={`rounded-[20px] px-5 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[20px] px-3 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
                   section === "article"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -285,7 +285,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
                       <button
                         key={option}
                         onClick={() => goToCategory(option)}
-                        className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors ${
+                        className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
                           activeCategory === option
                             ? "border-[#3B82F6] bg-[rgba(59,130,246,0.08)] text-white"
                             : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
