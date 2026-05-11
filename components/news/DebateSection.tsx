@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { ThumbsUp, ThumbsDown, Flag, AlertTriangle, ShieldCheck } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Flag, AlertTriangle, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DebateSection({ newsId, currentUser }: { newsId: string; currentUser: any }) {
@@ -10,30 +10,23 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
   const [comment, setComment] = useState("");
   const [tag, setTag] = useState("OPINION");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [comments, setComments] = useState<any[]>([]);
 
-  // Mock comments for now
-  const [comments, setComments] = useState<any[]>([
-    {
-      id: "1",
-      user: { name: "Anil Sharma", role: "LAWYER", avatar_url: null },
-      stance: "FOR",
-      comment: "According to the recent supreme court ruling, this action is entirely legal and necessary.",
-      tag: "FACT",
-      upvotes: 12,
-      downvotes: 1,
-      created_at: new Date(Date.now() - 3600000),
-    },
-    {
-      id: "2",
-      user: { name: "Rahul Verma", role: "CITIZEN", avatar_url: null },
-      stance: "AGAINST",
-      comment: "This will only cause more problems for the common man.",
-      tag: "OPINION",
-      upvotes: 5,
-      downvotes: 8,
-      created_at: new Date(Date.now() - 7200000),
-    }
-  ]);
+  useEffect(() => {
+    const fetchOpinions = async () => {
+      try {
+        const res = await fetch(`/api/news/opinion?newsId=${newsId}`);
+        const data = await res.json();
+        setComments(data.opinions || []);
+      } catch (error) {
+        console.error("Failed to fetch opinions");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOpinions();
+  }, [newsId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,25 +37,27 @@ export default function DebateSection({ newsId, currentUser }: { newsId: string;
     if (!comment.trim()) return;
 
     setIsSubmitting(true);
-    // Here we would typically make an API call to save the opinion
-    setTimeout(() => {
-      setComments([
-        {
-          id: Date.now().toString(),
-          user: currentUser,
-          stance,
-          comment,
-          tag,
-          upvotes: 0,
-          downvotes: 0,
-          created_at: new Date(),
-        },
-        ...comments,
-      ]);
-      setComment("");
+    try {
+      const res = await fetch("/api/news/opinion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newsId, stance, comment, tag })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setComments([data.opinion, ...comments]);
+        setComment("");
+        setStance(null);
+        toast.success("Opinion posted successfully");
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      toast.error("Failed to post: " + error.message);
+    } finally {
       setIsSubmitting(false);
-      toast.success("Opinion posted successfully");
-    }, 500);
+    }
   };
 
   const getTagStyle = (t: string) => {

@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { uploadToCloudinary } from "@/lib/automation/cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // This is a cron job endpoint. In production, protect it with CRON_SECRET header.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret");
+  
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === "ADMIN";
 
-  if (process.env.NODE_ENV === "production" && secret !== process.env.CRON_SECRET) {
+  if (process.env.NODE_ENV === "production" && !isAdmin && secret !== process.env.CRON_SECRET) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

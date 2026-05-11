@@ -12,10 +12,26 @@ export default function AutomationLogsPage() {
     { id: 3, type: "FETCH", status: "ERROR", message: "NewsData API quota exceeded", time: "2024-05-11 10:00:00" },
   ]);
 
+  const [stats, setStats] = useState({ articles: 0, polls: 0, uptime: "99.9%" });
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) setStats(data);
+      });
+  }, []);
+
   const handleTriggerManual = async () => {
     try {
       setIsTriggering(true);
-      const res = await fetch("/api/cron/fetch-news?secret=MANUAL_TRIGGER"); // In dev, we can allow this
+      const res = await fetch("/api/cron/fetch-news?secret=MANUAL_TRIGGER"); 
+      
+      if (res.status === 401) {
+        toast.error("Unauthorized: Please Log Out and Log In again to refresh your Admin role.");
+        return;
+      }
+
       const data = await res.json();
       
       if (data.success) {
@@ -27,6 +43,11 @@ export default function AutomationLogsPage() {
           message: `Manual: Saved ${data.saved} articles`,
           time: new Date().toLocaleString()
         }, ...prev]);
+        
+        // Refresh stats
+        const sRes = await fetch("/api/admin/stats");
+        const sData = await sRes.json();
+        if (!sData.error) setStats(sData);
       } else {
         throw new Error(data.error);
       }
@@ -107,17 +128,17 @@ export default function AutomationLogsPage() {
           <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
             <Database className="text-accent-blue mb-4" size={24} />
             <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Articles</h5>
-            <p className="text-2xl font-heading font-black text-white">1,204</p>
+            <p className="text-2xl font-heading font-black text-white">{stats.articles.toLocaleString()}</p>
           </div>
           <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
             <BarChart2 className="text-accent-amber mb-4" size={24} />
             <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Polls</h5>
-            <p className="text-2xl font-heading font-black text-white">48</p>
+            <p className="text-2xl font-heading font-black text-white">{stats.polls.toLocaleString()}</p>
           </div>
           <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
             <Activity className="text-green-500 mb-4" size={24} />
-            <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Uptime</h5>
-            <p className="text-2xl font-heading font-black text-white">99.9%</p>
+            <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">System Status</h5>
+            <p className="text-2xl font-heading font-black text-white">{stats.uptime}</p>
           </div>
         </div>
       </div>
