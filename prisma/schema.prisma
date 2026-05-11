@@ -172,3 +172,9 @@ model Bill {
   rajya_sabha_votes Json?
   created_at        DateTime @default(now())
 }
+
+model TrendsCache {
+  keyword    String   @id
+  result     Json
+  fetched_at DateTime @default(now())
+}

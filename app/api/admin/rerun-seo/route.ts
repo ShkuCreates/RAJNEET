@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
+import { uploadToCloudinary } from "@/lib/automation/cloudinary";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -21,6 +22,12 @@ export async function GET(req: Request) {
       published_at: article.created_at.toISOString()
     });
 
+    // Re-upload to Cloudinary if image exists
+    let cover_image_url = article.cover_image_url;
+    if (article.cover_image_url) {
+      cover_image_url = await uploadToCloudinary(article.cover_image_url, `${seoData.slug}-cover`);
+    }
+
     const updated = await prisma.news.update({
       where: { id },
       data: {
@@ -34,6 +41,7 @@ export async function GET(req: Request) {
         primary_keyword: seoData.primary_keyword,
         is_trending: seoData.is_trending,
         priority: seoData.priority,
+        cover_image_url: cover_image_url || null,
         // Also update the visible body if it's high score
         body: seoData.seo_body || article.body
       }

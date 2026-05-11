@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
+import { uploadToCloudinary } from "@/lib/automation/cloudinary";
 
 // This is a cron job endpoint. In production, protect it with CRON_SECRET header.
 export async function GET(req: Request) {
@@ -60,6 +61,12 @@ export async function GET(req: Request) {
           published_at: new Date().toISOString()
         });
 
+        // 1. Upload cover image to Cloudinary
+        let cover_image_url = art.image_url;
+        if (art.image_url) {
+          cover_image_url = await uploadToCloudinary(art.image_url, `${seoData.slug}-cover`);
+        }
+
         const status = seoData.seo_score < 60 ? "DRAFT" : "PUBLISHED";
         
         const newArt = await prisma.news.create({
@@ -69,7 +76,7 @@ export async function GET(req: Request) {
             body: seoData.seo_body || art.description,
             category: art.category,
             source_url: art.link,
-            cover_image_url: art.image_url,
+            cover_image_url: cover_image_url,
             status: status,
             geo_level: "NATIONAL",
             state: "National",

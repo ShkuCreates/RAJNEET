@@ -6,6 +6,8 @@ import { MapPin, Share2, MessageSquare, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import DebateSection from "@/components/news/DebateSection";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await prisma.news.findUnique({
     where: { slug: params.slug }
