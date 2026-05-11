@@ -225,40 +225,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* SECTION 1 - NEWS TICKER (TOP) */}
-      <div className="bg-surface/90 backdrop-blur-md border-b border-white/5 py-2 relative z-[100] overflow-hidden mt-16">
-        <div className="flex items-center">
-          <div className="px-6 bg-surface border-r border-white/10 shrink-0 flex items-center gap-2 relative z-10">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-            <span className="text-xs font-bold text-white tracking-widest">LIVE</span>
-          </div>
-          <div className="flex animate-ticker whitespace-nowrap">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-12 px-6 items-center">
-                {tickerItems.length > 0 ? tickerItems.map((item, idx) => (
-                  <span key={idx} className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-white/20" /> {item.category} — {item.headline}
-                  </span>
-                )) : (
-                  <span className="text-sm font-medium text-white/90 uppercase tracking-tight flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-white/20" /> Loading live news...
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-          {/* Date and Time Display */}
-          <div className="ml-auto px-6 bg-surface border-l border-white/10 shrink-0 flex items-center gap-2 relative z-10">
-            <span className="text-sm font-bold text-white tracking-wider">
-              {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
-            </span>
-            <span className="text-sm font-bold text-accent-amber">
-              {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-        </div>
-      </div>
-
+      
       {/* SECTION 2 - HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center px-6 overflow-hidden">
         {/* Subtle Radial Glow */}
