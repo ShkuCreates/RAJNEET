@@ -200,11 +200,9 @@ export default function LandingPage() {
               </div>
               
               <div className="space-y-4">
-                <img 
-                  src="/images/rajneet-logo.png" 
-                  alt="RAJNEET Logo" 
-                  className="h-12 md:h-16 w-auto drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                />
+                <h1 className="text-6xl md:text-7xl font-heading font-bold text-accent-amber tracking-tight">
+                  RAJNEET
+                </h1>
                 <p className="text-4xl md:text-5xl font-heading font-bold text-white">
                   Your Voice. Your Democracy.
                 </p>
