@@ -75,6 +75,7 @@ export default async function DashboardLayout({
 
         {/* User Badge */}
         <div className="p-4 m-4 bg-[#0D1B3E]/40 border border-white/5 rounded-2xl backdrop-blur-md">
+          <div className="border-t border-white/10 mb-4" />
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full border-2 border-accent-blue/30 p-0.5 shrink-0 overflow-hidden">
               {user.avatar_url ? (
@@ -94,12 +95,15 @@ export default async function DashboardLayout({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] rounded-lg mb-4">
-            <MapPin size={12} className="text-gray-500" />
-            <p className="text-[10px] text-gray-400 font-medium truncate uppercase tracking-wider">{user.state || "India"}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] rounded-lg flex-1">
+              <MapPin size={12} className="text-gray-500" />
+              <p className="text-[10px] text-gray-400 font-medium truncate uppercase tracking-wider">{user.state || "India"}</p>
+            </div>
+            <div className="ml-2" title="Sign Out">
+              <LogoutButton />
+            </div>
           </div>
-
-          <SignOutModal />
         </div>
       </aside>
 

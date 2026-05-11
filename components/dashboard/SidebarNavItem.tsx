@@ -13,13 +13,13 @@ interface SidebarNavItemProps {
   comingSoon?: boolean;
 }
 
-export function SidebarNavItem({ 
-  href, 
-  icon, 
-  label, 
-  badge, 
+export function SidebarNavItem({
+  href,
+  icon,
+  label,
+  badge,
   badgeCount,
-  comingSoon 
+  comingSoon
 }: SidebarNavItemProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
@@ -32,12 +32,12 @@ export function SidebarNavItem({
   };
 
   return (
-    <Link 
-      href={href} 
+    <Link
+      href={href}
       onClick={handleClick}
       className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-        isActive 
-          ? "bg-accent-blue/15 text-white border-l-2 border-accent-blue" 
+        isActive
+          ? "bg-accent-blue/15 text-white border-l-2 border-accent-blue"
           : "text-gray-400 hover:text-white hover:bg-white/[0.03]"
       }`}
     >
@@ -59,7 +59,7 @@ export function SidebarNavItem({
       )}
 
       {comingSoon && (
-        <span className="text-[8px] font-black uppercase tracking-widest text-gray-600 group-hover:text-gray-400 transition-colors">
+        <span className="px-2 py-0.5 rounded-full bg-red-600 text-[11px] font-bold text-white animate-pulse" style={{ animationDuration: "2s" }}>
           SOON
         </span>
       )}

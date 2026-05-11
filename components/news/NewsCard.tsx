@@ -92,8 +92,12 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     stripHtml(news.summary || "") ||
     stripHtml(news.body || "") ||
     "Click to read full article.";
+  const previewWords = previewSource.split(" ");
   const previewText =
-    previewSource.length > 180 ? `${previewSource.slice(0, 180).trim()}...` : previewSource;
+    previewWords.length > 150
+      ? `${previewWords.slice(0, 150).join(" ")}...`
+      : previewSource;
+  const showContinueLink = previewWords.length > 150;
   const ogFallbackUrl = `/api/og?title=${encodeURIComponent(news.seo_title || news.headline)}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
   const isGenericCover =
     typeof news.cover_image_url === "string" &&
@@ -171,9 +175,18 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
             {news.headline}
           </h2>
 
-          <p className="text-sm text-gray-400 leading-relaxed line-clamp-3 mb-5">
+          <p className="text-[14px] text-gray-400 leading-[1.7] mb-3 font-normal">
             {previewText}
           </p>
+
+          {showContinueLink && (
+            <button
+              onClick={(e) => { e.stopPropagation(); openArticle(); }}
+              className="text-accent-blue text-sm font-semibold hover:text-accent-blue/80 transition-colors mb-5"
+            >
+              Continue reading →
+            </button>
+          )}
 
           {/* Stance Bar */}
           <div className="mb-5">
