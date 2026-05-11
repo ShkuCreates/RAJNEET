@@ -1,31 +1,24 @@
 import type { Metadata } from "next";
-import { Playfair_Display, JetBrains_Mono, Bebas_Neue } from "next/font/google";
+import { Sora, Inter } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner";
 
-const playfair = Playfair_Display({ 
+const sora = Sora({ 
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["700", "800", "900"],
-  style: ["italic", "normal"]
+  variable: "--font-sora",
+  weight: ["400", "600", "700", "800"]
 });
 
-const jetbrains = JetBrains_Mono({ 
+const inter = Inter({ 
   subsets: ["latin"],
-  variable: "--font-jetbrains",
-  weight: ["400", "500", "700"]
-});
-
-const bebas = Bebas_Neue({ 
-  subsets: ["latin"],
-  variable: "--font-bebas",
-  weight: ["400"]
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"]
 });
 
 export const metadata: Metadata = {
-  title: "RAJNEET - Political News & Debate",
-  description: "India's Structured Political Debate Platform. Protected under Article 19(1)(a) of the Indian Constitution.",
+  title: "RAJNEET - Your Voice. Your Democracy.",
+  description: "India's Civic Tech Platform. Read real news, debate your stance, and hold power accountable.",
 };
 
 export default function RootLayout({
@@ -34,10 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${jetbrains.variable} ${bebas.variable} dark`}>
-      <body className="min-h-screen bg-dark-black font-mono antialiased">
-        <div className="noise-overlay" />
-        <div className="scanlines" />
+    <html lang="en" className={`${sora.variable} ${inter.variable} dark`}>
+      <body className="min-h-screen bg-midnight font-body antialiased">
         <NextAuthProvider>
           {children}
           <Toaster richColors position="top-center" theme="dark" />
