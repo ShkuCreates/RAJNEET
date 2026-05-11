@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role || "CITIZEN";
         token.state = (user as any).state || null;
-        token.district = (user as any).district || null;
+        token.onboarding_complete = (user as any).onboarding_complete || false;
         token.avatar_url = (user as any).avatar_url || user.image;
         token.username = (user as any).username || null;
       }
@@ -29,7 +29,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.state = token.state as string | null;
-        session.user.district = token.district as string | null;
+        session.user.onboarding_complete = token.onboarding_complete as boolean;
         session.user.avatar_url = token.avatar_url as string | null;
         session.user.username = token.username as string | null;
       }

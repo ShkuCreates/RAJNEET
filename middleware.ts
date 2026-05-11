@@ -24,15 +24,15 @@ export default withAuth(
       );
     }
     
-    // If authenticated but missing state/district, force onboarding (except for onboarding itself)
+    // If authenticated but missing onboarding_complete, force onboarding (except for onboarding itself)
     if (isAuth) {
-      const hasLocation = token.state && token.district;
-      const isOnboarding = req.nextUrl.pathname.startsWith("/onboarding");
+      const isOnboardingComplete = token.onboarding_complete;
+      const isOnboardingPage = req.nextUrl.pathname.startsWith("/onboarding");
       
-      if (!hasLocation && !isOnboarding) {
+      if (!isOnboardingComplete && !isOnboardingPage) {
         return NextResponse.redirect(new URL("/onboarding", req.url));
       }
-      if (hasLocation && isOnboarding) {
+      if (isOnboardingComplete && isOnboardingPage) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
 
