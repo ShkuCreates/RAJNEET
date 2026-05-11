@@ -124,8 +124,8 @@ export async function GET(req: Request) {
     }
 
     const fetchedArticles = data.results;
-    // Limit to 15 articles per run since Groq can handle it
-    const articlesToProcess = fetchedArticles.slice(0, 15);
+    // Limit to 15 articles per run// Process max 5 articles at once to avoid Groq limits
+    const articlesToProcess = fetchedArticles.slice(0, 5);
     const savedArticles = [];
     const skipped = [];
 
@@ -185,18 +185,18 @@ Raw source content: ${rawSummary}`;
 
         const newArt = await prisma.news.create({
           data: {
-            headline: art.title,
+            headline: art.title?.trim() || '',
             // Use Gemini's clean 2-3 sentence summary (our own words)
             summary: seoData.clean_summary || rawSummary.substring(0, 200),
-            // Use generated body
-            body: seo_body,
+            // Use generated body (800-1000 words)
+            body: seo_body || rawSummary,
             category,
             source_url: art.link,
             cover_image_url,
             status,
             geo_level: "NATIONAL",
             state: "National",
-            posted_by: null,
+            posted_by: undefined,
             
             // SEO Fields
             seo_title: seoData.seo_title,
