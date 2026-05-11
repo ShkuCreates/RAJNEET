@@ -164,7 +164,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 right-2 md:right-6 z-[99] bg-surface/95 backdrop-blur-md border border-accent-amber/30 rounded-xl shadow-2xl p-3 md:p-5 max-w-[280px] md:max-w-sm"
+            className="fixed bottom-4 left-4 right-4 md:top-20 md:left-auto md:right-6 md:bottom-auto z-[99] bg-surface/95 backdrop-blur-md border border-accent-amber/30 rounded-xl shadow-2xl p-3 md:p-5 max-w-[280px] md:max-w-sm"
           >
             <div className="mb-3">
               <h3 className="text-sm md:text-lg font-bold text-white">Meet the Creators</h3>
