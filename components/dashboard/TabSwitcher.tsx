@@ -28,8 +28,10 @@ export function TabSwitcher({ onTabChange, defaultTab = "news", articleCount = 0
               : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Newspaper size={18} />
-          <span>NEWS</span>
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          </div>
+          <span>LIVE NEWS</span>
           <span className="ml-1 px-2 py-0.5 rounded-full bg-accent-blue/20 text-[10px] font-bold">
             {articleCount} today
           </span>

@@ -57,6 +57,11 @@ model User {
   onboarding_complete Boolean   @default(false)
   bio                 String?   @db.Text
   username            String?   @unique
+  reputation_score    Int       @default(100)
+  reputation_tier     String    @default("Citizen") // Citizen, Active Citizen, Voice of the People, Community Leader, Political Analyst, RAJNEET Legend
+  upi_id              String?
+  reading_streak      Int       @default(0)
+  last_read_date      DateTime?
   created_at          DateTime  @default(now())
 
   accounts   Account[]
@@ -69,6 +74,10 @@ model User {
   newsUpvotes NewsUpvote[]
   pageViews   PageView[]
   articles   Article[]
+  reputationEvents ReputationEvent[]
+  debateParticipants DebateParticipant[]
+  juryVotes JuryVote[]
+  debateNotificationSubscriber DebateNotificationSubscriber[]
 }
 
 model News {
@@ -107,16 +116,23 @@ model News {
 }
 
 model Opinion {
-  id         String   @id @default(cuid())
-  news_id    String
-  user_id    String
-  stance     String   // FOR, AGAINST, NEUTRAL
-  comment    String   @db.Text
-  tag        String   // FACT, OPINION, ALLEGATION, SATIRE
-  upvotes    Int      @default(0)
-  downvotes  Int      @default(0)
-  parent_id  String?
-  created_at DateTime @default(now())
+  id               String   @id @default(cuid())
+  news_id          String
+  user_id          String
+  username         String?
+  stance           String   // FOR, AGAINST, NEUTRAL
+  comment          String   @db.Text
+  tag              String   // FACT, OPINION, ALLEGATION, SATIRE
+  like_count       Int      @default(0)
+  upvotes          Int      @default(0)
+  downvotes        Int      @default(0)
+  insightful_count Int      @default(0)
+  biased_count     Int      @default(0)
+  misleading_count Int      @default(0)
+  parent_id        String?
+  hashtags         String[]
+  is_fact_checked  Boolean  @default(false)
+  created_at       DateTime @default(now())
 
   news       News      @relation(fields: [news_id], references: [id], onDelete: Cascade)
   user       User      @relation(fields: [user_id], references: [id])
@@ -234,4 +250,93 @@ model Article {
   @@index([status])
   @@index([author_username])
   @@index([slug])
+}
+
+model ReputationEvent {
+  id            String   @id @default(cuid())
+  user_id       String
+  event_type    String
+  points_change Int
+  reference_id  String?
+  created_at    DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([event_type])
+}
+
+model Debate {
+  id               String   @id @default(cuid())
+  topic            String
+  description      String?  @db.Text
+  created_by       String
+  status           String   @default("upcoming") // upcoming, live, completed
+  scheduled_at     DateTime?
+  ends_at          DateTime?
+  winner_side      String?
+  participant_count Int      @default(0)
+  created_at       DateTime @default(now())
+
+  arguments DebateArgument[]
+  participants DebateParticipant[]
+  juryVotes JuryVote[]
+}
+
+model DebateArgument {
+  id          String   @id @default(cuid())
+  debate_id   String
+  user_id     String
+  username    String
+  side        String   // FOR, AGAINST
+  content     String   @db.Text
+  like_count  Int      @default(0)
+  jury_score  Decimal  @default(0)
+  created_at  DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  juryVotes JuryVote[]
+}
+
+model DebateParticipant {
+  id        String   @id @default(cuid())
+  debate_id String
+  user_id   String
+  side      String   // FOR, AGAINST
+  joined_at DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, user_id])
+}
+
+model JuryVote {
+  id            String   @id @default(cuid())
+  debate_id     String
+  juror_id      String
+  argument_id   String
+  logic_score   Int?
+  evidence_score Int?
+  clarity_score Int?
+  created_at    DateTime @default(now())
+
+  debate   Debate         @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  argument DebateArgument @relation(fields: [argument_id], references: [id], onDelete: Cascade)
+  juror    User           @relation(fields: [juror_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, juror_id, argument_id])
+}
+
+model DebateNotificationSubscriber {
+  id                 String   @id @default(cuid())
+  user_id            String
+  email              String
+  topic_preferences  String[]
+  is_active          Boolean  @default(true)
+  subscribed_at      DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id])
 }
