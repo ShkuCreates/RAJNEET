@@ -180,28 +180,36 @@ export default function LandingPage() {
               Read real political news. Debate your stance. Hold power accountable.
             </p>
             
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col items-center justify-center gap-4 pt-4">
               {status === "authenticated" ? (
-                <Link
-                  href="/dashboard"
-                  className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
-                >
-                  Start Reading
-                  <ArrowRight size={20} />
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
+                  >
+                    Go to Your Feed
+                    <ArrowRight size={20} />
+                  </Link>
+                </>
               ) : (
-                <Link
-                  href="/login"
-                  className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)]"
-                >
-                  <GoogleIcon />
-                  Get Started with Google
-                </Link>
+                <>
+                  <Link
+                    href="/login"
+                    className="inline-flex h-14 items-center justify-center rounded-full bg-accent-blue px-10 text-base font-bold text-white transition-all hover:bg-accent-blue/90 hover:scale-[1.03] shadow-[0_0_20px_rgba(59,130,246,0.4)] gap-3"
+                  >
+                    <GoogleIcon />
+                    Login with Google to Continue Reading
+                  </Link>
+                  <p className="text-sm text-muted-foreground -mt-2">
+                    Free forever. No credit card. Protected under Article 19(1)(a).
+                  </p>
+                </>
               )}
               <button className="inline-flex h-14 items-center justify-center rounded-full border border-white/20 bg-transparent px-10 text-base font-bold text-white transition-all hover:bg-white/5 hover:scale-[1.03]">
                 See How It Works
               </button>
             </div>
+
             
             <div className="flex flex-wrap items-center justify-center gap-6 pt-12">
               {[
@@ -247,8 +255,28 @@ export default function LandingPage() {
                   />
                 </div>
               </div>
+
+              {/* Login gate overlay (only when logged out) */}
+              {status !== "authenticated" && (
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-midnight/35 backdrop-blur-md border-t border-white/10 flex items-center">
+                  <div className="px-6 py-6">
+                    <p className="text-sm font-bold text-white">
+                      Login with Google to read full articles and join the debate.
+                    </p>
+                    <div className="mt-3">
+                      <Link
+                        href="/login"
+                        className="inline-flex h-10 items-center justify-center rounded-full bg-accent-blue px-5 text-xs font-black text-white uppercase tracking-widest hover:bg-accent-blue/90 transition-all"
+                      >
+                        Login
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
+
         </div>
       </section>
 
