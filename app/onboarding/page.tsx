@@ -218,7 +218,7 @@ export default function OnboardingPage() {
             </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse" />
-              <p className="text-sm text-gray-400 font-medium">Takes less than a minute</p>
+              <p className="text-sm text-white/80 font-medium">Takes less than a minute</p>
             </div>
           </motion.div>
 
@@ -226,7 +226,7 @@ export default function OnboardingPage() {
             {/* Row 1: Name & Username */}
             <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2.5">
-                <label className="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                <label className="text-sm font-semibold text-white/90 flex items-center gap-2">
                   Full Name <span className="text-red-500/80">*</span>
                 </label>
                 <div className="relative group">
@@ -234,14 +234,14 @@ export default function OnboardingPage() {
                   <input 
                     {...register("name")}
                     placeholder="Your full name"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-12 pr-4 text-white placeholder:text-[#4B5563] focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-12 pr-4 text-white placeholder:text-gray-500 focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
                   />
                 </div>
                 {errors.name && <p className="text-xs text-red-400 font-medium ml-1">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-2.5">
-                <label className="text-sm font-semibold text-gray-300">
+                <label className="text-sm font-semibold text-white/90">
                   Username <span className="text-red-500/80">*</span>
                 </label>
                 <div className="relative group">
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
                   <input 
                     {...register("username")}
                     placeholder="username"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-10 pr-10 text-white placeholder:text-[#4B5563] focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-10 pr-10 text-white placeholder:text-gray-500 focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     {usernameStatus === "checking" && <Loader2 size={16} className="animate-spin text-accent-blue" />}
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
 
             {/* Category Grid */}
             <motion.div variants={itemVariants} className="space-y-5">
-              <label className="text-sm font-semibold text-gray-300">
+              <label className="text-sm font-semibold text-white/90">
                 Category <span className="text-red-500/80">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
                       {cat.icon}
                     </span>
                     <span className={`text-[10px] font-bold uppercase tracking-widest text-center transition-colors ${
-                      watchCategory === cat.id ? "text-white" : "text-gray-500"
+                      watchCategory === cat.id ? "text-white" : "text-white/40"
                     }`}>
                       {cat.label}
                     </span>
@@ -305,7 +305,7 @@ export default function OnboardingPage() {
             {/* Row 2: State & Mobile */}
             <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2.5 relative">
-                <label className="text-sm font-semibold text-gray-300">
+                <label className="text-sm font-semibold text-white/90">
                   State <span className="text-red-500/80">*</span>
                 </label>
                 <div className="relative group">
@@ -319,7 +319,7 @@ export default function OnboardingPage() {
                       if (!isStateOpen) setIsStateOpen(true);
                     }}
                     onFocus={() => setIsStateOpen(true)}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-12 pr-10 text-white placeholder:text-[#4B5563] focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-12 pr-10 text-white placeholder:text-gray-500 focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
                   />
                   <ChevronDown size={18} className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition-transform ${isStateOpen ? "rotate-180" : ""}`} />
                   
@@ -362,8 +362,8 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-2.5">
-                <label className="text-sm font-semibold text-gray-300">
-                  Mobile Number <span className="text-xs text-gray-500 ml-1 font-normal">(Optional)</span>
+                <label className="text-sm font-semibold text-white/90">
+                  Mobile Number <span className="text-xs text-white/40 ml-1 font-normal">(Optional)</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pr-3 border-r border-white/10 h-1/2">
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                     {...register("mobile")}
                     placeholder="10-digit mobile number"
                     maxLength={10}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-20 pr-4 text-white placeholder:text-[#4B5563] focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[10px] py-3.5 pl-20 pr-4 text-white placeholder:text-gray-500 focus:border-accent-blue focus:ring-[3px] focus:ring-accent-blue/15 transition-all outline-none"
                   />
                 </div>
                 {errors.mobile && <p className="text-xs text-red-400 font-medium ml-1">{errors.mobile.message}</p>}
@@ -408,7 +408,7 @@ export default function OnboardingPage() {
               </button>
               
               <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2.5 px-6 py-2.5 bg-accent-blue/[0.06] border border-accent-blue/20 rounded-full text-[11px] text-gray-300 uppercase tracking-[0.05em] font-bold">
+                <div className="flex items-center gap-2.5 px-6 py-2.5 bg-accent-blue/[0.06] border border-accent-blue/20 rounded-full text-[11px] text-white/90 uppercase tracking-[0.05em] font-bold">
                   <Shield size={14} className="text-accent-blue" />
                   Your data is protected under DPDP Act 2023. We never sell your information.
                 </div>
