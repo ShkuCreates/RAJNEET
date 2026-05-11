@@ -56,7 +56,9 @@ export default function LandingPage() {
     if (status === "authenticated") {
       router.push("/dashboard");
     }
-    
+  }, [status, router]);
+
+  useEffect(() => {
     // News popup logic
     const interval = setInterval(() => {
       const id = Date.now();
