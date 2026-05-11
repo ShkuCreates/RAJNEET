@@ -48,6 +48,7 @@ model User {
   email               String?   @unique
   emailVerified       DateTime?
   image               String?
+  opinionLikes        OpinionLike[]
   avatar_url          String?
   role                String    @default("CITIZEN") // CITIZEN, ADMIN
   state               String?
@@ -117,27 +118,39 @@ model News {
 
 model Opinion {
   id               String   @id @default(cuid())
-  news_id          String
-  user_id          String
+  newsId          String
+  userId          String
   username         String?
   stance           String   // FOR, AGAINST, NEUTRAL
   comment          String   @db.Text
   tag              String   // FACT, OPINION, ALLEGATION, SATIRE
-  like_count       Int      @default(0)
+  likeCount       Int      @default(0)
   upvotes          Int      @default(0)
   downvotes        Int      @default(0)
-  insightful_count Int      @default(0)
-  biased_count     Int      @default(0)
-  misleading_count Int      @default(0)
-  parent_id        String?
+  insightfulCount Int      @default(0)
+  biasedCount     Int      @default(0)
+  misleadingCount Int      @default(0)
+  parentId        String?
   hashtags         String[]
-  is_fact_checked  Boolean  @default(false)
-  created_at       DateTime @default(now())
+  isFactChecked  Boolean  @default(false)
+  createdAt       DateTime @default(now())
 
-  news       News      @relation(fields: [news_id], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [user_id], references: [id])
-  parent     Opinion?  @relation("Thread", fields: [parent_id], references: [id])
+  news       News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id])
+  parent     Opinion?  @relation("Thread", fields: [parentId], references: [id])
   replies    Opinion[] @relation("Thread")
+  likes       OpinionLike[]
+}
+
+model OpinionLike {
+  id        String   @id @default(cuid())
+  userId    String
+  opinionId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  opinion   Opinion  @relation(fields: [opinionId], references: [id])
+
+  @@unique([userId, opinionId])
 }
 
 model Poll {
