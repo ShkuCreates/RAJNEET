@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
-import { uploadToCloudinary } from "@/lib/automation/cloudinary";
+import { generateBrandedCoverImage } from "@/lib/automation/cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// This is a cron job endpoint. In production, protect it with CRON_SECRET header.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret");
@@ -18,10 +17,10 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log("Fetching real news from NewsData API...");
+    console.log("Fetching news from NewsData API...");
     
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en`
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=10`
     );
     const data = await response.json();
     
@@ -31,45 +30,58 @@ export async function GET(req: Request) {
 
     const fetchedArticles = data.results;
     const savedArticles = [];
+    const skipped = [];
 
     for (const art of fetchedArticles) {
-      // Check if article already exists
+      // Skip articles without a title
+      if (!art.title) { skipped.push("no-title"); continue; }
+
+      // Check duplicate
       const existing = await prisma.news.findFirst({
         where: { source_url: art.link }
       });
+      if (existing) { skipped.push(art.title); continue; }
 
-      if (!existing) {
-        // Enforce SEO Optimization step
+      try {
+        const rawSummary = art.description || art.content || art.title;
+
+        // Run the full SEO + AI content pipeline
         const seoData = await seoOptimize({
           headline: art.title,
-          summary: art.description || art.content || art.title,
-          category: "POLITICAL", // Default to political for this fetch
-          state_name: "National", 
-          cover_image_url: art.image_url,
+          summary: rawSummary,
+          category: "POLITICAL",
+          state_name: "National",
+          cover_image_url: undefined, // Don't pass original image
           published_at: art.pubDate || new Date().toISOString()
         });
 
-        // 1. Upload cover image to Cloudinary
-        let cover_image_url = art.image_url;
-        if (art.image_url) {
-          cover_image_url = await uploadToCloudinary(art.image_url, `${seoData.slug}-cover`);
-        }
+        // Generate a branded RAJNEET cover image (no copyright issues)
+        const cover_image_url = await generateBrandedCoverImage(
+          art.title,
+          Array.isArray(art.category) ? art.category[0] : (art.category || "POLITICAL"),
+          seoData.slug
+        );
 
-        const status = seoData.seo_score < 60 ? "DRAFT" : "PUBLISHED";
-        const description = art.description || art.content || art.title || "";
-        
+        const category = Array.isArray(art.category)
+          ? art.category[0].toUpperCase()
+          : (art.category?.toUpperCase() || "POLITICAL");
+
+        const status = seoData.seo_score < 50 ? "DRAFT" : "PUBLISHED";
+
         const newArt = await prisma.news.create({
           data: {
             headline: art.title,
-            summary: description.substring(0, 200) + "...",
-            body: seoData.seo_body || description,
-            category: Array.isArray(art.category) ? art.category[0].toUpperCase() : (art.category?.toUpperCase() || "POLITICAL"),
+            // Use Gemini's clean 2-3 sentence summary (our own words)
+            summary: seoData.clean_summary || rawSummary.substring(0, 200),
+            // Use Gemini's full 700-900 word original article
+            body: seoData.seo_body,
+            category,
             source_url: art.link,
-            cover_image_url: cover_image_url,
-            status: status,
+            cover_image_url,
+            status,
             geo_level: "NATIONAL",
             state: "National",
-            posted_by: session?.user?.id || "ADMIN_SYSTEM", 
+            posted_by: session?.user?.id || "ADMIN_SYSTEM",
             
             // SEO Fields
             seo_title: seoData.seo_title,
@@ -85,30 +97,25 @@ export async function GET(req: Request) {
           }
         });
         savedArticles.push(newArt);
+        console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
+      } catch (articleError: any) {
+        console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
+        // Continue with next article
       }
     }
 
-    // 2. Auto Poll Generation Logic
-    // Check total articles in last 24h
+    // Auto Poll Generation (every 10 articles)
     const count24h = await prisma.news.count({
-      where: {
-        created_at: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-        }
-      }
+      where: { created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
     });
-
-    if (count24h > 0 && count24h % 10 === 0) {
-      console.log("Triggering auto-poll generation...");
-      // Logic to call Claude API and generate a poll
-      // await generateAutoPoll(mockArticles.map(a => a.title));
-    }
 
     return NextResponse.json({ 
       success: true, 
-      fetched: fetchedArticles.length, 
+      fetched: fetchedArticles.length,
       saved: savedArticles.length,
-      triggered_poll: count24h % 10 === 0
+      skipped: skipped.length,
+      published: savedArticles.filter(a => a.status === "PUBLISHED").length,
+      draft: savedArticles.filter(a => a.status === "DRAFT").length,
     });
   } catch (error: any) {
     console.error("Cron error:", error);
