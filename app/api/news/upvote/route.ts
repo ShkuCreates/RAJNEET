@@ -15,10 +15,8 @@ export async function POST(req: Request) {
     // Check if already upvoted
     const existing = await prisma.newsUpvote.findUnique({
       where: {
-        news_id_user_id: {
-          news_id: newsId,
-          user_id: session.user.id
-        }
+        news_id: newsId,
+        user_id: session.user.id
       }
     });
 

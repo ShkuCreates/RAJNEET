@@ -16,8 +16,8 @@ interface Opinion {
   }
   stance: string
   content: string
-  likeCount: number
-  createdAt: string
+  like_count: number
+  created_at: string
   replies?: Opinion[]
 }
 
