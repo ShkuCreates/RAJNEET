@@ -83,6 +83,18 @@ model News {
   posted_by       String
   created_at      DateTime @default(now())
 
+  // SEO Fields
+  seo_title       String?
+  meta_description String?
+  slug            String?  @unique
+  focus_keywords  String[]
+  schema_markup   String?  @db.Text
+  seo_body        String?  @db.Text
+  seo_score       Int      @default(0)
+  primary_keyword String?
+  is_trending     Boolean  @default(false)
+  priority        String   @default("normal") // normal, high
+
   author     User       @relation(fields: [posted_by], references: [id])
   opinions   Opinion[]
   polls      Poll[]

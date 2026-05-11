@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { seoOptimize } from "@/lib/automation/seoOptimize";
 
 // This is a cron job endpoint. In production, protect it with CRON_SECRET header.
 export async function GET(req: Request) {
@@ -49,20 +50,42 @@ export async function GET(req: Request) {
       });
 
       if (!existing) {
-        // AI Summarization would happen here
-        // const summary = await generateAISummary(art.title, art.description);
+        // Enforce SEO Optimization step
+        const seoData = await seoOptimize({
+          headline: art.title,
+          summary: art.description,
+          category: art.category,
+          state_name: "National", // Default for now
+          cover_image_url: art.image_url,
+          published_at: new Date().toISOString()
+        });
+
+        const status = seoData.seo_score < 60 ? "DRAFT" : "PUBLISHED";
         
         const newArt = await prisma.news.create({
           data: {
             headline: art.title,
             summary: art.description.substring(0, 200) + "...",
-            body: art.description + "\n\nFull story continues at the source link.",
+            body: seoData.seo_body || art.description,
             category: art.category,
             source_url: art.link,
             cover_image_url: art.image_url,
-            status: "PUBLISHED",
+            status: status,
             geo_level: "NATIONAL",
-            state: "National"
+            state: "National",
+            posted_by: "ADMIN_SYSTEM", // Placeholder for system user
+            
+            // SEO Fields
+            seo_title: seoData.seo_title,
+            meta_description: seoData.meta_description,
+            slug: seoData.slug,
+            focus_keywords: seoData.focus_keywords,
+            schema_markup: seoData.schema_markup,
+            seo_body: seoData.seo_body,
+            seo_score: seoData.seo_score,
+            primary_keyword: seoData.primary_keyword,
+            is_trending: seoData.is_trending,
+            priority: seoData.priority
           }
         });
         savedArticles.push(newArt);
