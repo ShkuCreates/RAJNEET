@@ -44,6 +44,13 @@ export default function NewsFeed({ initialNews, currentUser }: { initialNews: an
         </div>
       );
     }
+    
+    // Add empty divs to maintain grid alignment after ads
+    if ((index + 1) % 4 === 0 && index < newsList.length - 1) {
+      feedItems.push(
+        <div key={`spacer-after-ad-${index}`} className="col-span-1 my-2 md:col-span-2 xl:col-span-3 h-0" />
+      );
+    }
   });
 
   return (

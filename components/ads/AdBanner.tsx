@@ -31,11 +31,11 @@ export default function AdBanner({
   }, []);
 
   return (
-    <div className={`ad-container overflow-hidden ${className}`} aria-label="Advertisement">
+    <div className={`ad-container overflow-hidden flex items-center justify-center ${className}`} aria-label="Advertisement">
       <ins
         ref={adRef}
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "block", textAlign: "center" }}
         data-ad-client="ca-pub-4497767570737848"
         data-ad-slot={slot}
         data-ad-format={format}
