@@ -140,61 +140,61 @@ export default function DashboardHomeClient({
         </div>
       </div>
     );
+  } else {
+    return (
+      <div className="flex flex-col gap-8">
+        {/* Left Side - Filter & News */}
+        <div className="flex-1">
+          {/* Filter Info */}
+          {selectedCategory ? (
+            <div className="mb-6 rounded-[32px] border border-white/10 bg-[#111827] px-8 py-4 text-center shadow-2xl">
+              <p className="text-lg font-semibold text-white mb-2">
+                Showing: <span className="font-semibold">{selectedCategory}</span>
+              </p>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
+              >
+                <X size={16} />
+                Clear filter
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex min-h-[320px] items-center justify-center rounded-[32px] border border-white/10 bg-[#111827]">
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <Loader2 size={18} className="animate-spin" />
+                Loading latest news...
+              </div>
+            </div>
+          ) : news.length > 0 ? (
+            <NewsFeed initialNews={news} currentUser={currentUser} />
+          ) : (
+            <div className="rounded-[32px] border border-white/10 bg-[#111827] px-8 py-16 text-center shadow-2xl">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-blue/10">
+                <Newspaper className="text-accent-blue" size={30} />
+              </div>
+              <h2 className="mb-3 text-2xl font-semibold text-white">
+                No articles available for this filter yet.
+              </h2>
+              <p className="mb-2 text-gray-400">
+                Our AI engine fetches new articles every 30 minutes.
+              </p>
+              <p className="text-sm text-gray-500">
+                Last fetched: {lastFetchedLabel || "Not available yet"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side - Live News Tracker */}
+        <div className="w-80">
+          <LiveNewsTracker />
+        </div>
+      </div>
+    );
   }
-
-  return (
-    <div className="flex flex-col gap-8">
-      {/* Left Side - Filter & News */}
-      <div className="flex-1">
-        {/* Filter Info */}
-        {selectedCategory && (
-          <div className="mb-6 rounded-[32px] border border-white/10 bg-[#111827] px-8 py-4 text-center shadow-2xl">
-            <p className="text-lg font-semibold text-white mb-2">
-              Showing: <span className="font-semibold">{selectedCategory}</span>
-            </p>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
-            >
-              <X size={16} />
-              Clear filter
-            </Link>
-          </div>
-        ) : null}
-
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex min-h-[320px] items-center justify-center rounded-[32px] border border-white/10 bg-[#111827]">
-            <div className="flex items-center gap-3 text-sm text-gray-400">
-              <Loader2 size={18} className="animate-spin" />
-              Loading latest news...
-            </div>
-          </div>
-        ) : news.length > 0 ? (
-          <NewsFeed initialNews={news} currentUser={currentUser} />
-        ) : (
-          <div className="rounded-[32px] border border-white/10 bg-[#111827] px-8 py-16 text-center shadow-2xl">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-blue/10">
-              <Newspaper className="text-accent-blue" size={30} />
-            </div>
-            <h2 className="mb-3 text-2xl font-semibold text-white">
-              No articles available for this filter yet.
-            </h2>
-            <p className="mb-2 text-gray-400">
-              Our AI engine fetches new articles every 30 minutes.
-            </p>
-            <p className="text-sm text-gray-500">
-              Last fetched: {lastFetchedLabel || "Not available yet"}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Right Side - Live News Tracker */}
-      <div className="w-80">
-        <LiveNewsTracker />
-      </div>
-    </div>
-  );
 }
-}
+
