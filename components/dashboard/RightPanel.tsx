@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, BarChart2, Landmark, Flame, TrendingUp, ChevronRight, Activity, Loader2, Plus, MessageCircle } from "lucide-react";
+import { MapPin, BarChart2, Landmark, Flame, TrendingUp, ChevronRight, Activity, Loader2, Plus, MessageCircle, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -71,6 +71,41 @@ export function RightPanel({ user, activeTab = "news", onOpenSubmitModal }: Righ
       <div className="space-y-10">
         {activeTab === "news" ? (
           <>
+            {/* Reputation Leaderboard - News Tab */}
+            <section>
+              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2 mb-6">
+                <Trophy size={14} className="text-yellow-500" />
+                Top Reputation This Week
+              </h3>
+              
+              <div className="space-y-3">
+                {[
+                  { rank: 1, username: "debate_master", score: 3450, tier: "Political Analyst" },
+                  { rank: 2, username: "political_wiz", score: 3100, tier: "Community Leader" },
+                  { rank: 3, username: "logic_king", score: 2850, tier: "Community Leader" },
+                  { rank: 4, username: "policy_expert", score: 2600, tier: "Voice of the People" },
+                  { rank: 5, username: "civic_mind", score: 2350, tier: "Voice of the People" },
+                ].map((user) => (
+                  <div key={user.rank} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/5 rounded-xl">
+                    <span className={`text-xs font-mono font-bold min-w-[20px] ${
+                      user.rank === 1 ? "text-yellow-500" :
+                      user.rank === 2 ? "text-gray-400" :
+                      user.rank === 3 ? "text-amber-700" :
+                      "text-gray-500"
+                    }`}>{user.rank}</span>
+                    <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue text-[10px] font-bold">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[11px] font-bold text-white">@{user.username}</p>
+                      <p className="text-[9px] text-gray-500">{user.tier}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-accent-amber">{user.score}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             {/* Trending Section - News Tab */}
             <section>
               <div className="flex items-center justify-between mb-6">
