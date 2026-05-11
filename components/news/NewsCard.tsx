@@ -1,167 +1,146 @@
+"use client";
+
 import { useState } from "react";
-import { MessageSquare, Share2, ChevronDown, ChevronUp, MapPin, Landmark } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import DebateSection from "./DebateSection";
-import WriteToMpModal from "../mp/WriteToMpModal";
+import { MessageSquare, Share2, MapPin, Eye, ArrowRight } from "lucide-react";
+import { formatDistanceToNow, differenceInHours } from "date-fns";
+import { motion } from "framer-motion";
+import { ArticlePanel } from "../dashboard/ArticlePanel";
+
+const categoryColors: Record<string, string> = {
+  POLITICAL: "bg-accent-blue",
+  CRIMINAL: "bg-red-500",
+  FINANCE: "bg-green-500",
+  INFRASTRUCTURE: "bg-accent-amber",
+  ENVIRONMENT: "bg-emerald-500",
+  TECHNOLOGY: "bg-purple-500",
+  HEALTH: "bg-rose-500",
+  OTHER: "bg-gray-500"
+};
 
 export default function NewsCard({ news, currentUser }: { news: any, currentUser: any }) {
-  const [expanded, setExpanded] = useState(false);
-  const [stance, setStance] = useState<string | null>(null);
-  const [showMpModal, setShowMpModal] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
+  
+  const categoryColor = categoryColors[news.category.toUpperCase()] || "bg-gray-500";
+  const isNew = differenceInHours(new Date(), new Date(news.created_at)) < 2;
 
-  const handleStance = (newStance: string) => {
-    // Stance selection logic - will be fully implemented in Debate phase
-    if (!stance) setStance(newStance);
-  };
+  // Dummy percentages for stance bar
+  const stanceData = { for: 45, against: 35, neutral: 20 };
 
   return (
-    <article className="border border-border bg-card rounded-xl overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-      {/* Card Header: Tags & Meta */}
-      <div className="p-5 pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded-md">
-              {news.category}
-            </span>
-            {(news.district || news.state) && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
-                <MapPin size={12} />
-                {news.district ? `${news.district}, ` : ""}
-                {news.state}
-              </span>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(news.created_at), { addSuffix: true })}
-          </span>
-        </div>
-
-        {/* Headline & Summary */}
-        <h2 className="text-xl md:text-2xl font-bold leading-tight mb-2 text-foreground">
-          {news.headline}
-        </h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-          {news.summary}
-        </p>
-
-        {/* Author Info */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold shrink-0">
-            {news.author?.avatar_url ? (
-              <img src={news.author.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-            ) : (
-              news.author?.name?.charAt(0) || "A"
-            )}
-          </div>
-          <span className="text-xs font-medium text-foreground">{news.author?.name}</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-            {news.author?.role}
-          </span>
-        </div>
-
-        {/* Action Bar */}
-        <div className="flex items-center justify-between border-t border-border pt-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleStance("FOR")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                stance === "FOR" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground hover:bg-green-500/20 hover:text-green-600"
-              }`}
-            >
-              FOR
-            </button>
-            <button
-              onClick={() => handleStance("NEUTRAL")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                stance === "NEUTRAL" ? "bg-gray-500 text-white" : "bg-muted text-muted-foreground hover:bg-gray-500/20 hover:text-gray-600"
-              }`}
-            >
-              NEUTRAL
-            </button>
-            <button
-              onClick={() => handleStance("AGAINST")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                stance === "AGAINST" ? "bg-red-500 text-white" : "bg-muted text-muted-foreground hover:bg-red-500/20 hover:text-red-600"
-              }`}
-            >
-              AGAINST
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4 text-muted-foreground">
-            {currentUser?.district && (
-              <button 
-                onClick={() => setShowMpModal(true)}
-                className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors border border-border px-2 py-1 rounded bg-secondary/5"
-                title="Write to Your MP regarding this issue"
-              >
-                <Landmark size={14} />
-                <span className="font-medium hidden sm:inline">Write to MP</span>
-              </button>
-            )}
-            <button className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors">
-              <MessageSquare size={16} />
-              <span className="font-medium">{news._count?.opinions || 0}</span>
-            </button>
-            <button className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors">
-              <Share2 size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Expand Toggle */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-center gap-1 py-2 bg-secondary/5 text-xs font-semibold text-secondary-foreground hover:bg-secondary/10 transition-colors border-t border-border"
+    <>
+      <motion.article 
+        whileHover={{ y: -6 }}
+        className="group relative bg-[#111827] border border-white/5 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/5"
       >
-        {expanded ? (
-          <>Read Less <ChevronUp size={14} /></>
-        ) : (
-          <>Read Full Story <ChevronDown size={14} /></>
-        )}
-      </button>
-
-      {/* Expanded Content */}
-      {expanded && (
-        <div className="p-5 border-t border-border bg-background animate-in slide-in-from-top-2 duration-200">
-          {news.cover_image_url && (
+        {/* Category Color Bar */}
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${categoryColor} opacity-70`} />
+        
+        {/* Cover Image */}
+        {news.cover_image_url && (
+          <div className="relative aspect-video overflow-hidden">
             <img 
               src={news.cover_image_url} 
-              alt="Cover" 
-              className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
+              alt={news.headline}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              onError={(e) => {
+                e.currentTarget.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1000";
+              }}
             />
-          )}
-          <div 
-            className="prose prose-sm dark:prose-invert max-w-none mb-6 text-foreground"
-            dangerouslySetInnerHTML={{ __html: news.body }} 
-          />
-          
-          {news.source_url && (
-            <a 
-              href={news.source_url} 
-              target="_blank" 
-              rel="noreferrer"
-              className="text-xs text-primary hover:underline"
-            >
-              Original Source ↗
-            </a>
-          )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
+            
+            {/* Badges */}
+            <div className="absolute top-4 left-4 flex gap-2">
+              <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${categoryColor} text-white rounded-lg shadow-lg`}>
+                {news.category}
+              </span>
+            </div>
 
-          {/* Connect to Debate System Component here later */}
-          <div className="mt-6 pt-4 border-t border-border text-center">
-            <DebateSection newsId={news.id} currentUser={currentUser} />
+            {isNew && (
+              <div className="absolute top-4 right-4">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500 rounded-lg shadow-lg animate-pulse">
+                  <div className="w-1 h-1 rounded-full bg-white" />
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest">NEW</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              <MapPin size={12} className="text-accent-blue" />
+              {news.state || "National"}
+            </div>
+            <div className="w-1 h-1 rounded-full bg-white/10" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              {formatDistanceToNow(new Date(news.created_at), { addSuffix: true })}
+            </span>
+          </div>
+
+          <h2 className="text-xl md:text-2xl font-heading font-black text-white leading-tight mb-4 group-hover:text-accent-blue transition-colors line-clamp-2">
+            {news.headline}
+          </h2>
+
+          <p className="text-sm text-gray-400 leading-relaxed line-clamp-2 mb-6">
+            {news.summary}
+          </p>
+
+          {/* Stance Bar */}
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <span className="text-green-500">For {stanceData.for}%</span>
+              <span>Neutral {stanceData.neutral}%</span>
+              <span className="text-red-500">Against {stanceData.against}%</span>
+            </div>
+            <div className="h-2 w-full flex rounded-full overflow-hidden bg-white/5 border border-white/5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${stanceData.for}%` }}
+                className="bg-green-500/60"
+              />
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${stanceData.neutral}%` }}
+                className="bg-gray-500/60"
+              />
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${stanceData.against}%` }}
+                className="bg-red-500/60"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-6 border-t border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <MessageSquare size={14} />
+                <span className="text-[11px] font-black">{news._count?.opinions || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <Eye size={14} />
+                <span className="text-[11px] font-black">1.2K</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowPanel(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent-blue/10 hover:bg-accent-blue text-accent-blue hover:text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all group/btn shadow-lg hover:shadow-accent-blue/20"
+            >
+              Debate 
+              <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+            </button>
           </div>
         </div>
-      )}
+      </motion.article>
 
-      {showMpModal && currentUser?.district && (
-        <WriteToMpModal 
-          newsHeadline={news.headline}
-          userDistrict={currentUser.district}
-          onClose={() => setShowMpModal(false)}
-        />
-      )}
-    </article>
+      <ArticlePanel 
+        news={news} 
+        isOpen={showPanel} 
+        onClose={() => setShowPanel(false)} 
+        currentUser={currentUser}
+      />
+    </>
   );
 }

@@ -9,10 +9,17 @@ import {
   Landmark, 
   BarChart2, 
   User as UserIcon,
-  LogOut
+  LogOut,
+  Bell,
+  MessageCircle,
+  ChevronRight,
+  ShieldCheck
 } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import PollWidget from "@/components/polls/PollWidget";
+import { SidebarNavItem } from "@/components/dashboard/SidebarNavItem";
+import { SignOutModal } from "@/components/dashboard/SignOutModal";
+import { RightPanel } from "@/components/dashboard/RightPanel";
 
 export default async function DashboardLayout({
   children,
@@ -33,68 +40,53 @@ export default async function DashboardLayout({
       <aside className="w-full md:w-64 border-r border-border bg-card flex flex-col justify-between sticky top-0 md:h-screen z-10">
         <div>
           <div className="p-6">
-            <Link href="/dashboard">
-              <img 
-                src="/images/rajneet-logo.png" 
-                alt="RAJNEET Logo" 
-                className="h-8 w-auto mb-2"
-              />
+            <Link href="/dashboard" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-accent-amber/10 rounded-xl flex items-center justify-center border border-accent-amber/20 group-hover:scale-110 transition-transform">
+                <Landmark size={24} className="text-accent-amber" />
+              </div>
+              <span className="text-2xl font-heading font-black text-accent-amber tracking-tighter hidden md:block">
+                RAJNEET
+              </span>
             </Link>
           </div>
           
-          <nav className="space-y-1 px-4">
-            <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-foreground rounded-md bg-secondary/10 font-medium">
-              <Home size={20} className="text-primary" />
-              Home Feed
-            </Link>
-            <Link href="/dashboard/trending" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md font-medium transition-colors">
-              <TrendingUp size={20} />
-              Trending Debates
-            </Link>
-            <Link href="/dashboard/district" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md font-medium transition-colors">
-              <MapPin size={20} />
-              My District
-            </Link>
-            <Link href="/dashboard/parliament" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md font-medium transition-colors">
-              <Landmark size={20} />
-              Parliament Tracker
-            </Link>
-            <Link href="/dashboard/polls" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md font-medium transition-colors">
-              <BarChart2 size={20} />
-              Opinion Polls
-            </Link>
-            <Link href="/dashboard/profile" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md font-medium transition-colors">
-              <UserIcon size={20} />
-              My Profile
-            </Link>
+          <nav className="space-y-1.5 px-4 mt-2">
+            <SidebarNavItem href="/dashboard" icon={<Home size={20} />} label="Home Feed" />
+            <SidebarNavItem href="/dashboard/trending" icon={<TrendingUp size={20} />} label="Trending" badge="red" />
+            <SidebarNavItem href="/dashboard/district" icon={<MapPin size={20} />} label="My District" comingSoon />
+            <SidebarNavItem href="/dashboard/parliament" icon={<Landmark size={20} />} label="Parliament" comingSoon />
+            <SidebarNavItem href="/dashboard/polls" icon={<BarChart2 size={20} />} label="Opinion Polls" badge="blue" badgeCount={3} />
+            <SidebarNavItem href="/dashboard/profile" icon={<UserIcon size={20} />} label="My Profile" />
           </nav>
         </div>
 
         {/* User Badge */}
-        <div className="p-4 m-4 border border-border rounded-lg bg-background">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground font-bold shrink-0">
+        <div className="p-4 m-4 bg-[#0D1B3E]/40 border border-white/5 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full border-2 border-accent-blue/30 p-0.5 shrink-0 overflow-hidden">
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                <img src={user.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                user.name?.charAt(0) || "C"
+                <div className="w-full h-full rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-black">
+                  {user.name?.charAt(0) || "U"}
+                </div>
               )}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-semibold truncate">{user.name}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                  {user.role}
+              <p className="text-sm font-heading font-bold text-white truncate">{user.name}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-accent-blue/10 text-accent-blue border border-accent-blue/20">
+                  {user.category || "CITIZEN"}
                 </span>
               </div>
             </div>
           </div>
-          <div className="mt-3 text-xs text-muted-foreground">
-            <p className="truncate">{user.district}, {user.state}</p>
+          <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] rounded-lg mb-4">
+            <MapPin size={12} className="text-gray-500" />
+            <p className="text-[10px] text-gray-400 font-medium truncate uppercase tracking-wider">{user.state || "India"}</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-border">
-            <LogoutButton />
-          </div>
+          
+          <SignOutModal />
         </div>
       </aside>
 
@@ -106,45 +98,7 @@ export default async function DashboardLayout({
         </div>
 
         {/* Right Panel */}
-        <aside className="w-full md:w-80 bg-card p-6 overflow-y-auto sticky top-0 h-screen hidden lg:block">
-          {/* Trending in District */}
-          <div className="mb-8">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-              <MapPin size={16} className="text-primary" />
-              Trending in {user.district}
-            </h3>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground italic">No trending topics yet.</p>
-            </div>
-          </div>
-
-          {/* Active Poll */}
-          <div className="mb-8">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-              <BarChart2 size={16} className="text-primary" />
-              Live Opinion Poll
-            </h3>
-            <PollWidget />
-          </div>
-
-          {/* Parliament Today */}
-          <div>
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Landmark size={16} className="text-primary" />
-              Parliament Today
-            </h3>
-            <div className="space-y-3">
-              <div className="border border-border rounded-lg p-3 bg-background flex justify-between items-center">
-                <span className="text-sm font-medium">Lok Sabha</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-500 font-bold">IN SESSION</span>
-              </div>
-              <div className="border border-border rounded-lg p-3 bg-background flex justify-between items-center">
-                <span className="text-sm font-medium">Rajya Sabha</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-bold">ADJOURNED</span>
-              </div>
-            </div>
-          </div>
-        </aside>
+        <RightPanel user={user} />
       </main>
     </div>
   );

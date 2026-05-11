@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import NewsFeed from "@/components/news/NewsFeed";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar";
+import { FilterTabs } from "@/components/news/FilterTabs";
+import { DashboardTour } from "@/components/dashboard/DashboardTour";
 
 export const dynamic = "force-dynamic";
 
@@ -46,30 +49,29 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Filter Bar */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border p-4">
-        <h1 className="text-xl font-bold mb-4">News Feed</h1>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {["All", "My District", "My State", "National", "International"].map((f) => (
-            <a
-              key={f}
-              href={`/dashboard?filter=${encodeURIComponent(f)}`}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/10 text-secondary-foreground hover:bg-secondary/20"
-              }`}
-            >
-              {f}
-            </a>
-          ))}
-        </div>
-      </div>
+    <div className="flex flex-col h-full bg-[#050A14]">
+      <DashboardTour />
+      <DashboardTopBar user={user} />
 
-      {/* News Feed List */}
-      <div className="p-4">
-        <NewsFeed initialNews={news} currentUser={user} />
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-8 pb-32">
+          {/* News Feed Header */}
+          <div className="mb-10">
+            <div className="flex flex-col gap-1 mb-6">
+              <h1 className="text-4xl md:text-5xl font-heading font-black text-white tracking-tight">
+                News Feed
+              </h1>
+              <p className="text-sm text-gray-500 font-medium">
+                Showing latest political updates across India
+              </p>
+            </div>
+
+            <FilterTabs />
+          </div>
+
+          {/* News Feed List */}
+          <NewsFeed initialNews={news} currentUser={user} />
+        </div>
       </div>
     </div>
   );
