@@ -4,6 +4,77 @@ import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<string> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      )
+
+      if (response.status === 429) {
+        const waitTime = attempt * 45000 // 45s, 90s, 135s
+        console.log(`Rate limited. Waiting ${waitTime/1000}s before retry ${attempt}/${maxRetries}`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+
+      if (!response.ok) {
+        throw new Error(`Gemini error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    } catch (err) {
+      if (attempt === maxRetries) throw err
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+  return ''
+}
+
+function enforceValidCategory(rawCategory?: string, title?: string): string {
+  if (!rawCategory && !title) return "POLITICAL";
+  
+  const categoryMap: Record<string, string> = {
+    'politics': 'POLITICAL',
+    'political': 'POLITICAL',
+    'government': 'POLITICAL',
+    'election': 'POLITICAL',
+    'finance': 'FINANCE',
+    'economy': 'FINANCE',
+    'business': 'FINANCE',
+    'sports': 'SPORTS',
+    'cricket': 'SPORTS',
+    'world': 'WORLD',
+    'international': 'WORLD',
+    'crime': 'CRIMINAL',
+    'criminal': 'CRIMINAL',
+    'infrastructure': 'INFRASTRUCTURE',
+    'environment': 'ENVIRONMENT',
+    'health': 'HEALTH',
+    'technology': 'TECHNOLOGY',
+    'tech': 'TECHNOLOGY'
+  };
+  
+  const keywords = (rawCategory + ' ' + (title || '')).toLowerCase();
+  
+  for (const [key, value] of Object.entries(categoryMap)) {
+    if (keywords.includes(key)) {
+      return value;
+    }
+  }
+  
+  return "POLITICAL";
+}
+
 function extractArticleImage(art: any) {
   if (art.image_url) return art.image_url;
   if (art.enclosure?.url) return art.enclosure.url;
@@ -38,10 +109,12 @@ export async function GET(req: Request) {
     }
 
     const fetchedArticles = data.results;
+    // Limit to 5 articles per run to stay within free tier limits
+    const articlesToProcess = fetchedArticles.slice(0, 5);
     const savedArticles = [];
     const skipped = [];
 
-    for (const art of fetchedArticles) {
+    for (const art of articlesToProcess) {
       // Skip articles without a title
       if (!art.title) { skipped.push("no-title"); continue; }
 
@@ -54,21 +127,44 @@ export async function GET(req: Request) {
       try {
         const rawSummary = art.description || art.content || art.title;
 
-        // Run the full SEO + AI content pipeline
+        // Use keyword mapping for category - no Gemini needed
+        const category = enforceValidCategory(art.category, art.title);
+        const sourceImage = extractArticleImage(art);
+        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+
+        // Only use Gemini for body generation (not category classification)
+        const bodyPrompt = `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
+
+Write a DETAILED news article for this story. This is NOT a summary. This is a full article.
+
+STRICT REQUIREMENTS:
+- Minimum 300 words, maximum 400 words
+- Write exactly 4 paragraphs
+- Paragraph 1 (Lead): What happened, who was involved, when and where. Most important facts first. 4-5 sentences.
+- Paragraph 2 (Background): Context and background. Why did this happen. What led to this moment. 4-5 sentences.
+- Paragraph 3 (Impact): How does this affect Indian citizens directly. What changes for common people. What are experts or opposition saying. 4-5 sentences.
+- Paragraph 4 (Debate): What are the two sides of this issue. End with a question inviting readers to share their stance on RAJNEET.
+- Write in simple clear English that any Indian citizen can understand
+- Do NOT use: "delve", "crucial", "realm", "furthermore", "moreover", "it is worth noting", "in conclusion"
+- Do NOT start with "Original news:" or any wire service attribution
+- Do NOT copy text from source
+- Return ONLY article text with paragraph breaks. Nothing else.
+
+Headline: ${art.title}
+Category: ${category}
+Raw source content: ${rawSummary}`;
+
+        const seo_body = await callGeminiWithRetry(bodyPrompt);
+        
+        // Generate other SEO fields with minimal Gemini usage
         const seoData = await seoOptimize({
           headline: art.title,
           summary: rawSummary,
-          category: "POLITICAL",
+          category,
           state_name: "National",
-          cover_image_url: undefined, // Don't pass original image
+          cover_image_url: undefined,
           published_at: art.pubDate || new Date().toISOString()
         });
-
-        const category = Array.isArray(art.category)
-          ? art.category[0].toUpperCase()
-          : (art.category?.toUpperCase() || "POLITICAL");
-        const sourceImage = extractArticleImage(art);
-        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(seoData.seo_title || art.title)}&category=${encodeURIComponent(category)}`;
 
         const status = seoData.seo_score < 50 ? "DRAFT" : "PUBLISHED";
 
@@ -77,8 +173,8 @@ export async function GET(req: Request) {
             headline: art.title,
             // Use Gemini's clean 2-3 sentence summary (our own words)
             summary: seoData.clean_summary || rawSummary.substring(0, 200),
-            // Use Gemini's full 700-900 word original article
-            body: seoData.seo_body,
+            // Use generated body
+            body: seo_body,
             category,
             source_url: art.link,
             cover_image_url,
@@ -93,7 +189,7 @@ export async function GET(req: Request) {
             slug: seoData.slug,
             focus_keywords: seoData.focus_keywords,
             schema_markup: seoData.schema_markup,
-            seo_body: seoData.seo_body,
+            seo_body: seo_body,
             seo_score: seoData.seo_score,
             primary_keyword: seoData.primary_keyword,
             is_trending: seoData.is_trending,
@@ -102,9 +198,13 @@ export async function GET(req: Request) {
         });
         savedArticles.push(newArt);
         console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
+        
+        // Wait 3 seconds between each Gemini call to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (articleError: any) {
         console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
-        // Continue with next article
+        // Continue to next article even if one fails
+        continue;
       }
     }
 

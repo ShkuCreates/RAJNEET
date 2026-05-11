@@ -1,9 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import googleTrends from "google-trends-api";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<string> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      )
+
+      if (response.status === 429) {
+        const waitTime = attempt * 45000 // 45s, 90s, 135s
+        console.log(`Rate limited. Waiting ${waitTime/1000}s before retry ${attempt}/${maxRetries}`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+
+      if (!response.ok) {
+        throw new Error(`Gemini error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    } catch (err) {
+      if (attempt === maxRetries) throw err
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+  return ''
+}
 
 function isValidArticleBody(text: string): boolean {
   if (!text) return false;
@@ -75,19 +107,19 @@ export async function seoOptimize(article: SEOData) {
   }
 
   // STEP 2 — SEO TITLE
-  const seo_title = await callGemini(
+  const seo_title = await callGeminiWithRetry(
     `You are an expert SEO title writer for RAJNEET, India's premier political debate platform. Write ONE title: 55-60 characters, includes the primary keyword, creates urgency without clickbait, sounds like a professional Indian news headline. Return ONLY the title.`,
     `Headline: ${article.headline}\nKeyword: ${primary_keyword}\nCategory: ${article.category}\nState: ${article.state_name}`
   );
 
   // STEP 3 — CLEAN SUMMARY (2-3 sentences, RAJNEET's own words)
-  const clean_summary = await callGemini(
+  const clean_summary = await callGeminiWithRetry(
     `You are a news writer for RAJNEET, India's political debate platform. Write a 2-3 sentence summary of this news story IN YOUR OWN WORDS. Do NOT copy the original text. Make it clear, factual, engaging for Indian citizens. No fluff.`,
     `Original news: ${article.summary}\nHeadline: ${article.headline}\nState: ${article.state_name}`
   );
 
   // STEP 4 — FULL ORIGINAL ARTICLE BODY (300-400 words with 4 paragraphs)
-  const full_body = await callGemini(
+  const full_body = await callGeminiWithRetry(
     `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
 
 Write a DETAILED news article for this story. This is NOT a summary. This is a full article.
@@ -103,12 +135,15 @@ STRICT REQUIREMENTS:
 - Do NOT use: "delve", "crucial", "realm", "furthermore", "moreover", "it is worth noting", "in conclusion"
 - Do NOT start with "Original news:" or any wire service attribution
 - Do NOT copy text from the source
-- Return ONLY the article text with paragraph breaks. Nothing else.`,
-    `Headline: ${article.headline}\nCategory: ${article.category}\nRaw source content: ${article.summary}`
+- Return ONLY the article text with paragraph breaks. Nothing else.
+
+Headline: ${article.headline}
+Category: ${article.category}
+Raw source content: ${article.summary}`
   );
 
   // STEP 5 — META DESCRIPTION
-  const meta_description = await callGemini(
+  const meta_description = await callGeminiWithRetry(
     `Write a Google meta description for this article: exactly 150-160 characters, includes the primary keyword, ends with a subtle CTA. Return ONLY the meta description.`,
     `SEO Title: ${seo_title}\nKeyword: ${primary_keyword}\nSummary: ${clean_summary}`
   );
@@ -190,14 +225,3 @@ STRICT REQUIREMENTS:
   };
 }
 
-async function callGemini(systemPrompt: string, userMessage: string) {
-  try {
-    const fullPrompt = `${systemPrompt}\n\nUser: ${userMessage}`;
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    return response.text().trim();
-  } catch (e) {
-    console.error("Gemini API Error:", e);
-    return userMessage.slice(0, 55);
-  }
-}
