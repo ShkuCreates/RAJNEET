@@ -27,6 +27,13 @@ const categoryColors: Record<string, string> = {
 
 export default function NewsCard({ news, currentUser }: { news: any, currentUser: any }) {
   const router = useRouter();
+  const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const normalizeImageUrl = (value?: string | null) => {
+    if (!value) return "";
+    if (value.startsWith("http://")) return value.replace("http://", "https://");
+    if (value.startsWith("https://") || value.startsWith("/")) return value;
+    return "";
+  };
   const [liked, setLiked] = useState(
     news.upvotes?.some((v: any) => v.user_id === currentUser?.id) || false
   );
@@ -81,9 +88,9 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
   };
 
   const previewSource =
-    news.seo_body ||
-    news.summary ||
-    news.body ||
+    stripHtml(news.seo_body || "") ||
+    stripHtml(news.summary || "") ||
+    stripHtml(news.body || "") ||
     "Click to read full article.";
   const previewText =
     previewSource.length > 120 ? `${previewSource.slice(0, 120).trim()}...` : previewSource;
@@ -92,7 +99,8 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
     typeof news.cover_image_url === "string" &&
     (news.cover_image_url.includes("unsplash.com") ||
       news.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
-  const displayCoverUrl = !news.cover_image_url || isGenericCover ? ogFallbackUrl : news.cover_image_url;
+  const normalizedCover = normalizeImageUrl(news.cover_image_url);
+  const displayCoverUrl = !normalizedCover || isGenericCover ? ogFallbackUrl : normalizedCover;
 
   return (
     <>
@@ -108,8 +116,12 @@ export default function NewsCard({ news, currentUser }: { news: any, currentUser
               src={displayCoverUrl}
               alt={news.headline}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = ogFallbackUrl;
+                const img = e.currentTarget as HTMLImageElement;
+                if (img.dataset.fallbackApplied === "1") return;
+                img.dataset.fallbackApplied = "1";
+                img.src = ogFallbackUrl;
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />

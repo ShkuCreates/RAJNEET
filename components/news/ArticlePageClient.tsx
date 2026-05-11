@@ -50,7 +50,8 @@ function LoginPromptModal({ onClose }: { onClose: () => void }) {
 
 export default function ArticlePageClient({ article }: { article: any }) {
   const { data: session, status } = useSession();
-  const isLoggedIn = status === "authenticated";
+  const authResolved = status !== "loading";
+  const isLoggedIn = status === "authenticated" && Boolean(session?.user);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [hasScrolledEnough, setHasScrolledEnough] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -58,13 +59,22 @@ export default function ArticlePageClient({ article }: { article: any }) {
   const [showWriteToMp, setShowWriteToMp] = useState(false);
   const modalShownByIntent = useRef(false);
 
+  const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const normalizeImageUrl = (value?: string | null) => {
+    if (!value) return "";
+    if (value.startsWith("http://")) return value.replace("http://", "https://");
+    if (value.startsWith("https://") || value.startsWith("/")) return value;
+    return "";
+  };
+
   const title = article.seo_title || article.headline;
   const ogUrl = `/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
   const isGenericCover =
     typeof article.cover_image_url === "string" &&
     (article.cover_image_url.includes("unsplash.com") ||
       article.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
-  const coverUrl = !article.cover_image_url || isGenericCover ? ogUrl : article.cover_image_url;
+  const normalizedCover = normalizeImageUrl(article.cover_image_url);
+  const coverUrl = !normalizedCover || isGenericCover ? ogUrl : normalizedCover;
   const sourceName = useMemo(() => {
     if (!article.source_url) return "Original Source";
     try {
@@ -74,8 +84,9 @@ export default function ArticlePageClient({ article }: { article: any }) {
       return "Original Source";
     }
   }, [article.source_url]);
-  const bodyHtml = article.seo_body || article.summary || "";
-  const hasReadableBody = Boolean((article.seo_body || article.summary || "").trim());
+  const bodyHtml = article.seo_body || "";
+  const summaryText = stripHtml(article.summary || "");
+  const hasReadableBody = Boolean(stripHtml(article.seo_body || "").trim());
 
   useEffect(() => {
     if (document.readyState === "complete") {
@@ -109,13 +120,13 @@ export default function ArticlePageClient({ article }: { article: any }) {
   }, [showLoginModal]);
 
   useEffect(() => {
-    if (isLoggedIn || !hasScrolledEnough || !pageLoaded) return;
+    if (!authResolved || isLoggedIn || !hasScrolledEnough || !pageLoaded) return;
     if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "1") return;
     const timer = window.setTimeout(() => {
       if (!modalShownByIntent.current) setShowLoginModal(true);
     }, 20000);
     return () => window.clearTimeout(timer);
-  }, [isLoggedIn, hasScrolledEnough, pageLoaded]);
+  }, [authResolved, isLoggedIn, hasScrolledEnough, pageLoaded]);
 
   useEffect(() => {
     let mounted = true;
@@ -170,7 +181,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
 
   return (
     <main className="min-h-screen bg-[#050A14] text-white">
-      {showLoginModal && !isLoggedIn && <LoginPromptModal onClose={closeLoginModal} />}
+      {showLoginModal && authResolved && !isLoggedIn && <LoginPromptModal onClose={closeLoginModal} />}
       {showWriteToMp && (
         <WriteToMpModal
           newsHeadline={title}
@@ -221,11 +232,24 @@ export default function ArticlePageClient({ article }: { article: any }) {
               src={coverUrl}
               alt={title}
               className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(article.category || "POLITICAL")}`;
+                const img = e.currentTarget as HTMLImageElement;
+                if (img.dataset.fallbackApplied === "1") return;
+                img.dataset.fallbackApplied = "1";
+                img.src = ogUrl;
               }}
             />
           </div>
+
+          {summaryText && (
+            <div className="mb-8 p-5 bg-accent-blue/5 border border-accent-blue/20 rounded-2xl">
+              <p className="text-[10px] font-black text-accent-blue uppercase tracking-[0.22em] mb-2">
+                Quick Summary
+              </p>
+              <p className="text-gray-200 leading-relaxed text-base">{summaryText}</p>
+            </div>
+          )}
 
           <div className="mb-10">
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
@@ -245,6 +269,8 @@ export default function ArticlePageClient({ article }: { article: any }) {
               className="prose prose-invert max-w-none mb-16 prose-p:text-gray-200 prose-p:leading-[1.8] prose-p:text-[1.05rem]"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
+          ) : summaryText ? (
+            <div className="mb-16 text-gray-300 text-lg leading-[1.8]">{summaryText}</div>
           ) : (
             <div className="mb-16 text-gray-300 text-lg leading-[1.8]">
               Full article available at source{" "}
@@ -268,14 +294,14 @@ export default function ArticlePageClient({ article }: { article: any }) {
             </a>
             <button
               onClick={() => {
-                if (!isLoggedIn) return openLoginModal();
+                if (!authResolved || !isLoggedIn) return openLoginModal();
                 setShowWriteToMp(true);
               }}
               className="px-4 py-2 rounded-xl bg-accent-blue hover:bg-accent-blue/90 text-sm inline-flex items-center gap-2"
             >
               <Landmark size={14} /> Write to MP
             </button>
-            {!isLoggedIn && (
+            {authResolved && !isLoggedIn && (
               <button onClick={openLoginModal} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
                 <Share2 size={14} /> Join debate
               </button>
@@ -291,7 +317,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
               newsId={article.id}
               currentUser={session?.user || null}
               onRequireLogin={openLoginModal}
-              allowInteraction={isLoggedIn}
+              allowInteraction={authResolved && isLoggedIn}
             />
           </section>
         </article>
