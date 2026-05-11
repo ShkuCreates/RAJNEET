@@ -20,14 +20,8 @@ export default async function DashboardPage({
 
   // Build query based on filter
   let whereClause = {};
-  if (filter === "My District" && user?.district) {
-    whereClause = { district: user.district };
-  } else if (filter === "My State" && user?.state) {
-    whereClause = { state: user.state };
-  } else if (filter === "National") {
-    whereClause = { geo_level: "NATIONAL" };
-  } else if (filter === "International") {
-    whereClause = { geo_level: "INTERNATIONAL" };
+  if (filter !== "All") {
+    whereClause = { category: filter.toUpperCase() };
   }
 
   const news = await prisma.news.findMany({

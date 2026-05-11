@@ -4,10 +4,20 @@ import { MapPin, BarChart2, Landmark, Flame, TrendingUp, ChevronRight, Activity,
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface NewsItem {
+  id: string;
+  headline: string;
+  slug: string | null;
+  category: string;
+}
 
 export function RightPanel({ user }: { user: any }) {
+  const router = useRouter();
   const [poll, setPoll] = useState<any>(null);
   const [isVoting, setIsVoting] = useState<string | null>(null);
+  const [trendingNews, setTrendingNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     fetch(`/api/polls/featured?state=${user?.state || ""}`)
@@ -16,6 +26,15 @@ export function RightPanel({ user }: { user: any }) {
         if (data.success) setPoll(data.poll);
       });
   }, [user]);
+
+  useEffect(() => {
+    fetch('/api/public/trending')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setTrendingNews(data.slice(0, 5));
+      })
+      .catch(() => setTrendingNews([]));
+  }, []);
 
   const handleVote = async (option: string) => {
     if (!poll) return;
@@ -55,22 +74,24 @@ export function RightPanel({ user }: { user: any }) {
           </div>
           
           <div className="space-y-3">
-            {[
-              "Electoral Bonds Verdict",
-              "UP Infrastructure Push",
-              "Farmers Protest 2.0",
-              "Digital India Bill",
-              "Cauvery Water Dispute"
-            ].map((topic, i) => (
-              <button 
-                key={i}
-                className="w-full flex items-center gap-3 p-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-2xl transition-all group"
-              >
-                <span className="text-xs font-mono font-bold text-accent-blue/60 group-hover:text-accent-blue transition-colors">0{i+1}</span>
-                <span className="text-[11px] font-bold text-gray-300 group-hover:text-white transition-colors truncate">{topic}</span>
-                <Flame size={12} className="ml-auto text-accent-amber opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-            ))}
+            {trendingNews.length > 0 ? (
+              trendingNews.map((news, i) => (
+                <button
+                  key={news.id}
+                  onClick={() => router.push(`/news/${news.slug || news.id}`)}
+                  className="w-full flex items-center gap-3 p-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-2xl transition-all group"
+                >
+                  <span className="text-xs font-mono font-bold text-accent-blue/60 group-hover:text-accent-blue transition-colors">0{i+1}</span>
+                  <span className="text-[11px] font-bold text-gray-300 group-hover:text-white transition-colors truncate">{news.headline}</span>
+                  <Flame size={12} className="ml-auto text-accent-amber opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <Loader2 className="mx-auto text-accent-blue animate-spin mb-2" size={16} />
+                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Loading...</p>
+              </div>
+            )}
           </div>
         </section>
 

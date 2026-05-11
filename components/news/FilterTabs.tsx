@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const filters = ["All", "My District", "My State", "National", "International"];
+const filters = ["All", "Politics", "Sports", "Finance", "Corporate", "Infrastructure", "Social", "Environment", "Health", "Education", "International"];
 
 export function FilterTabs() {
   const router = useRouter();
