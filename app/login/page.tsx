@@ -21,7 +21,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 p-8 border border-border rounded-xl bg-card text-card-foreground shadow-sm">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">RAJNEET</h1>
+          <img 
+            src="/images/rajneet-logo.png" 
+            alt="RAJNEET Logo" 
+            className="h-10 w-auto mx-auto mb-2"
+          />
           <p className="text-sm text-muted-foreground mt-2">Sign in to your civic account</p>
         </div>
         

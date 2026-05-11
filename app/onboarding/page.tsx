@@ -207,9 +207,11 @@ export default function OnboardingPage() {
         <div className="p-8 md:p-12">
           {/* Header Section */}
           <motion.div variants={itemVariants} className="flex flex-col items-center mb-10 text-center">
-            <div className="text-3xl font-black text-accent-amber mb-2 tracking-tighter drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-              RAJNEET
-            </div>
+            <img 
+              src="/images/rajneet-logo.png" 
+              alt="RAJNEET Logo" 
+              className="h-10 w-auto mb-4 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+            />
             <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-accent-blue/40 to-transparent mb-6" />
             <h1 className="text-3xl md:text-4xl font-heading font-bold text-white mb-2 tracking-tight">
               Complete your profile

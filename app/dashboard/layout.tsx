@@ -33,8 +33,12 @@ export default async function DashboardLayout({
       <aside className="w-full md:w-64 border-r border-border bg-card flex flex-col justify-between sticky top-0 md:h-screen z-10">
         <div>
           <div className="p-6">
-            <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-primary">
-              RAJNEET
+            <Link href="/dashboard">
+              <img 
+                src="/images/rajneet-logo.png" 
+                alt="RAJNEET Logo" 
+                className="h-8 w-auto mb-2"
+              />
             </Link>
           </div>
           

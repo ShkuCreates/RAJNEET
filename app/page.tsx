@@ -169,9 +169,11 @@ export default function LandingPage() {
             </div>
             
             <div className="space-y-4">
-              <h1 className="text-7xl md:text-9xl font-heading font-extrabold tracking-tight text-accent-amber drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                RAJNEET
-              </h1>
+              <img 
+                src="/images/rajneet-logo.png" 
+                alt="RAJNEET Logo" 
+                className="h-12 md:h-16 w-auto mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+              />
               <p className="text-4xl md:text-5xl font-heading font-bold text-white">
                 Your Voice. Your Democracy.
               </p>
@@ -357,7 +359,11 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="grid md:grid-cols-3 gap-16 mb-20">
             <div className="space-y-6">
-              <h2 className="text-3xl font-heading font-extrabold text-accent-amber">RAJNEET</h2>
+              <img 
+                src="/images/rajneet-logo.png" 
+                alt="RAJNEET Logo" 
+                className="h-8 w-auto mb-4"
+              />
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Your Voice. Your Democracy. <br />
                 Dedicated to Article 19(1)(a).
