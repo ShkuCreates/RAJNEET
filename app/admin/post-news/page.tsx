@@ -103,6 +103,8 @@ export default function PostNewsPage() {
               <option value="Finance">Finance</option>
               <option value="Sports">Sports</option>
               <option value="World">World</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Others">Others</option>
             </select>
 
           </div>

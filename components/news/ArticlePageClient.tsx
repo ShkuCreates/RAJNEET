@@ -216,7 +216,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
               WhatsApp
             </a>
             {authResolved && !isLoggedIn && (
-              <button onClick={openLoginModal} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
+              <button onClick={openLoginPopup} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm inline-flex items-center gap-2">
                 <Share2 size={14} /> Join debate
               </button>
             )}
