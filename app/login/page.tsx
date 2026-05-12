@@ -21,7 +21,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: "/" });
     } catch (error) {
       toast.error("Failed to login with Google");
       setIsLoading(false);
