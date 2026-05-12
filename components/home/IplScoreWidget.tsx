@@ -30,26 +30,27 @@ export default function IplScoreWidget() {
       setLoading(true);
       setError(null);
       
-      // Using a simple free cricket API
-      const response = await fetch(
-        'https://cdn.jsdelivr.net/gh/cricbuzz/cricbuzz-match-data.json'
-      );
+      // Use backend API route to avoid CORS issues
+      const response = await fetch('/api/cricket/scores', {
+        cache: 'no-store'
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch IPL scores');
       }
       
       const data = await response.json();
-      if (data.matches && data.matches.length > 0) {
-        const latestMatch = data.matches[0]; // Get the first/latest match
+      
+      if (data.success && data.matches && data.matches.length > 0) {
+        const latestMatch = data.matches[0];
         setMatch({
           id: latestMatch.id,
-          team1: latestMatch.team1?.name || 'Team 1',
-          team2: latestMatch.team2?.name || 'Team 2',
-          score1: latestMatch.team1?.score || '0/0',
-          score2: latestMatch.team2?.score || '0/0',
-          status: latestMatch.status || 'UNKNOWN',
-          venue: latestMatch.venue || 'Unknown'
+          team1: latestMatch.team1,
+          team2: latestMatch.team2,
+          score1: latestMatch.score1,
+          score2: latestMatch.score2,
+          status: latestMatch.status,
+          venue: latestMatch.venue
         });
       } else {
         setMatch(null);

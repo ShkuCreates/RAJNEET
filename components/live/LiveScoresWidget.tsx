@@ -32,32 +32,27 @@ export default function LiveScoresWidget() {
       setLoading(true);
       setError(null);
       
-      // Using Cricbuzz public API (free tier)
-      const response = await fetch(
-        'https://www.cricbuzz.com/api/cricket/league/ipl-mens-ipl-2024/matches'
-      );
+      // Use backend API route to avoid CORS issues
+      const response = await fetch('/api/cricket/scores', {
+        cache: 'no-store'
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch live scores');
       }
       
       const data = await response.json();
-      const allMatches = data.matches
-        .map((match: any): LiveMatch => ({
-          id: match.id,
-          team1: match.team1?.name || 'Team 1',
-          team2: match.team2?.name || 'Team 2',
-          score1: match.team1?.score || '0/0',
-          score2: match.team2?.score || '0/0',
-          status: match.status?.toUpperCase() || 'UNKNOWN',
-          overs: `${match.team1?.overs || '0.0'} / ${match.team2?.overs || '0.0'}`,
-          venue: match.venue || 'Unknown',
-          timestamp: match.startTime || ''
-        }))
-        .filter((match) => match.status !== 'UNKNOWN');
       
-      setMatches(allMatches);
-      setLastUpdated(new Date().toLocaleTimeString());
+      if (data.success && data.matches) {
+        setMatches(data.matches);
+        setLastUpdated(new Date().toLocaleTimeString());
+        
+        if (data.source === 'sample') {
+          setError('Live scores unavailable - showing sample data');
+        }
+      } else {
+        throw new Error('Invalid response from API');
+      }
     } catch (err) {
       console.error('Live scores error:', err);
       setError('Unable to fetch live scores');
