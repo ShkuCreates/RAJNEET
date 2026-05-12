@@ -42,6 +42,7 @@ export default function HomeClient() {
       
       const data = await res.json();
       console.log('News response:', data);
+      console.log('News IDs:', data.news?.map((n:any) => n.id) || []);
 
       if (Array.isArray(data)) {
         return { news: data, latestFetchAt: null };
