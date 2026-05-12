@@ -21,15 +21,42 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      // If user exists and has onboarding_complete, let them in
-      if (user) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email! }
+    async signIn({ user, account }) {
+      if (!user.email) return false;
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: user.email }
+      });
+
+      if (existingUser) {
+        // Link the new account to the existing user if not already linked
+        const existingAccount = await prisma.account.findFirst({
+          where: {
+            userId: existingUser.id,
+            provider: account?.provider,
+            providerAccountId: account?.providerAccountId
+          }
         });
-        if (existingUser && existingUser.onboarding_complete) {
-          return true;
+
+        if (!existingAccount && account) {
+          await prisma.account.create({
+            data: {
+              userId: existingUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              refresh_token: account.refresh_token,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+              session_state: account.session_state
+            }
+          });
         }
+        return true;
       }
       return true;
     },
