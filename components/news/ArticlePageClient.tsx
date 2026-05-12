@@ -230,7 +230,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
             <DebateSection
               newsId={article.id}
               currentUser={session?.user || null}
-              onRequireLogin={openLoginModal}
+              onRequireLogin={openLoginPopup}
               allowInteraction={authResolved && isLoggedIn}
             />
           </section>
