@@ -3,17 +3,9 @@ import { prisma } from "@/lib/prisma";
 import ArticlePageClient from "@/components/articles/ArticlePageClient";
 
 export async function generateStaticParams() {
-  const articles = await prisma.article.findMany({
-    where: { status: "approved" },
-    select: { slug: true },
-    take: 50,
-  });
-
-  return articles
-    .map((article) => ({
-      slug: article.slug || article.id,
-    }))
-    .filter((item) => item.slug);
+  // Return empty array to avoid database connection issues during build
+  // Routes will be generated dynamically at runtime
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {

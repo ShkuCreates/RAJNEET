@@ -30,15 +30,9 @@ async function getArticleBySlug(slug: string) {
 }
 
 export async function generateStaticParams() {
-  const popular = await prisma.news.findMany({
-    where: { status: "PUBLISHED", OR: [{ is_trending: true }, { priority: "high" }] },
-    select: { slug: true, headline: true },
-    orderBy: { created_at: "desc" },
-    take: 50,
-  });
-  return popular.map((article) => ({
-    slug: article.slug || slugFromHeadline(article.headline || "article"),
-  }));
+  // Return empty array to avoid database connection issues during build
+  // Routes will be generated dynamically at runtime
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
