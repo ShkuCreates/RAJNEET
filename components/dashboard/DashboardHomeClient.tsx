@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell, Loader2, Newspaper, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import NewsFeed from "@/components/news/NewsFeed";
-import LiveNewsTracker from "@/components/dashboard/LiveNewsTracker";
 import { toast } from "sonner";
 
 type DashboardHomeClientProps = {
@@ -188,13 +187,7 @@ export default function DashboardHomeClient({
             </div>
           )}
         </div>
-
-        {/* Right Side - Live News Tracker */}
-        <div className="w-80">
-          <LiveNewsTracker />
-        </div>
       </div>
     );
   }
 }
-

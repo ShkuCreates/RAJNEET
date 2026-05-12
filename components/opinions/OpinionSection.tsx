@@ -78,12 +78,21 @@ function OpinionSection({ newsId }: { newsId: string }) {
 
   const handleLike = async (opinionId: string) => {
     if (!session) return
-    await fetch(`/api/opinions/${opinionId}/like`, { method: 'POST' })
-    setOpinions(prev => prev.map(op =>
-      op.id === opinionId
-        ? { ...op, likeCount: op.likeCount + 1 }
-        : op
-    ))
+    
+    try {
+      const res = await fetch(`/api/opinions/${opinionId}/like`, { method: 'POST' })
+      const data = await res.json()
+      
+      if (res.ok) {
+        setOpinions(prev => prev.map(op =>
+          op.id === opinionId
+            ? { ...op, like_count: data.liked ? op.like_count + 1 : op.like_count - 1 }
+            : op
+        ))
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+    }
   }
 
   return (
@@ -174,7 +183,7 @@ function OpinionSection({ newsId }: { newsId: string }) {
                 color: opinion.stance === 'FOR' ? '#10B981' : opinion.stance === 'AGAINST' ? '#EF4444' : '#9CA3AF'
               }}>{opinion.stance}</span>
               <span style={{ color: '#6B7280', fontSize: 12, marginLeft: 'auto' }}>
-                {new Date(opinion.createdAt).toLocaleDateString('en-IN')}
+                {new Date(opinion.created_at).toLocaleDateString('en-IN')}
               </span>
             </div>
 
@@ -189,7 +198,7 @@ function OpinionSection({ newsId }: { newsId: string }) {
                 onClick={() => handleLike(opinion.id)}
                 style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
               >
-                👍 {opinion.likeCount || 0}
+                👍 {opinion.like_count || 0}
               </button>
               <button
                 onClick={() => setReplyingTo(replyingTo === opinion.id ? null : opinion.id)}
@@ -235,7 +244,7 @@ function OpinionSection({ newsId }: { newsId: string }) {
                   <img src={reply.user?.image} style={{ width: 24, height: 24, borderRadius: '50%' }} />
                   <span style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>{reply.user?.name}</span>
                   <span style={{ color: '#6B7280', fontSize: 11, marginLeft: 'auto' }}>
-                    {new Date(reply.createdAt).toLocaleDateString('en-IN')}
+                    {new Date(reply.created_at).toLocaleDateString('en-IN')}
                   </span>
                 </div>
                 <p style={{ color: '#D1D5DB', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
