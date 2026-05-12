@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Script from "next/script";
 import ArticlePageClient from "@/components/news/ArticlePageClient";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const slugFromHeadline = (headline: string) =>
   headline

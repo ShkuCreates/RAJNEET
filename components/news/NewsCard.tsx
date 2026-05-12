@@ -6,6 +6,7 @@ import { formatDistanceToNow, differenceInHours } from "date-fns";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useLoginPopup } from "@/components/LoginPopup";
 
 const categoryColors: Record<string, string> = {
   POLITICAL: "bg-accent-blue",
@@ -27,6 +28,7 @@ const categoryColors: Record<string, string> = {
 
 export default function NewsCard({ news, currentUser }: { news: any; currentUser: any }) {
   const router = useRouter();
+  const { showPopup } = useLoginPopup();
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   const normalizeImageUrl = (value?: string | null) => {
     if (!value) return "";
@@ -55,7 +57,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
   const handleUpvote = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!currentUser) {
-      toast.error("Login to like articles");
+      showPopup("interaction");
       return;
     }
 

@@ -5,6 +5,9 @@ import { NextAuthProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner";
 import Script from "next/script";
 import LiveTicker from "@/components/news/LiveTicker";
+import { LoginPopupProvider } from "@/components/LoginPopup";
+import AppShell from "@/components/AppShell";
+import { Suspense } from "react";
 
 const sora = Sora({ 
   subsets: ["latin"],
@@ -61,9 +64,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-midnight font-body antialiased">
         <NextAuthProvider>
-          <LiveTicker />
-          {children}
-          <Toaster richColors position="top-center" theme="dark" />
+          <LoginPopupProvider>
+            <LiveTicker />
+            <Suspense fallback={null}>
+              <AppShell>{children}</AppShell>
+            </Suspense>
+            <Toaster richColors position="top-center" theme="dark" />
+          </LoginPopupProvider>
         </NextAuthProvider>
       </body>
     </html>

@@ -143,7 +143,7 @@ export default function OnboardingPage() {
       
       // Force a full reload to ensure middleware catches the new token
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }, 1000);
     } catch (error) {
       toast.error("Something went wrong. Please try again.");

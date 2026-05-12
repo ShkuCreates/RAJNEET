@@ -141,7 +141,7 @@ export default function ProfilePage() {
         borderBottom: '1px solid rgba(255,255,255,0.1)'
       }}>
         <Link 
-          href="/dashboard"
+          href="/"
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -153,7 +153,7 @@ export default function ProfilePage() {
           }}
         >
           <ArrowLeft size={18} />
-          <span>Back to Dashboard</span>
+          <span>Back to Home</span>
         </Link>
         
         <Link 

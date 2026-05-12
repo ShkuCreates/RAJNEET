@@ -1,61 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Clock, ExternalLink, Copy, MessageSquare, Share2, X } from "lucide-react";
+import { MapPin, Clock, ExternalLink, Copy, MessageSquare, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import DebateSection from "@/components/news/DebateSection";
 import { toast } from "sonner";
-
-const SESSION_DISMISS_KEY = "article-login-modal-dismissed";
-
-function LoginPromptModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="relative w-full max-w-md rounded-2xl bg-[#111827] p-7 border border-white/10 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute right-3 top-3 p-2 text-gray-400 hover:text-white"
-          aria-label="Close"
-        >
-          <X size={18} />
-        </button>
-        <div className="flex items-center justify-center mb-5">
-          <img src="/images/rajneet-logo.png" alt="RAJNEET" className="h-8 w-auto" />
-        </div>
-        <h3 className="text-white text-2xl font-heading font-bold mb-2 text-center">
-          Join the debate on RAJNEET
-        </h3>
-        <p className="text-gray-400 text-sm text-center mb-6">
-          Login to share your stance, comment, and debate this article. Free forever.
-        </p>
-        <button
-          onClick={() => signIn("google")}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3"
-        >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-4 w-4" />
-          Login with Google
-        </button>
-        <p className="text-xs text-gray-500 text-center mt-3">
-          Protected under Article 19(1)(a) of the Indian Constitution
-        </p>
-      </div>
-    </div>
-  );
-}
+import { useLoginPopup } from "@/components/LoginPopup";
 
 export default function ArticlePageClient({ article }: { article: any }) {
   const { data: session, status } = useSession();
   const authResolved = status !== "loading";
   const isLoggedIn = status === "authenticated" && Boolean(session?.user);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [hasScrolledEnough, setHasScrolledEnough] = useState(false);
-  const [pageLoaded, setPageLoaded] = useState(false);
   const [stanceCounts, setStanceCounts] = useState({ FOR: 0, NEUTRAL: 0, AGAINST: 0 });
-  const modalShownByIntent = useRef(false);
+  const { showPopup } = useLoginPopup();
 
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   const normalizeImageUrl = (value?: string | null) => {
@@ -81,46 +39,6 @@ export default function ArticlePageClient({ article }: { article: any }) {
   const bodyHtml = article.seo_body || article.body || "";
   const summaryText = stripHtml(article.summary || article.body || "");
   const hasReadableBody = Boolean(stripHtml(article.seo_body || article.body || "").trim());
-
-  useEffect(() => {
-    if (document.readyState === "complete") {
-      setPageLoaded(true);
-      return;
-    }
-    const onLoad = () => setPageLoaded(true);
-    window.addEventListener("load", onLoad);
-    return () => window.removeEventListener("load", onLoad);
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY >= 100) setHasScrolledEnough(true);
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (!showLoginModal) return;
-    const onEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
-        setShowLoginModal(false);
-      }
-    };
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [showLoginModal]);
-
-  useEffect(() => {
-    if (!authResolved || isLoggedIn || !hasScrolledEnough || !pageLoaded) return;
-    if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "1") return;
-    const timer = window.setTimeout(() => {
-      if (!modalShownByIntent.current) setShowLoginModal(true);
-    }, 20000);
-    return () => window.clearTimeout(timer);
-  }, [authResolved, isLoggedIn, hasScrolledEnough, pageLoaded]);
 
   useEffect(() => {
     let mounted = true;
@@ -154,14 +72,8 @@ export default function ArticlePageClient({ article }: { article: any }) {
   const neutralPct = total ? Math.round((stanceCounts.NEUTRAL / total) * 100) : 0;
   const againstPct = total ? 100 - forPct - neutralPct : 0;
 
-  const openLoginModal = () => {
-    modalShownByIntent.current = true;
-    setShowLoginModal(true);
-  };
-
-  const closeLoginModal = () => {
-    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
-    setShowLoginModal(false);
+  const openLoginPopup = () => {
+    showPopup("interaction");
   };
 
   const handleCopyLink = async () => {
@@ -175,8 +87,6 @@ export default function ArticlePageClient({ article }: { article: any }) {
 
   return (
     <main className="min-h-screen bg-[#050A14] text-white">
-      {showLoginModal && authResolved && !isLoggedIn && <LoginPromptModal onClose={closeLoginModal} />}
-
       <div className="max-w-4xl mx-auto px-6 py-12">
         <article>
           <header className="mb-10">
