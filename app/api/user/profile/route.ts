@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const [totalComments, totalLikesResult, totalArticles] = await Promise.all([
+    const [totalComments, totalLikesResult, totalArticles, debateParticipation] = await Promise.all([
       prisma.opinion.count({
         where: { user_id: session.user.id }
       }),
@@ -23,13 +23,16 @@ export async function GET(req: Request) {
       }),
       prisma.news.count({
         where: { posted_by: session.user.id }
+      }),
+      prisma.debateParticipant.count({
+        where: { user_id: session.user.id }
       })
     ]);
 
     const totalLikes = totalLikesResult._sum.like_count || 0;
-    const totalEngagement = totalComments + totalLikes;
+    const totalEngagement = totalLikes;
 
-    const userActivities = await prisma.opinion.findMany({
+    const userOpinions = await prisma.opinion.findMany({
       where: { user_id: session.user.id },
       orderBy: { created_at: 'desc' },
       take: 20,
@@ -37,6 +40,16 @@ export async function GET(req: Request) {
         news: { select: { headline: true, slug: true } } 
       }
     });
+
+    const userActivities = userOpinions.map(opinion => ({
+      id: opinion.id,
+      type: 'comment' as const,
+      description: `Commented on: ${opinion.news?.headline || 'a news article'}`,
+      timestamp: new Date(opinion.created_at).toLocaleString('en-IN'),
+      color: '#3B82F6',
+      icon: 'comment',
+      articleSlug: opinion.news?.slug
+    }));
 
     const userArticles = await prisma.news.findMany({
       where: { posted_by: session.user.id },
@@ -61,7 +74,7 @@ export async function GET(req: Request) {
         totalComments,
         totalLikes,
         totalEngagement,
-        debateParticipation: totalComments,
+        debateParticipation,
         totalArticles
       },
       activities: userActivities,
