@@ -123,36 +123,74 @@ export async function seoOptimize(article: SEOData) {
 
   // STEP 2 — SEO TITLE
   const seo_title = await callGroqWithRetry(
-    `You are an expert SEO title writer for RAJNEET, India's premier political debate platform. Write ONE title: 55-60 characters, includes the primary keyword, creates urgency without clickbait, sounds like a professional Indian news headline. Return ONLY the title.
+    `You are a world-class SEO expert for Google ranking optimization. Write ONE SEO-optimized title for RAJNEET, India's political debate platform.
+
+CRITICAL SEO REQUIREMENTS FOR GOOGLE RANKING:
+- Length: 50-60 characters (Google displays 50-60 characters in search results)
+- Primary keyword placement: Include the primary keyword at the beginning or within first 10 characters
+- Search intent: Address user's intent (informational, transactional, or navigational)
+- No clickbait: Professional, trustworthy, fact-based
+- Indian context: Use terms relevant to Indian politics and current affairs
+- Emotional hook: Create urgency or curiosity without being misleading
+- Brand mention: Include "RAJNEET" if space allows for brand recognition
+- Power words: Use strong action verbs and impactful words
+- Numbers: Include relevant numbers/percentages if available
+
+OUTPUT FORMAT: Return ONLY the title text, nothing else.
 
 Headline: ${article.headline}
-Keyword: ${primary_keyword}
+Primary Keyword: ${primary_keyword}
 Category: ${article.category}
-State: ${article.state_name}`
+State: ${article.state_name}
+Trending Keywords: ${risingQueries.join(", ")}`
   );
 
   // STEP 3 — CLEAN SUMMARY (2-3 sentences, RAJNEET's own words)
   const clean_summary = await callGroqWithRetry(
-    `You are a news writer for RAJNEET, India's political debate platform. Write a 2-3 sentence summary of this news story IN YOUR OWN WORDS. Do NOT copy the original text. Make it clear, factual, engaging for Indian citizens. No fluff.
+    `You are an expert SEO content writer for RAJNEET, India's political debate platform. Write a 2-3 sentence summary optimized for Google ranking.
+
+SEO OPTIMIZATION REQUIREMENTS:
+- Primary keyword inclusion: Naturally include the primary keyword in the summary
+- Search intent: Address what users are searching for regarding this topic
+- Readability: Use simple, clear language that scores high on readability tests
+- Original content: Write IN YOUR OWN WORDS - do NOT copy from the source
+- Indian context: Make it relevant to Indian citizens and current affairs
+- Engagement: Make it compelling and share-worthy
+- Length: 2-3 sentences, 150-200 characters total
+- No fluff: Every word must add value
+
+OUTPUT FORMAT: Return ONLY the summary text, nothing else.
 
 Original news: ${article.summary}
 Headline: ${article.headline}
+Primary Keyword: ${primary_keyword}
+Category: ${article.category}
 State: ${article.state_name}`
   );
 
   // STEP 4 — FULL ORIGINAL ARTICLE BODY (300-400 words with 4 paragraphs)
   const full_body = await callGroqWithRetry(
-    `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
+    `You are a senior political journalist and SEO content expert writing for RAJNEET, India's top civic debate platform.
 
-Write a DETAILED news article for this story. This is NOT a summary. This is a full article.
+Write a DETAILED SEO-OPTIMIZED news article for this story. This is NOT a summary. This is a full article.
 
-STRICT REQUIREMENTS:
-- Minimum 300 words, maximum 400 words
-- Write exactly 4 paragraphs
-- Paragraph 1 (Lead): What happened, who was involved, when and where. Most important facts first. 4-5 sentences.
-- Paragraph 2 (Background): Context and background. Why did this happen. What led to this moment. 4-5 sentences.
+SEO CONTENT OPTIMIZATION REQUIREMENTS:
+- Primary keyword: Naturally include the primary keyword 2-3 times throughout the article
+- Secondary keywords: Include 1-2 related keywords from the trending list
+- Readability: Use simple, clear language (Flesch Reading Ease score > 60)
+- Structure: Use clear paragraph breaks and logical flow
+- Indian context: Make it relevant to Indian citizens and current affairs
+- Engagement: Include questions and call-to-actions for reader interaction
+- Length: Minimum 300 words, maximum 400 words
+- Paragraphs: Write exactly 4 paragraphs
+
+PARAGRAPH STRUCTURE:
+- Paragraph 1 (Lead): What happened, who was involved, when and where. Include primary keyword. Most important facts first. 4-5 sentences.
+- Paragraph 2 (Background): Context and background. Why did this happen. What led to this moment. Include secondary keyword. 4-5 sentences.
 - Paragraph 3 (Impact): How does this affect Indian citizens directly. What changes for common people. What are experts or opposition saying. 4-5 sentences.
-- Paragraph 4 (Debate): What are the two sides of this issue. End with a question inviting readers to share their stance on RAJNEET.
+- Paragraph 4 (Debate): What are the two sides of this issue. End with a question inviting readers to share their stance on RAJNEET. Include primary keyword. 4-5 sentences.
+
+STYLE REQUIREMENTS:
 - Write in simple clear English that any Indian citizen can understand
 - Do NOT use: "delve", "crucial", "realm", "furthermore", "moreover", "it is worth noting", "in conclusion"
 - Do NOT start with "Original news:" or any wire service attribution
@@ -160,17 +198,35 @@ STRICT REQUIREMENTS:
 - Return ONLY the article text with paragraph breaks. Nothing else.
 
 Headline: ${article.headline}
+Primary Keyword: ${primary_keyword}
 Category: ${article.category}
+State: ${article.state_name}
+Trending Keywords: ${risingQueries.join(", ")}
 Raw source content: ${article.summary}`
   );
 
   // STEP 5 — META DESCRIPTION
   const meta_description = await callGroqWithRetry(
-    `Write a Google meta description for this article: exactly 150-160 characters, includes the primary keyword, ends with a subtle CTA. Return ONLY the meta description.
+    `You are a Google SEO expert specializing in meta descriptions that drive high CTR and rankings. Write ONE compelling meta description for this article.
+
+GOOGLE META DESCRIPTION OPTIMIZATION REQUIREMENTS:
+- Length: 150-160 characters (Google displays 155-160 characters in search results)
+- Primary keyword: Include the primary keyword naturally in the first 120 characters
+- Search intent: Address what users want to know about this topic
+- CTA: End with a strong call-to-action (e.g., "Read more", "Learn more", "Get details")
+- Value proposition: Highlight why this content matters to the reader
+- Indian context: Make it relevant to Indian citizens and current affairs
+- Emotional hook: Create curiosity or urgency without being misleading
+- No clickbait: Be factual and trustworthy
+- Brand mention: Include "RAJNEET" if space allows
+
+OUTPUT FORMAT: Return ONLY the meta description text, nothing else.
 
 SEO Title: ${seo_title}
-Keyword: ${primary_keyword}
-Summary: ${clean_summary}`
+Primary Keyword: ${primary_keyword}
+Summary: ${clean_summary}
+Category: ${article.category}
+State: ${article.state_name}`
   );
 
   // STEP 6 — SLUG
@@ -187,8 +243,25 @@ Summary: ${clean_summary}`
 
   // STEP 7 — FOCUS KEYWORDS
   const focusKeywordsText = await callGroqWithRetry(
-    `Generate exactly 5 SEO focus keywords for this Indian political article. Return ONLY a JSON array of 5 strings.`,
-    `Headline: ${article.headline}\nKeyword: ${primary_keyword}\nCategory: ${article.category}\nState: ${article.state_name}\nTrending: ${risingQueries.join(", ")}`
+    `You are an expert SEO keyword researcher for Google ranking. Generate exactly 5 high-value SEO focus keywords for this Indian political article.
+
+KEYWORD RESEARCH REQUIREMENTS FOR GOOGLE RANKING:
+- Primary keyword: Include the main primary keyword as the first result
+- Long-tail keywords: Include 2-3 long-tail keywords (3+ words) with lower competition
+- Local SEO: Include 1-2 location-specific keywords (state/city names if relevant)
+- Search volume: Focus on keywords with good search volume but lower competition
+- User intent: Mix of informational, navigational, and transactional intent keywords
+- Indian context: Use terms relevant to Indian politics and current affairs
+- No duplicates: All 5 keywords must be unique
+- Lowercase: Return all keywords in lowercase
+
+OUTPUT FORMAT: Return ONLY a JSON array of 5 strings, nothing else.
+
+Headline: ${article.headline}
+Primary Keyword: ${primary_keyword}
+Category: ${article.category}
+State: ${article.state_name}
+Trending Keywords: ${risingQueries.join(", ")}`
   );
   
   let focus_keywords = [primary_keyword];
