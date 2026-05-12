@@ -26,8 +26,8 @@ const NAV_ITEMS = [
   { label: "Finance", category: "Finance", href: null },
   { label: "Entertainment", category: "Entertainment", href: null },
   { label: "Others", category: "Others", href: null },
-  { label: "Admin", href: "/admin/analytics", isAdmin: true },
   { label: "Premium", href: "/premium", isPremium: true },
+  { label: "Admin", href: "/admin/analytics", isAdmin: true },
 ] as const;
 const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
@@ -206,12 +206,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          {/* Center - Switcher - absolutely centered and wider */}
+          {/* Center - Switcher - thinner & more stretchable */}
           <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20">
-            <div className="hidden rounded-[25px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1.5 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+            <div className="hidden rounded-[20px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
               <button
                 onClick={() => setSection("news")}
-                className={`rounded-[20px] px-10 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                   section === "news"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -219,10 +219,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 NEWS
               </button>
-              <div className="w-px h-7 bg-white/20" />
+              <div className="w-px h-5 bg-white/20" />
               <button
                 onClick={() => setSection("article")}
-                className={`rounded-[20px] px-10 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                   section === "article"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -236,11 +236,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           
           {/* Right - Date Time + Profile */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-4 md:flex">
-            <div className="flex items-center gap-2 text-right">
-              <span className="text-[13px] font-medium text-[#6B7280]">{`${weekday}, ${month} ${day}`}</span>
-              <span className="text-[#374151]">-</span>
-              <span className="text-lg font-semibold text-[#F9FAFB]">{time}</span>
-              <span className="rounded-full bg-[#3B82F6] px-2 py-1 text-[11px] font-semibold text-white">IST</span>
+            <div className="flex items-center gap-3 px-3 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg">
+              <span className="text-[12px] font-medium text-gray-300">{`${weekday}, ${month} ${day}`}</span>
+              <span className="text-white/30">•</span>
+              <span className="text-lg font-semibold text-white">{time}</span>
             </div>
             <div className="h-7 w-px bg-white/10" />
             <UserLink user={session?.user} />
