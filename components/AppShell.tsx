@@ -46,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
 const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"] as const;
 const DEBATE_OPTIONS = [
   { label: "ONGOING", href: "/live" },
+  { label: "LIVE DEBATE", href: "/debates/live" },
   { label: "CALENDAR", href: "/debates/calendar" },
 ] as const;
 const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
@@ -297,7 +298,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     ? pathname === item.href
                     : !activeCategory;
 
-                const handleClick = () => {
+                const handleClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
                   if (item.href) {
                     router.push(item.href);
                   } else if (item.category) {
@@ -473,8 +477,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </footer>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 bg-black/60 md:hidden">
-          <div className="absolute inset-x-0 bottom-0 rounded-t-[28px] border border-white/10 bg-[#0D1117] p-6">
+        <div className="fixed inset-0 z-50 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-white/10 bg-[#0D1117] p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <div className="rounded-full border border-white/10 bg-[#1F2937] p-1">
                 <button onClick={() => setSection("news")} className={`rounded-[20px] px-4 py-1.5 text-sm font-semibold ${section === "news" ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white" : "text-gray-300"}`}>NEWS</button>

@@ -30,8 +30,8 @@ export default function HomeClient() {
   useEffect(() => {
     const fetchNews = async (category?: string) => {
       const query = category
-        ? `/api/news?category=${encodeURIComponent(category)}&limit=12`
-        : "/api/news?limit=12";
+        ? `/api/news?category=${encodeURIComponent(category)}&limit=100`
+        : "/api/news?limit=100";
 
       console.log('Fetching news from:', query);
       const res = await fetch(query, { cache: "no-store" });

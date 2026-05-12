@@ -13,17 +13,8 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Get all users, excluding system users and ordering by creation date
+    // Get ALL users without restrictive filtering
     const users = await prisma.user.findMany({
-      where: {
-        // Exclude system users by filtering out common system identifiers
-        AND: [
-          { email: { not: { contains: 'system' } } },
-          { email: { not: { contains: 'admin' } } },
-          { id: { not: { contains: 'ADMIN' } } },
-          { id: { not: { contains: 'SYSTEM' } } }
-        ]
-      },
       orderBy: { created_at: "desc" },
       include: {
         _count: {
@@ -32,7 +23,7 @@ export async function GET(req: Request) {
       }
     });
 
-    console.log(`[ADMIN_USERS_DEBUG] Found ${users.length} real users (excluding system users)`);
+    console.log(`[ADMIN_USERS_DEBUG] Found ${users.length} total users`);
 
     return NextResponse.json({ users });
   } catch (error) {
