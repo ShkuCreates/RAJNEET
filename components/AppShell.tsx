@@ -21,6 +21,7 @@ type AppShellProps = {
 
 const NAV_ITEMS = [
   { label: "Live", category: null, href: "/live", isLive: true },
+  { label: "Trending", category: null, href: "/trending", isTrending: true },
   { label: "Politics", category: "Politics", href: null },
   { label: "Sports", category: "Sports", href: null },
   { label: "Finance", category: "Finance", href: null },

@@ -157,7 +157,7 @@ export default function ProfilePage() {
         </Link>
         
         <Link 
-          href="https://instagram.com/rajneet"
+          href="https://instagram.com/rajneet.co.in"
           target="_blank"
           style={{ 
             display: 'flex', 
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9CA3AF', fontSize: '12px' }}>
                     <span>
-                      {new Date(article.createdAt).toLocaleDateString('en-IN')}
+                      {new Date(article.created_at).toLocaleDateString('en-IN')}
                     </span>
                     <span>
                       {article._count?.pageViews || 0} views
