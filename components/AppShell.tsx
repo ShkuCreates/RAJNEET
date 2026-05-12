@@ -19,7 +19,19 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-const NAV_ITEMS = [
+type NavItem = {
+  label: string;
+  category?: string | null;
+  href?: string | null;
+  isLive?: boolean;
+  isTrending?: boolean;
+  isDebate?: boolean;
+  isPremium?: boolean;
+  isAdmin?: boolean;
+  isAction?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { label: "Live", category: null, href: "/live", isLive: true },
   { label: "Trending", category: null, href: "/trending", isTrending: true },
   { label: "Politics", category: "Politics", href: null },
@@ -27,15 +39,16 @@ const NAV_ITEMS = [
   { label: "Finance", category: "Finance", href: null },
   { label: "Entertainment", category: "Entertainment", href: null },
   { label: "Others", category: "Others", href: null },
+  { label: "Debates", href: "/debates", isDebate: true },
   { label: "Premium", href: "/premium", isPremium: true },
-] as const;
+];
 
 const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"] as const;
 const DEBATE_OPTIONS = [
   { label: "Live", href: "/live" },
-  { label: "Calendar", href: null },
+  { label: "Calendar", href: "/debates/calendar" },
 ] as const;
-const ADMIN_DROPDOWN_OPTIONS = [
+const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
   { label: "Manage Post", href: "/admin/manage-news" },
   { label: "Upload News", href: "/admin/post-news" },
   { label: "Upload Article", href: "/admin/articles" },
@@ -43,7 +56,7 @@ const ADMIN_DROPDOWN_OPTIONS = [
   { label: "Analytics", href: "/admin/analytics" },
   { label: "Users", href: "/admin/users" },
   { label: "Fetch News", href: null, isAction: true },
-] as const;
+];
 
 function UserLink({ user }: { user: DashboardUser | null | undefined }) {
   if (!user?.id) {
@@ -245,8 +258,52 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           
-          {/* Right - Date Time + Profile */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-4 md:flex">
+          {/* Right - Debate Nav + Date Time + Profile */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-3 md:flex">
+            {/* Debate Dropdown */}
+            <div className="relative" ref={debatesRef}>
+              <button
+                onClick={() => {
+                  setDebatesOpen((value) => !value);
+                  setNewsOpen(false);
+                  setAdminOpen(false);
+                }}
+                className={`relative flex h-full items-center gap-1 px-4 py-2 text-[13px] font-bold uppercase tracking-wider transition-colors rounded-lg ${
+                  pathname.startsWith("/debates") || pathname === "/live"
+                    ? "bg-red-500 text-white"
+                    : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                }`}
+              >
+                DEBATES
+                <ChevronDown size={14} className={`transition-transform duration-200 ${debatesOpen ? "rotate-180" : ""}`} />
+                {(pathname.startsWith("/debates") || pathname === "/live") && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-b-lg" />
+                )}
+              </button>
+              {debatesOpen ? (
+                <div className="absolute right-0 top-full z-30 mt-2 min-w-[160px] overflow-hidden rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                  {DEBATE_OPTIONS.map((option) => (
+                    <Link
+                      key={option.label}
+                      href={option.href}
+                      className={`flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment ${
+                        pathname === option.href
+                          ? "bg-red-500/20 text-red-400"
+                          : "text-gray-400 hover:bg-red-500/10 hover:text-red-300"
+                      }`}
+                    >
+                      {option.label === "Live" && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                      )}
+                      {option.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            
+            <div className="h-7 w-px bg-white/10" />
+            
             <div className="flex items-center gap-3 px-3 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg">
               <span className="text-[12px] font-medium text-gray-300">{`${weekday}, ${month} ${day}`}</span>
               <span className="text-white/30">•</span>
@@ -287,6 +344,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     router.push(item.href);
                   } else if (item.category) {
                     goToCategory(item.category);
+                  } else if (item.isDebate) {
+                    setDebatesOpen((value) => !value);
+                    setNewsOpen(false);
+                    setAdminOpen(false);
                   } else {
                     router.push("/");
                   }
@@ -469,9 +530,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="rounded-2xl border border-white/10 p-2">
                   <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Debates</div>
                   {DEBATE_OPTIONS.map((option) => (
-                    <button key={option.href} onClick={() => { router.push(option.href); setMobileOpen(false); }} className="flex w-full items-center rounded-xl px-3 py-3 text-left text-white hover:bg-white/[0.04]">
+                    <Link key={option.label} href={option.href} onClick={() => setMobileOpen(false)} className="flex w-full items-center rounded-xl px-3 py-3 text-left text-white hover:bg-white/[0.04]">
+                      {option.label === "Live" && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                      )}
                       {option.label}
-                    </button>
+                    </Link>
                   ))}
                 </div>
 

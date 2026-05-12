@@ -100,6 +100,221 @@ function extractArticleImage(art: any) {
   return null;
 }
 
+// Multiple API configurations for different news sources
+const API_CONFIGS = {
+  newsdata: {
+    keys: [
+      process.env.NEWSDATA_API_KEY,
+      process.env.NEWSDATA_API_KEY_2,
+      process.env.NEWSDATA_API_KEY_3,
+      "5gRpK5NKilKfCPdtkvC2oEZBFHNuT-z1bbozEY6Cq42JY--H"
+    ].filter(Boolean),
+    baseUrl: "https://newsdata.io/api/1/news",
+    queryParams: "&language=en&limit=10"
+  },
+  currents: {
+    keys: [
+      process.env.CURRENTS_API_KEY,
+      process.env.CURRENTS_API_KEY_2,
+      process.env.CURRENTS_API_KEY_3,
+      "test_currents_api_key" // Add test key for verification
+    ].filter(Boolean),
+    baseUrl: "https://api.currentsapi.services/v1/search",
+    queryParams: "&language=en&limit=10"
+  },
+  gnews: {
+    keys: [
+      process.env.GNEWS_API_KEY,
+      process.env.GNEWS_API_KEY_2,
+      "4d0204f121a0846d1a8a1096d5352f08"
+    ].filter(Boolean),
+    baseUrl: "https://gnews.io/api/v4/search",
+    queryParams: "&lang=en&max=10&sortby=publishedAt"
+  }
+};
+
+// Normalize article data from different APIs to common format
+function normalizeArticle(article: any, source: string): any {
+  switch (source) {
+    case 'newsdata':
+      return {
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        link: article.link,
+        pubDate: article.pubDate,
+        image_url: article.image_url,
+        category: article.category,
+        source: 'newsdata'
+      };
+    
+    case 'currents':
+      return {
+        title: article.title,
+        description: article.description,
+        content: article.description, // Currents API doesn't have separate content field
+        link: article.url,
+        pubDate: article.published,
+        image_url: article.image,
+        category: article.category || 'general',
+        source: 'currents'
+      };
+    
+    case 'gnews':
+      return {
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        link: article.url,
+        pubDate: article.publishedAt,
+        image_url: article.image,
+        category: article.source?.name || 'general',
+        source: 'gnews'
+      };
+    
+    default:
+      return article;
+  }
+}
+
+async function fetchFromAPIWithFallback(apiName: string, query: string): Promise<any[]> {
+  const config = API_CONFIGS[apiName as keyof typeof API_CONFIGS];
+  if (!config || config.keys.length === 0) {
+    console.log(`No API keys configured for ${apiName}`);
+    return [];
+  }
+
+  const results: any[] = [];
+  const errors: string[] = [];
+  
+  for (const apiKey of config.keys) {
+    if (!apiKey) {
+      continue; // Skip null/undefined keys
+    }
+    
+    try {
+      console.log(`Trying ${apiName} API key: ${apiKey.substring(0, 10)}...`);
+      
+      let url = `${config.baseUrl}?`;
+      
+      if (apiName === 'newsdata') {
+        url += `apikey=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}`;
+      } else if (apiName === 'currents') {
+        url += `apiKey=${apiKey}&keywords=${encodeURIComponent(query)}${config.queryParams}`;
+      } else if (apiName === 'gnews') {
+        url += `token=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}`;
+      }
+      
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[${apiName.toUpperCase()}_API_ERROR] Key ${apiKey.substring(0, 10)}...:`, response.status, errorText);
+        
+        // If it's a rate limit or quota issue, try next key
+        if (response.status === 429 || response.status === 401 || response.status === 403) {
+          errors.push(`Key ${apiKey.substring(0, 10)}...: ${response.status} - Rate limited/Quota exceeded`);
+          continue;
+        }
+        
+        // For other errors like invalid parameters, don't retry with other keys
+        if (response.status === 422 || response.status === 400) {
+          console.log(`Parameter error with ${apiName}, skipping this API`);
+          return [];
+        }
+        
+        errors.push(`Key ${apiKey.substring(0, 10)}...: ${response.status} - ${errorText}`);
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        errors.push(`Key ${apiKey.substring(0, 10)}...: Invalid response type`);
+        continue;
+      }
+
+      const data = await response.json();
+      let articles: any[] = [];
+      
+      if (apiName === 'newsdata' && data.results) {
+        articles = data.results;
+      } else if (apiName === 'currents' && data.news) {
+        articles = data.news;
+      } else if (apiName === 'gnews' && data.articles) {
+        articles = data.articles;
+      }
+      
+      if (articles.length === 0) {
+        errors.push(`Key ${apiKey.substring(0, 10)}...: No articles in response`);
+        continue;
+      }
+      
+      console.log(`✓ Success with ${apiName} key ${apiKey.substring(0, 10)}...: ${articles.length} articles`);
+      
+      // Normalize articles to common format
+      const normalizedArticles = articles.map((article: any) => normalizeArticle(article, apiName));
+      results.push(...normalizedArticles);
+      
+      // If we got results, don't try more keys for this API
+      break;
+      
+    } catch (error: any) {
+      console.error(`${apiName} key ${apiKey.substring(0, 10)}... failed:`, error.message);
+      errors.push(`Key ${apiKey.substring(0, 10)}...: ${error.message}`);
+      continue;
+    }
+  }
+  
+  if (results.length === 0 && errors.length > 0) {
+    console.log(`All ${apiName} API keys failed. Errors: ${errors.join('; ')}`);
+  }
+  
+  return results;
+}
+
+// Main function to fetch from all APIs
+async function fetchFromAllAPIs(query: string): Promise<any[]> {
+  const allResults: any[] = [];
+  const apiNames = ['newsdata', 'currents', 'gnews'];
+  
+  console.log('Fetching news from all APIs...');
+  
+  // Fetch from all APIs concurrently
+  const apiPromises = apiNames.map(apiName => 
+    fetchFromAPIWithFallback(apiName, query).catch(error => {
+      console.error(`Error fetching from ${apiName}:`, error.message);
+      return [];
+    })
+  );
+  
+  const results = await Promise.all(apiPromises);
+  
+  // Combine all results
+  results.forEach((apiResults, index) => {
+    if (apiResults.length > 0) {
+      console.log(`${apiNames[index]}: ${apiResults.length} articles`);
+      allResults.push(...apiResults);
+    }
+  });
+  
+  console.log(`Total articles from all APIs: ${allResults.length}`);
+  
+  // Remove duplicates based on URL
+  const uniqueArticles: any[] = [];
+  const seenUrls = new Set<string>();
+  
+  for (const article of allResults) {
+    if (article.link && !seenUrls.has(article.link)) {
+      seenUrls.add(article.link);
+      uniqueArticles.push(article);
+    }
+  }
+  
+  console.log(`Unique articles after deduplication: ${uniqueArticles.length}`);
+  
+  return uniqueArticles.slice(0, 20); // Limit to 20 total articles
+}
+
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret");
@@ -112,42 +327,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    console.log("Fetching news from NewsData API...");
+    console.log("Fetching news from multiple APIs...");
     
-    if (!process.env.NEWSDATA_API_KEY) {
-      throw new Error("NEWSDATA_API_KEY is not set in environment variables");
-    }
-
-    const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[NEWSDATA_API_ERROR]", response.status, errorText);
-      throw new Error(`NewsData API error: ${response.status} - ${errorText || "Unknown error"}`);
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("[NEWSDATA_API_INVALID_RESPONSE]", text);
-      throw new Error("NewsData API returned non-JSON response");
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError: any) {
-      console.error("[NEWSDATA_API_PARSE_ERROR]", parseError);
-      throw new Error("Failed to parse NewsData API response");
-    }
-    
-    if (!data.results) {
-      throw new Error(data.message || "Failed to fetch news from API");
-    }
-
-    const fetchedArticles = data.results;
+    const fetchedArticles = await fetchFromAllAPIs("politics India");
     // Limit to 15 articles per run
     const articlesToProcess = fetchedArticles.slice(0, 15);
     const savedArticles = [];
@@ -278,42 +460,9 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log("Fetching news from NewsData API...");
+    console.log("Fetching news from multiple APIs...");
     
-    if (!process.env.NEWSDATA_API_KEY) {
-      throw new Error("NEWSDATA_API_KEY is not set in environment variables");
-    }
-
-    const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[NEWSDATA_API_ERROR]", response.status, errorText);
-      throw new Error(`NewsData API error: ${response.status} - ${errorText || "Unknown error"}`);
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("[NEWSDATA_API_INVALID_RESPONSE]", text);
-      throw new Error("NewsData API returned non-JSON response");
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError: any) {
-      console.error("[NEWSDATA_API_PARSE_ERROR]", parseError);
-      throw new Error("Failed to parse NewsData API response");
-    }
-    
-    if (!data.results) {
-      throw new Error(data.message || "Failed to fetch news from API");
-    }
-
-    const fetchedArticles = data.results;
+    const fetchedArticles = await fetchFromAllAPIs("politics India");
     // Limit to 15 articles per run
     const articlesToProcess = fetchedArticles.slice(0, 15);
     const savedArticles = [];

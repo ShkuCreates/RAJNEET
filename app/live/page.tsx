@@ -1,17 +1,15 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import DashboardHomeClient from "@/components/dashboard/DashboardHomeClient";
+import LiveDebatesClient from "@/components/debates/LiveDebatesClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardLivePage() {
+export default async function LiveDebatesPage() {
   const session = await getServerSession(authOptions);
 
   return (
-    <DashboardHomeClient
+    <LiveDebatesClient
       currentUser={session?.user}
-      selectedCategory={null}
-      showLiveOnly
     />
   );
 }

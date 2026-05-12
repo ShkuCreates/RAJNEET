@@ -47,8 +47,9 @@ export default async function DebatesCalendarPage() {
           </div>
         ) : (
           <div className="rounded-[28px] border border-white/10 bg-white/[0.03] px-8 py-16 text-center">
-            <h2 className="mb-3 text-2xl font-semibold text-white">No debates are scheduled yet.</h2>
-            <p className="text-gray-400">Upcoming debate sessions will appear here once they are added.</p>
+            <h2 className="mb-3 text-2xl font-semibold text-white">Coming Soon</h2>
+            <p className="text-gray-400">No debates are scheduled yet.</p>
+            <p className="text-sm text-gray-500 mt-2">Upcoming debate sessions will appear here once they are added.</p>
           </div>
         )}
       </div>
