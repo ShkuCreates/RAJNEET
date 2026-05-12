@@ -222,7 +222,7 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                 </div>
               ))}
             </div>
-          )}
+          </div>
         )}
       </div>
     </div>
