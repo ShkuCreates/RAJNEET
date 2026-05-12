@@ -258,50 +258,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           
-          {/* Right - Debate Nav + Date Time + Profile */}
+          {/* Right - Date Time + Profile */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-3 md:flex">
-            {/* Debate Dropdown */}
-            <div className="relative" ref={debatesRef}>
-              <button
-                onClick={() => {
-                  setDebatesOpen((value) => !value);
-                  setNewsOpen(false);
-                  setAdminOpen(false);
-                }}
-                className={`relative flex h-full items-center gap-1 px-4 py-2 text-[13px] font-bold uppercase tracking-wider transition-colors rounded-lg ${
-                  pathname.startsWith("/debates") || pathname === "/live"
-                    ? "bg-red-500 text-white"
-                    : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                }`}
-              >
-                DEBATES
-                <ChevronDown size={14} className={`transition-transform duration-200 ${debatesOpen ? "rotate-180" : ""}`} />
-                {(pathname.startsWith("/debates") || pathname === "/live") && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-b-lg" />
-                )}
-              </button>
-              {debatesOpen ? (
-                <div className="absolute right-0 top-full z-30 mt-2 min-w-[160px] overflow-hidden rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                  {DEBATE_OPTIONS.map((option) => (
-                    <Link
-                      key={option.label}
-                      href={option.href}
-                      className={`flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment ${
-                        pathname === option.href
-                          ? "bg-red-500/20 text-red-400"
-                          : "text-gray-400 hover:bg-red-500/10 hover:text-red-300"
-                      }`}
-                    >
-                      {option.label === "Live" && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
-                      )}
-                      {option.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            
             <div className="h-7 w-px bg-white/10" />
             
             <div className="flex items-center gap-3 px-3 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg">
@@ -354,23 +312,52 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 };
 
                 return (
-                  <button
-                    key={item.label}
-                    onClick={handleClick}
-                    className={`relative flex h-full items-center px-5 text-[13px] font-semibold uppercase tracking-wider transition-all ${
-                      isActive 
-                        ? "text-[#3B82F6] bg-white/[0.03]" 
-                        : "text-white hover:text-[#93C5FD] hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    {item.isLive && (
-                      <span className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
-                    )}
-                    {item.label}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
-                    )}
-                  </button>
+                  <div key={item.label} className="relative" ref={item.isDebate ? debatesRef : undefined}>
+                    <button
+                      onClick={handleClick}
+                      className={`relative flex h-full items-center gap-1 px-5 text-[13px] font-bold uppercase tracking-wider transition-all ${
+                        item.isDebate
+                          ? pathname.startsWith("/debates") || pathname === "/live"
+                            ? "bg-red-500 text-white"
+                            : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                          : isActive 
+                            ? "text-[#3B82F6] bg-white/[0.03]" 
+                            : "text-white hover:text-[#93C5FD] hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      {item.isLive && (
+                        <span className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                      )}
+                      {item.label}
+                      {item.isDebate && <ChevronDown size={14} className={`transition-transform duration-200 ${debatesOpen ? "rotate-180" : ""}`} />}
+                      {isActive && !item.isDebate && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                      )}
+                      {item.isDebate && (pathname.startsWith("/debates") || pathname === "/live") && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-b-lg" />
+                      )}
+                    </button>
+                    {item.isDebate && debatesOpen ? (
+                      <div className="absolute left-0 top-full z-30 mt-2 min-w-[160px] overflow-hidden rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                        {DEBATE_OPTIONS.map((option) => (
+                          <Link
+                            key={option.label}
+                            href={option.href}
+                            className={`flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment ${
+                              pathname === option.href
+                                ? "bg-red-500/20 text-red-400"
+                                : "text-gray-400 hover:bg-red-500/10 hover:text-red-300"
+                            }`}
+                          >
+                            {option.label === "Live" && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                            )}
+                            {option.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
 

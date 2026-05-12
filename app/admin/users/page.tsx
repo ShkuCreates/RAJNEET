@@ -29,9 +29,11 @@ export default function AdminUsersPage() {
       try {
         const res = await fetch("/api/admin/users");
         const data = await res.json();
+        console.log("[ADMIN_USERS_PAGE_DEBUG] Received data:", data);
+        console.log("[ADMIN_USERS_PAGE_DEBUG] Users count:", data.users?.length || 0);
         setUsers(data.users || []);
       } catch (err) {
-        console.error(err);
+        console.error("[ADMIN_USERS_PAGE_ERROR]", err);
       } finally {
         setLoading(false);
       }
@@ -136,8 +138,15 @@ export default function AdminUsersPage() {
                   ))
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      No users found
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <User size={48} className="text-gray-600" />
+                        <div>
+                          <p className="text-gray-500 text-lg font-medium">No real users found</p>
+                          <p className="text-gray-600 text-sm mt-1">Users will appear here when they sign up through Google OAuth</p>
+                          <p className="text-gray-600 text-xs mt-2">System and admin users are filtered out from this view</p>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ) : (

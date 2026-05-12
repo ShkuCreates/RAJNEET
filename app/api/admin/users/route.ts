@@ -13,7 +13,17 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Get all users, excluding system users and ordering by creation date
     const users = await prisma.user.findMany({
+      where: {
+        // Exclude system users by filtering out common system identifiers
+        AND: [
+          { email: { not: { contains: 'system' } } },
+          { email: { not: { contains: 'admin' } } },
+          { id: { not: { contains: 'ADMIN' } } },
+          { id: { not: { contains: 'SYSTEM' } } }
+        ]
+      },
       orderBy: { created_at: "desc" },
       include: {
         _count: {
@@ -22,9 +32,11 @@ export async function GET(req: Request) {
       }
     });
 
+    console.log(`[ADMIN_USERS_DEBUG] Found ${users.length} real users (excluding system users)`);
+
     return NextResponse.json({ users });
   } catch (error) {
     console.error("[ADMIN_USERS_ERROR]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json("Internal Error", { status: 500 });
   }
 }

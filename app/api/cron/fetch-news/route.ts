@@ -110,7 +110,7 @@ const API_CONFIGS = {
       "5gRpK5NKilKfCPdtkvC2oEZBFHNuT-z1bbozEY6Cq42JY--H"
     ].filter(Boolean),
     baseUrl: "https://newsdata.io/api/1/news",
-    queryParams: "&language=en&limit=10"
+    queryParams: "&language=en"
   },
   currents: {
     keys: [
