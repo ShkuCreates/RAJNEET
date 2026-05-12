@@ -30,6 +30,11 @@ const NAV_ITEMS = [
   { label: "Premium", href: "/premium", isPremium: true },
 ] as const;
 
+const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"] as const;
+const DEBATE_OPTIONS = [
+  { label: "Live", href: "/live" },
+  { label: "Calendar", href: null },
+] as const;
 const ADMIN_DROPDOWN_OPTIONS = [
   { label: "Manage Post", href: "/admin/manage-news" },
   { label: "Upload News", href: "/admin/post-news" },

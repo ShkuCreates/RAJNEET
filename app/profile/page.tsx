@@ -3,109 +3,72 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ArrowLeft, Instagram, LogOut, Pen, Clock, Heart, TrendingUp, Users } from 'lucide-react'
+
+type ProfileStats = {
+  totalComments: number
+  totalLikes: number
+  totalEngagement: number
+  debateParticipation: number
+  totalArticles: number
+}
+
+type Activity = {
+  id: string
+  type: 'comment' | 'debate'
+  description: string
+  timestamp: string
+  color: string
+  icon: string
+  articleSlug?: string
+}
+
+type Article = {
+  id: string
+  headline: string
+  slug?: string
+  created_at: string
+  status: string
+  _count: { pageViews: number }
+}
 
 export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<ProfileStats>({
     totalComments: 0,
     totalLikes: 0,
     totalEngagement: 0,
     debateParticipation: 0,
     totalArticles: 0
   })
-  const [activities, setActivities] = useState([])
-  const [articles, setArticles] = useState([])
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [articles, setArticles] = useState<Article[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!session?.user?.id) return
 
     const fetchProfileData = async () => {
       try {
-        // Fetch stats with real-time updates
-        const [totalComments, totalLikesResult, totalArticles] = await Promise.all([
-          prisma.opinion.count({
-            where: { userId: session.user.id }
-          }),
-          prisma.opinion.aggregate({
-            where: { userId: session.user.id },
-            _sum: { like_count: true }
-          }),
-          prisma.news.count({
-            where: { posted_by: session.user.id }
-          })
-        ])
-
-        const totalLikes = totalLikesResult._sum.like_count || 0
-        const totalEngagement = totalComments + totalLikes
-
-        // Fetch activities with real-time updates
-        const userActivities = await prisma.opinion.findMany({
-          where: { user_id: session.user.id },
-          orderBy: { created_at: 'desc' },
-          take: 20,
-          include: { 
-            news: { select: { headline: true, slug: true } } 
-          }
-        })
-
-        // Fetch user articles with real-time updates
-        const userArticles = await prisma.news.findMany({
-          where: { posted_by: session.user.id },
-          orderBy: { created_at: 'desc' },
-          take: 50,
-          select: {
-            id: true,
-            headline: true,
-            slug: true,
-            created_at: true,
-            status: true,
-            _count: {
-              select: {
-                pageViews: true
-              }
-            }
-          }
-        })
-
-        setStats({
-          totalComments,
-          totalLikes,
-          totalEngagement,
-          debateParticipation: totalComments, // For now, using comments as debate participation
-          totalArticles
-        })
-
-        // Format activities with real-time updates
-        const formattedActivities = userActivities.map(activity => {
-          const activityType = activity.news ? 'comment' : 'debate'
-          const color = activityType === 'comment' ? '#3B82F6' : '#8B5CF6'
-          const icon = activityType === 'comment' ? '💬' : '🗳️'
-          
-          return {
-            id: activity.id,
-            type: activityType,
-            description: `You ${activityType === 'comment' ? 'commented on' : 'participated in'} "${activity.news?.headline || 'Article'}"`,
-            timestamp: new Date(activity.created_at).toLocaleDateString('en-IN'),
-            color,
-            icon,
-            articleSlug: activity.news?.slug
-          }
-        })
-
-        setActivities(formattedActivities)
-        setArticles(userArticles)
+        setLoading(true)
+        const res = await fetch('/api/user/profile', { cache: 'no-store' })
+        if (!res.ok) throw new Error('Failed to fetch profile data')
+        const data = await res.json()
+        
+        setStats(data.stats || stats)
+        setActivities(data.activities || [])
+        setArticles(data.articles || [])
       } catch (error) {
         console.error('Error fetching profile data:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchProfileData()
     
-    // Set up real-time updates every 30 seconds
     const interval = setInterval(fetchProfileData, 30000)
     
     return () => clearInterval(interval)
@@ -190,7 +153,7 @@ export default function ProfilePage() {
                 width: '80px',
                 height: '80px',
                 borderRadius: '50%',
-                background: `url(${session.user.image})`,
+                background: session.user.image ? `url(${session.user.image})` : '#1f2937',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 border: '3px solid #3B82F6',
@@ -265,233 +228,244 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(4, 1fr)', 
-          gap: '16px', 
-          marginBottom: '32px' 
-        }}>
-          {/* Total Comments */}
-          <div style={{
-            background: '#1F2937',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <Heart size={24} style={{ color: '#3B82F6', marginBottom: '8px' }} />
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
-              {stats.totalComments.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
-              Total Comments
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+            <div style={{ display: 'flex', gap: '12px', color: '#6B7280' }}>
+              <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
+              <span>Loading profile...</span>
             </div>
           </div>
-
-          {/* Total Likes */}
-          <div style={{
-            background: '#1F2937',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <TrendingUp size={24} style={{ color: '#10B981', marginBottom: '8px' }} />
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
-              {stats.totalLikes.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
-              Total Likes
-            </div>
-          </div>
-
-          {/* Total Engagement */}
-          <div style={{
-            background: '#1F2937',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <Users size={24} style={{ color: '#F59E0B', marginBottom: '8px' }} />
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
-              {stats.totalEngagement.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
-              Total Engagement
-            </div>
-          </div>
-
-          {/* Debate Participation */}
-          <div style={{
-            background: '#1F2937',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <TrendingUp size={24} style={{ color: '#8B5CF6', marginBottom: '8px' }} />
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
-              {stats.debateParticipation.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
-              Debate Participant
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Log Section */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Clock size={20} style={{ color: '#FFFFFF' }} />
-            <h2 style={{ 
-              color: '#FFFFFF', 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              margin: '0',
-              fontFamily: 'Sora, sans-serif'
+        ) : (
+          <>
+            {/* Stats Row */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '16px', 
+              marginBottom: '32px' 
             }}>
-              Activity Log
-            </h2>
-          </div>
-          
-          <div style={{ background: '#111827', borderRadius: '12px', padding: '20px', maxHeight: '400px', overflowY: 'auto' }}>
-            {activities.length === 0 ? (
-              <p style={{ color: '#6B7280', textAlign: 'center', padding: '40px' }}>
-                No activity yet. Start engaging with articles to see your activity here.
-              </p>
-            ) : (
-              activities.map((activity, index) => (
-                <div 
-                  key={activity.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    borderBottom: index < activities.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                    transition: 'background 150ms'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: activity.color,
-                    flexShrink: 0
-                  }} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      color: '#D1D5DB',
-                      fontSize: '14px',
-                      margin: '0 0 4px 0',
-                      fontFamily: 'Inter, sans-serif'
-                    }}>
-                      {activity.description}
-                    </p>
-                    <span style={{ color: '#6B7280', fontSize: '12px', marginLeft: 'auto' }}>
-                      {activity.timestamp}
-                    </span>
-                  </div>
-                  {activity.articleSlug && (
-                    <Link 
-                      href={`/news/${activity.articleSlug}`}
-                      style={{ 
-                        color: '#3B82F6', 
-                        fontSize: '12px', 
-                        textDecoration: 'none',
-                        fontWeight: '500'
+              {/* Total Comments */}
+              <div style={{
+                background: '#1F2937',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <Heart size={24} style={{ color: '#3B82F6', marginBottom: '8px' }} />
+                <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
+                  {stats.totalComments.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
+                  Total Comments
+                </div>
+              </div>
+
+              {/* Total Likes */}
+              <div style={{
+                background: '#1F2937',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <TrendingUp size={24} style={{ color: '#10B981', marginBottom: '8px' }} />
+                <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
+                  {stats.totalLikes.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
+                  Total Likes
+                </div>
+              </div>
+
+              {/* Total Engagement */}
+              <div style={{
+                background: '#1F2937',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <Users size={24} style={{ color: '#F59E0B', marginBottom: '8px' }} />
+                <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
+                  {stats.totalEngagement.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
+                  Total Engagement
+                </div>
+              </div>
+
+              {/* Debate Participation */}
+              <div style={{
+                background: '#1F2937',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <TrendingUp size={24} style={{ color: '#8B5CF6', marginBottom: '8px' }} />
+                <div style={{ fontSize: '28px', fontWeight: '700', color: '#FFFFFF', fontFamily: 'Sora, sans-serif' }}>
+                  {stats.debateParticipation.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>
+                  Debate Participant
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Log Section */}
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <Clock size={20} style={{ color: '#FFFFFF' }} />
+                <h2 style={{ 
+                  color: '#FFFFFF', 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  margin: '0',
+                  fontFamily: 'Sora, sans-serif'
+                }}>
+                  Activity Log
+                </h2>
+              </div>
+              
+              <div style={{ background: '#111827', borderRadius: '12px', padding: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+                {activities.length === 0 ? (
+                  <p style={{ color: '#6B7280', textAlign: 'center', padding: '40px' }}>
+                    No activity yet. Start engaging with articles to see your activity here.
+                  </p>
+                ) : (
+                  activities.map((activity, index) => (
+                    <div 
+                      key={activity.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px',
+                        borderBottom: index < activities.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                        transition: 'background 150ms'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent'
                       }}
                     >
-                      View Article →
-                    </Link>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: activity.color,
+                        flexShrink: 0
+                      }} />
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          color: '#D1D5DB',
+                          fontSize: '14px',
+                          margin: '0 0 4px 0',
+                          fontFamily: 'Inter, sans-serif'
+                        }}>
+                          {activity.description}
+                        </p>
+                        <span style={{ color: '#6B7280', fontSize: '12px', marginLeft: 'auto' }}>
+                          {activity.timestamp}
+                        </span>
+                      </div>
+                      {activity.articleSlug && (
+                        <Link 
+                          href={`/news/${activity.articleSlug}`}
+                          style={{ 
+                            color: '#3B82F6', 
+                            fontSize: '12px', 
+                            textDecoration: 'none',
+                            fontWeight: '500'
+                          }}
+                        >
+                          View Article →
+                        </Link>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
-        {/* Articles Published Section */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Pen size={20} style={{ color: '#FFFFFF' }} />
-            <h2 style={{ 
-              color: '#FFFFFF', 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              margin: '0',
-              fontFamily: 'Sora, sans-serif'
-            }}>
-              Articles Published
-            </h2>
-          </div>
-          
-          <div style={{ background: '#111827', borderRadius: '12px', padding: '20px' }}>
-            {articles.length === 0 ? (
-              <p style={{ color: '#6B7280', textAlign: 'center', padding: '40px' }}>
-                You have not published any articles yet.
-              </p>
-            ) : (
-              articles.map((article, index) => (
-                <div 
-                  key={article.id}
-                  style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    marginBottom: index < articles.length - 1 ? '12px' : '0',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    transition: 'all 150ms'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h3 style={{
-                      color: '#FFFFFF',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      margin: '0',
-                      fontFamily: 'Sora, sans-serif',
-                      flex: 1
-                    }}>
-                      {article.headline}
-                    </h3>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      background: article.status === 'PUBLISHED' ? '#10B981' : '#6B7280',
-                      color: '#FFFFFF'
-                    }}>
-                      {article.status}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9CA3AF', fontSize: '12px' }}>
-                    <span>
-                      {new Date(article.created_at).toLocaleDateString('en-IN')}
-                    </span>
-                    <span>
-                      {article._count?.pageViews || 0} views
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+            {/* Articles Published Section */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <Pen size={20} style={{ color: '#FFFFFF' }} />
+                <h2 style={{ 
+                  color: '#FFFFFF', 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  margin: '0',
+                  fontFamily: 'Sora, sans-serif'
+                }}>
+                  Articles Published
+                </h2>
+              </div>
+              
+              <div style={{ background: '#111827', borderRadius: '12px', padding: '20px' }}>
+                {articles.length === 0 ? (
+                  <p style={{ color: '#6B7280', textAlign: 'center', padding: '40px' }}>
+                    You have not published any articles yet.
+                  </p>
+                ) : (
+                  articles.map((article, index) => (
+                    <div 
+                      key={article.id}
+                      style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        marginBottom: index < articles.length - 1 ? '12px' : '0',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        transition: 'all 150ms'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <h3 style={{
+                          color: '#FFFFFF',
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          margin: '0',
+                          fontFamily: 'Sora, sans-serif',
+                          flex: 1
+                        }}>
+                          {article.headline}
+                        </h3>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          background: article.status === 'PUBLISHED' ? '#10B981' : '#6B7280',
+                          color: '#FFFFFF'
+                        }}>
+                          {article.status}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9CA3AF', fontSize: '12px' }}>
+                        <span>
+                          {new Date(article.created_at).toLocaleDateString('en-IN')}
+                        </span>
+                        <span>
+                          {article._count?.pageViews || 0} views
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
