@@ -21,14 +21,31 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user }) {
+      // If user exists and has onboarding_complete, let them in
+      if (user) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! }
+        });
+        if (existingUser && existingUser.onboarding_complete) {
+          return true;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
+        // Fetch full user from DB to get latest onboarding status
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! }
+        });
+        
         token.id = user.id;
-        token.role = (user as any).role || "CITIZEN";
-        token.state = (user as any).state || null;
-        token.onboarding_complete = (user as any).onboarding_complete || false;
-        token.avatar_url = (user as any).avatar_url || user.image;
-        token.username = (user as any).username || null;
+        token.role = (dbUser as any)?.role || "CITIZEN";
+        token.state = (dbUser as any)?.state || null;
+        token.onboarding_complete = (dbUser as any)?.onboarding_complete || false;
+        token.avatar_url = (dbUser as any)?.avatar_url || user.image;
+        token.username = (dbUser as any)?.username || null;
       }
       
       if (trigger === "update" && session) {
