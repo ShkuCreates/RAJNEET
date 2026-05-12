@@ -114,10 +114,34 @@ export async function POST(req: Request) {
   try {
     console.log("Fetching news from NewsData API...");
     
+    if (!process.env.NEWSDATA_API_KEY) {
+      throw new Error("NEWSDATA_API_KEY is not set in environment variables");
+    }
+
     const response = await fetch(
       `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
     );
-    const data = await response.json();
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[NEWSDATA_API_ERROR]", response.status, errorText);
+      throw new Error(`NewsData API error: ${response.status} - ${errorText || "Unknown error"}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("[NEWSDATA_API_INVALID_RESPONSE]", text);
+      throw new Error("NewsData API returned non-JSON response");
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError: any) {
+      console.error("[NEWSDATA_API_PARSE_ERROR]", parseError);
+      throw new Error("Failed to parse NewsData API response");
+    }
     
     if (!data.results) {
       throw new Error(data.message || "Failed to fetch news from API");
@@ -256,10 +280,34 @@ export async function GET(req: Request) {
   try {
     console.log("Fetching news from NewsData API...");
     
+    if (!process.env.NEWSDATA_API_KEY) {
+      throw new Error("NEWSDATA_API_KEY is not set in environment variables");
+    }
+
     const response = await fetch(
       `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=10`
     );
-    const data = await response.json();
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[NEWSDATA_API_ERROR]", response.status, errorText);
+      throw new Error(`NewsData API error: ${response.status} - ${errorText || "Unknown error"}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("[NEWSDATA_API_INVALID_RESPONSE]", text);
+      throw new Error("NewsData API returned non-JSON response");
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError: any) {
+      console.error("[NEWSDATA_API_PARSE_ERROR]", parseError);
+      throw new Error("Failed to parse NewsData API response");
+    }
     
     if (!data.results) {
       throw new Error(data.message || "Failed to fetch news from API");
