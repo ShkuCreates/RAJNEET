@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     }
 
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=10`
     );
 
     if (!response.ok) {
@@ -241,6 +241,6 @@ Raw source content: ${rawSummary}`;
     });
   } catch (error: any) {
     console.error("[ADMIN_FETCH_NEWS_ERROR]", error);
-    return new NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
