@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Shield, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { User, Shield, TrendingUp, Calendar, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -45,7 +45,6 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users/${userId}/promote`, { method: "POST" });
       if (res.ok) {
         toast.success("User promoted to admin!");
-        // Refresh users
         const res2 = await fetch("/api/admin/users");
         const data = await res2.json();
         setUsers(data.users || []);
@@ -54,6 +53,30 @@ export default function AdminUsersPage() {
       }
     } catch (e) {
       toast.error("Failed to promote user");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleDelete = async (userId: string, userName: string | null) => {
+    if (!confirm(`Are you sure you want to delete ${userName || "this user"}? This action cannot be undone.`)) {
+      return;
+    }
+    
+    setUpdating(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/delete`, { method: "POST" });
+      if (res.ok) {
+        toast.success("User deleted successfully!");
+        const res2 = await fetch("/api/admin/users");
+        const data = await res2.json();
+        setUsers(data.users || []);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete user");
+      }
+    } catch (e) {
+      toast.error("Failed to delete user");
     } finally {
       setUpdating(null);
     }
@@ -158,18 +181,26 @@ export default function AdminUsersPage() {
                         {format(new Date(user.created_at), "MMM d, yyyy")}
                       </td>
                       <td className="px-6 py-4">
-                        {user.role !== "ADMIN" ? (
+                        <div className="flex items-center gap-2">
+                          {user.role !== "ADMIN" ? (
+                            <button
+                              onClick={() => handlePromote(user.id)}
+                              disabled={updating === user.id}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-lg text-sm font-medium hover:bg-amber-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {updating === user.id ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+                              {updating === user.id ? "Promoting..." : "Promote to Admin"}
+                            </button>
+                          ) : null}
                           <button
-                            onClick={() => handlePromote(user.id)}
+                            onClick={() => handleDelete(user.id, user.name)}
                             disabled={updating === user.id}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-lg text-sm font-medium hover:bg-amber-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-300 rounded-lg text-sm font-medium hover:bg-red-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            {updating === user.id ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
-                            {updating === user.id ? "Promoting..." : "Promote to Admin"}
+                            {updating === user.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                            {updating === user.id ? "Deleting..." : "Delete"}
                           </button>
-                        ) : (
-                          <span className="text-gray-600 text-sm">-</span>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))
