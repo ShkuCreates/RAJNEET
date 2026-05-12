@@ -11,15 +11,24 @@ export async function GET(request: Request) {
   try {
     const where: any = { status: 'PUBLISHED' }
     
-    if (category && ['Politics', 'Finance', 'Sports', 'World'].includes(category)) {
+    if (category) {
       // Map category names to database values
       const categoryMap: Record<string, string> = {
         'Politics': 'POLITICAL',
         'Finance': 'FINANCE',
         'Sports': 'SPORTS',
-        'World': 'WORLD'
+        'World': 'WORLD',
+        'Entertainment': 'ENTERTAINMENT',
+        'Others': 'OTHER'
       }
-      where.category = categoryMap[category] || category
+      if (categoryMap[category]) {
+        where.category = categoryMap[category]
+      } else if (category === 'Others') {
+        // For 'Others', show categories not in main list
+        where.NOT = {
+          category: { in: ['POLITICAL', 'FINANCE', 'SPORTS', 'WORLD', 'ENTERTAINMENT'] }
+        }
+      }
     }
 
     const articles = await prisma.news.findMany({

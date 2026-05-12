@@ -19,11 +19,15 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-const NEWS_OPTIONS = ["Politics", "Finance", "Sports", "World"] as const;
-const DEBATE_OPTIONS = [
-  { label: "Live", href: "/debates" },
-  { label: "Calendar", href: "/debates/calendar" },
-  { label: "Creators", href: "/creators" },
+const NAV_ITEMS = [
+  { label: "Live", category: null, href: "/live", isLive: true },
+  { label: "Politics", category: "Politics", href: null },
+  { label: "Sports", category: "Sports", href: null },
+  { label: "Finance", category: "Finance", href: null },
+  { label: "Entertainment", category: "Entertainment", href: null },
+  { label: "Others", category: "Others", href: null },
+  { label: "Admin", href: "/admin/analytics", isAdmin: true },
+  { label: "Premium", href: "/premium", isPremium: true },
 ] as const;
 const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
@@ -202,12 +206,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          {/* Center - Switcher - absolutely centered */}
+          {/* Center - Switcher - absolutely centered and wider */}
           <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20">
-            <div className="hidden rounded-[25px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+            <div className="hidden rounded-[25px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1.5 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
               <button
                 onClick={() => setSection("news")}
-                className={`rounded-[20px] px-3 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[20px] px-10 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                   section === "news"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -215,10 +219,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 NEWS
               </button>
-              <div className="w-px h-6 bg-white/20" />
+              <div className="w-px h-7 bg-white/20" />
               <button
                 onClick={() => setSection("article")}
-                className={`rounded-[20px] px-3 py-2 text-sm font-semibold transition-all duration-250 active:scale-[0.98] ${
+                className={`rounded-[20px] px-10 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                   section === "article"
                     ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                     : "text-gray-400"
@@ -257,114 +261,47 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {section === "news" ? (
         <div className="border-b-2 border-[#1E3A5F] bg-[#070B14]">
-          <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center gap-8 px-4 sm:px-6">
-            <div className="hidden items-center gap-3 md:flex">
-              <button
-                onClick={() => router.push("/live")}
-                className="relative flex h-9 items-center gap-2 rounded-md px-3 text-[13px] font-bold tracking-[0.5px] text-[#EF4444] transition hover:bg-[rgba(239,68,68,0.1)]"
-              >
-                <span className="h-2 w-2 rounded-full bg-[#EF4444]" style={{ animation: "livePulse 1.2s infinite" }} />
-                LIVE
-                <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-[#3B82F6] transition-all duration-200 ${currentNav === "live" ? "opacity-100" : "opacity-0"}`} />
-              </button>
+          <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
+            <div className="hidden items-center gap-0 md:flex">
+              {NAV_ITEMS.map((item) => {
+                if (item.isAdmin && !isAdmin) return null;
+                
+                const isActive = item.category 
+                  ? activeCategory === item.category
+                  : item.href 
+                    ? pathname === item.href
+                    : !activeCategory;
 
-              <div className="relative" ref={newsRef}>
-                <button
-                  onClick={() => {
-                    setNewsOpen((value) => !value);
-                    setDebatesOpen(false);
-                    setAdminOpen(false);
-                  }}
-                  className={`relative flex h-9 items-center gap-1 px-1 text-sm font-semibold transition-colors ${
-                    currentNav === "news" ? "text-[#3B82F6]" : "text-white"
-                  }`}
-                >
-                  NEWS
-                  <ChevronDown size={16} className={`transition-transform duration-200 ${newsOpen ? "rotate-180" : ""}`} />
-                  <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-[#3B82F6] transition-all duration-200 ${currentNav === "news" ? "opacity-100" : "opacity-0"}`} />
-                </button>
-                {newsOpen ? (
-                  <div className="absolute left-0 top-full z-30 mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                    {NEWS_OPTIONS.map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => goToCategory(option)}
-                        className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
-                          activeCategory === option
-                            ? "border-[#3B82F6] bg-[rgba(59,130,246,0.08)] text-white"
-                            : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+                const handleClick = () => {
+                  if (item.href) {
+                    router.push(item.href);
+                  } else if (item.category) {
+                    goToCategory(item.category);
+                  } else {
+                    router.push("/");
+                  }
+                };
 
-              <div className="relative" ref={debatesRef}>
-                <button
-                  onClick={() => {
-                    setDebatesOpen((value) => !value);
-                    setNewsOpen(false);
-                    setAdminOpen(false);
-                  }}
-                  className={`relative flex h-9 items-center gap-1 px-1 text-sm font-semibold transition-colors ${
-                    currentNav === "debates" ? "text-[#3B82F6]" : "text-white"
-                  }`}
-                >
-                  DEBATES
-                  <ChevronDown size={16} className={`transition-transform duration-200 ${debatesOpen ? "rotate-180" : ""}`} />
-                  <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-[#3B82F6] transition-all duration-200 ${currentNav === "debates" ? "opacity-100" : "opacity-0"}`} />
-                </button>
-                {debatesOpen ? (
-                  <div className="absolute left-0 top-full z-30 mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                    <Link href="/debates" className="flex items-center gap-3 border-l-2 border-transparent px-4 py-3 text-sm font-medium text-gray-400 transition-colors hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white">
-                      <span className={`h-2 w-2 rounded-full ${isDebateLive ? "bg-green-500" : "bg-red-500"}`} style={{ animation: "livePulse 1.2s infinite" }} />
-                      Live
-                    </Link>
-                    <Link href="/debates/calendar" className="flex items-center gap-3 border-l-2 border-transparent px-4 py-3 text-sm font-medium text-gray-400 transition-colors hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white">
-                      <CalendarDays size={16} />
-                      Calendar
-                    </Link>
-                  </div>
-                ) : null}
-              </div>
-
-              {isAdmin ? (
-                <div className="relative" ref={adminRef}>
+                return (
                   <button
-                    onClick={() => {
-                      setAdminOpen((value) => !value);
-                      setNewsOpen(false);
-                      setDebatesOpen(false);
-                    }}
-                    className={`relative flex h-9 items-center gap-1 px-1 text-sm font-semibold transition-colors ${
-                      currentNav === "admin" ? "text-amber-400" : "text-amber-300"
+                    key={item.label}
+                    onClick={handleClick}
+                    className={`relative flex h-full items-center px-5 text-[13px] font-semibold uppercase tracking-wider transition-all ${
+                      isActive 
+                        ? "text-[#3B82F6] bg-white/[0.03]" 
+                        : "text-white hover:text-[#93C5FD] hover:bg-white/[0.02]"
                     }`}
                   >
-                    <Shield size={15} />
-                    ADMIN
-                    <ChevronDown size={16} className={`transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`} />
-                    <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-amber-400 transition-all duration-200 ${currentNav === "admin" ? "opacity-100" : "opacity-0"}`} />
+                    {item.isLive && (
+                      <span className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                    )}
+                    {item.label}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                    )}
                   </button>
-                  {adminOpen ? (
-                    <div className="absolute left-0 top-full z-30 mt-2 min-w-[220px] overflow-hidden rounded-[10px] border border-amber-500/20 bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                      <Link href="/admin/analytics" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Analytics</Link>
-                      <Link href="/admin/post-news" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Post News</Link>
-                      <Link href="/admin/manage-news" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Manage News</Link>
-                      <Link href="/admin/automation-logs" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Automation Logs</Link>
-                      <button
-                        onClick={handleFetchNow}
-                        disabled={fetchingNow}
-                        className="flex w-full items-center border-l-2 border-transparent px-4 py-3 text-left text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10 disabled:opacity-60"
-                      >
-                        {fetchingNow ? "Starting fetch..." : "Run Fetch Now"}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
+                );
+              })}
             </div>
           </div>
         </div>
