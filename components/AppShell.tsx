@@ -242,39 +242,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <UserLink user={session?.user} />
           </div>
 
-          {/* Navigation Bar */}
-          <div className="absolute left-1/2 top-full z-10 hidden md:flex">
-            <button
-              onClick={() => router.push('/live')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              LIVE
-            </button>
-            <Link
-              href="/"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="text-xl">📰</span>
-              NEWS
-            </Link>
-            <button
-              onClick={() => router.push('/debates')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="text-xl">🗳️</span>
-              DEBATES
-            </button>
-            {isAdmin && (
-              <button
-                onClick={() => router.push('/admin/analytics')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-              >
-                <span className="text-xl">⚙️</span>
-                ADMIN
-              </button>
-            )}
-          </div>
+
 
           <button
             type="button"

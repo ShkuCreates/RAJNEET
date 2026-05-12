@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useLoginPopup } from "@/components/LoginPopup";
 
-const categoryColors: Record<string, string> = {
+export const categoryColors: Record<string, string> = {
   POLITICAL: "bg-accent-blue",
   POLITICS: "bg-accent-blue",
   CRIMINAL: "bg-red-500",
