@@ -36,6 +36,7 @@ const ADMIN_DROPDOWN_OPTIONS = [
   { label: "Manage Article", href: "/admin/manage-articles" },
   { label: "Analytics", href: "/admin/analytics" },
   { label: "Users", href: "/admin/users" },
+  { label: "Fetch News", href: null, isAction: true },
 ] as const;
 const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
@@ -331,19 +332,53 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   </button>
                   {adminOpen ? (
                     <div className="absolute left-0 top-full z-30 mt-2 min-w-[200px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                      {ADMIN_DROPDOWN_OPTIONS.map((option) => (
-                        <Link
-                          key={option.label}
-                          href={option.href}
-                          className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
-                            pathname === option.href
-                              ? "border-[#3B82F6] bg-[rgba(59,130,246,0.08)] text-white"
-                              : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
-                          }`}
-                        >
-                          {option.label}
-                        </Link>
-                      ))}
+                      {ADMIN_DROPDOWN_OPTIONS.map((option) => {
+                        if (option.isAction) {
+                          return (
+                            <button
+                              key={option.label}
+                              onClick={async () => {
+                                setAdminOpen(false);
+                                setFetchingNow(true);
+                                toast.info("Fetching news...");
+                                try {
+                                  const res = await fetch("/api/admin/fetch-news", { method: "POST" });
+                                  if (res.ok) {
+                                    toast.success("News fetched successfully!");
+                                  } else {
+                                    toast.error("Failed to fetch news");
+                                  }
+                                } catch (e) {
+                                  toast.error("Failed to fetch news");
+                                } finally {
+                                  setFetchingNow(false);
+                                }
+                              }}
+                              disabled={fetchingNow}
+                              className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
+                                fetchingNow
+                                  ? "border-transparent text-gray-600 cursor-not-allowed"
+                                  : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
+                              }`}
+                            >
+                              {fetchingNow ? "Fetching..." : option.label}
+                            </button>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={option.label}
+                            href={option.href}
+                            className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
+                              pathname === option.href
+                                ? "border-[#3B82F6] bg-[rgba(59,130,246,0.08)] text-white"
+                                : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
+                            }`}
+                          >
+                            {option.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : null}
                 </div>

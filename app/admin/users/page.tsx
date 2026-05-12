@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Shield, TrendingUp, Calendar } from "lucide-react";
+import { User, Shield, TrendingUp, Calendar, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 type UserWithStats = {
   id: string;
@@ -21,6 +22,7 @@ type UserWithStats = {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -36,6 +38,26 @@ export default function AdminUsersPage() {
     };
     fetchUsers();
   }, []);
+
+  const handlePromote = async (userId: string) => {
+    setUpdating(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/promote`, { method: "POST" });
+      if (res.ok) {
+        toast.success("User promoted to admin!");
+        // Refresh users
+        const res2 = await fetch("/api/admin/users");
+        const data = await res2.json();
+        setUsers(data.users || []);
+      } else {
+        toast.error("Failed to promote user");
+      }
+    } catch (e) {
+      toast.error("Failed to promote user");
+    } finally {
+      setUpdating(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050A14] p-6 md:p-10">
@@ -62,6 +84,7 @@ export default function AdminUsersPage() {
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Reputation</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Posts</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Joined</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -83,11 +106,14 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4">
                         <div className="h-4 w-24 bg-white/10 rounded" />
                       </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-20 bg-white/10 rounded" />
+                      </td>
                     </tr>
                   ))
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                       No users found
                     </td>
                   </tr>
@@ -130,6 +156,20 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 text-gray-400 text-sm flex items-center gap-2">
                         <Calendar size={14} />
                         {format(new Date(user.created_at), "MMM d, yyyy")}
+                      </td>
+                      <td className="px-6 py-4">
+                        {user.role !== "ADMIN" ? (
+                          <button
+                            onClick={() => handlePromote(user.id)}
+                            disabled={updating === user.id}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-lg text-sm font-medium hover:bg-amber-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {updating === user.id ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+                            {updating === user.id ? "Promoting..." : "Promote to Admin"}
+                          </button>
+                        ) : (
+                          <span className="text-gray-600 text-sm">-</span>
+                        )}
                       </td>
                     </tr>
                   ))
