@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     }
 
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=10`
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
     );
 
     if (!response.ok) {
@@ -285,7 +285,7 @@ export async function GET(req: Request) {
     }
 
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=10`
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en&size=15`
     );
 
     if (!response.ok) {
@@ -314,8 +314,8 @@ export async function GET(req: Request) {
     }
 
     const fetchedArticles = data.results;
-    // Limit to 15 articles per run// Process max 5 articles at once to avoid Groq limits
-    const articlesToProcess = fetchedArticles.slice(0, 5);
+    // Limit to 15 articles per run
+    const articlesToProcess = fetchedArticles.slice(0, 15);
     const savedArticles = [];
     const skipped = [];
 

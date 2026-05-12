@@ -44,7 +44,6 @@ const ADMIN_DROPDOWN_OPTIONS = [
   { label: "Users", href: "/admin/users" },
   { label: "Fetch News", href: null, isAction: true },
 ] as const;
-const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
 function UserLink({ user }: { user: DashboardUser | null | undefined }) {
   if (!user?.id) {
@@ -159,10 +158,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           ? "admin"
           : "news";
 
-  const isAdmin =
-    session?.user?.role === "ADMIN" ||
-    session?.user?.role === "admin" ||
-    session?.user?.email?.toLowerCase() === ADMIN_EMAIL_FALLBACK.toLowerCase();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const isDebateLive = pathname === "/debates";
 
