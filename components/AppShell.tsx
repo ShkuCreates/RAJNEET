@@ -338,16 +338,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       )}
                     </button>
                     {item.isDebate && debatesOpen ? (
-                      <div className="absolute left-0 top-full z-30 mt-2 min-w-[160px] overflow-hidden rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                      <div className="absolute left-0 top-full z-50 mt-2 min-w-[180px] overflow-visible rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
                         {DEBATE_OPTIONS.map((option) => (
                           <Link
                             key={option.label}
                             href={option.href}
-                            className={`flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment ${
-                              pathname === option.href
-                                ? "bg-red-500/20 text-red-400"
-                                : "text-gray-400 hover:bg-red-500/10 hover:text-red-300"
-                            }`}
+                            className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment text-gray-400 hover:bg-red-500/10 hover:text-red-300"
                           >
                             {option.label === "ONGOING" && (
                               <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />

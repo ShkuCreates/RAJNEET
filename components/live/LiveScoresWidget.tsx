@@ -42,21 +42,21 @@ export default function LiveScoresWidget() {
       }
       
       const data = await response.json();
-      const liveMatches = data.matches
-        .filter((match: any) => match.status === 'live' || match.status === 'scheduled')
+      const allMatches = data.matches
         .map((match: any): LiveMatch => ({
           id: match.id,
           team1: match.team1?.name || 'Team 1',
           team2: match.team2?.name || 'Team 2',
           score1: match.team1?.score || '0/0',
           score2: match.team2?.score || '0/0',
-          status: match.status.toUpperCase(),
+          status: match.status?.toUpperCase() || 'UNKNOWN',
           overs: `${match.team1?.overs || '0.0'} / ${match.team2?.overs || '0.0'}`,
           venue: match.venue || 'Unknown',
           timestamp: match.startTime || ''
-        }));
+        }))
+        .filter((match) => match.status !== 'UNKNOWN');
       
-      setMatches(liveMatches);
+      setMatches(allMatches);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
       console.error('Live scores error:', err);
