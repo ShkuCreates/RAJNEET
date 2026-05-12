@@ -344,13 +344,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                                 toast.info("Fetching news...");
                                 try {
                                   const res = await fetch("/api/admin/fetch-news", { method: "POST" });
+                                  const data = await res.json();
                                   if (res.ok) {
-                                    toast.success("News fetched successfully!");
+                                    toast.success(`Fetched ${data.saved} news articles!`);
                                   } else {
-                                    toast.error("Failed to fetch news");
+                                    toast.error(data.error || "Failed to fetch news");
+                                    console.error("Fetch news error:", data);
                                   }
-                                } catch (e) {
-                                  toast.error("Failed to fetch news");
+                                } catch (e: any) {
+                                  toast.error(e.message || "Failed to fetch news");
+                                  console.error("Fetch news exception:", e);
                                 } finally {
                                   setFetchingNow(false);
                                 }
