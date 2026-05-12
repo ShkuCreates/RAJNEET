@@ -45,8 +45,8 @@ const NAV_ITEMS: NavItem[] = [
 
 const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"] as const;
 const DEBATE_OPTIONS = [
-  { label: "Live", href: "/live" },
-  { label: "Calendar", href: "/debates/calendar" },
+  { label: "ONGOING", href: "/live" },
+  { label: "CALENDAR", href: "/debates/calendar" },
 ] as const;
 const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
   { label: "Manage Post", href: "/admin/manage-news" },
@@ -315,10 +315,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <div key={item.label} className="relative" ref={item.isDebate ? debatesRef : undefined}>
                     <button
                       onClick={handleClick}
-                      className={`relative flex h-full items-center gap-1 px-5 text-[13px] font-bold uppercase tracking-wider transition-all ${
+                      className={`relative flex h-full items-center gap-1 px-5 py-2 text-[13px] font-bold uppercase tracking-wider transition-all rounded-lg ${
                         item.isDebate
                           ? pathname.startsWith("/debates") || pathname === "/live"
-                            ? "bg-red-500 text-white"
+                            ? "bg-red-500 text-white shadow-lg"
                             : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
                           : isActive 
                             ? "text-[#3B82F6] bg-white/[0.03]" 
@@ -349,7 +349,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                                 : "text-gray-400 hover:bg-red-500/10 hover:text-red-300"
                             }`}
                           >
-                            {option.label === "Live" && (
+                            {option.label === "ONGOING" && (
                               <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
                             )}
                             {option.label}
@@ -518,7 +518,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Debates</div>
                   {DEBATE_OPTIONS.map((option) => (
                     <Link key={option.label} href={option.href} onClick={() => setMobileOpen(false)} className="flex w-full items-center rounded-xl px-3 py-3 text-left text-white hover:bg-white/[0.04]">
-                      {option.label === "Live" && (
+                      {option.label === "ONGOING" && (
                         <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
                       )}
                       {option.label}
