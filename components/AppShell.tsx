@@ -27,7 +27,15 @@ const NAV_ITEMS = [
   { label: "Entertainment", category: "Entertainment", href: null },
   { label: "Others", category: "Others", href: null },
   { label: "Premium", href: "/premium", isPremium: true },
-  { label: "Admin", href: "/admin/analytics", isAdmin: true },
+] as const;
+
+const ADMIN_DROPDOWN_OPTIONS = [
+  { label: "Manage Post", href: "/admin/manage-news" },
+  { label: "Upload News", href: "/admin/post-news" },
+  { label: "Upload Article", href: "/admin/articles" },
+  { label: "Manage Article", href: "/admin/manage-articles" },
+  { label: "Analytics", href: "/admin/analytics" },
+  { label: "Users", href: "/admin/users" },
 ] as const;
 const ADMIN_EMAIL_FALLBACK = "your-admin-email@gmail.com";
 
@@ -301,6 +309,45 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   </button>
                 );
               })}
+
+              {/* Admin Dropdown */}
+              {isAdmin && (
+                <div className="relative" ref={debatesRef}>
+                  <button
+                    onClick={() => {
+                      setAdminOpen((value) => !value);
+                      setNewsOpen(false);
+                      setDebatesOpen(false);
+                    }}
+                    className={`relative flex h-full items-center gap-1 px-5 text-[13px] font-semibold uppercase tracking-wider transition-colors ${
+                      pathname.startsWith("/admin") ? "text-[#3B82F6]" : "text-white"
+                    }`}
+                  >
+                    ADMIN
+                    <ChevronDown size={16} className={`transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`} />
+                    {pathname.startsWith("/admin") && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                    )}
+                  </button>
+                  {adminOpen ? (
+                    <div className="absolute left-0 top-full z-30 mt-2 min-w-[200px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                      {ADMIN_DROPDOWN_OPTIONS.map((option) => (
+                        <Link
+                          key={option.label}
+                          href={option.href}
+                          className={`flex w-full items-center border-l-2 px-4 py-3 text-left text-sm font-medium transition-colors touch-manipulation-adjustment ${
+                            pathname === option.href
+                              ? "border-[#3B82F6] bg-[rgba(59,130,246,0.08)] text-white"
+                              : "border-transparent text-gray-400 hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white"
+                          }`}
+                        >
+                          {option.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
         </div>
