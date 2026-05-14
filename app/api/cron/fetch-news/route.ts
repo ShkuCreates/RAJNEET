@@ -3,21 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import Parser from 'rss-parser';
-
-const parser = new Parser();
-
-// High-quality Indian news RSS feeds
-const RSS_FEEDS = [
-  'https://www.thehindu.com/news/national/feeder/default.rss',
-  'https://indianexpress.com/section/india/feed/',
-  'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms',
-  'https://www.ndtv.com/india-news/rss',
-  'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml',
-  'https://news.google.com/rss/search?q=india+politics&hl=en-IN&gl=IN&ceid=IN:en',
-  'https://news.google.com/rss/search?q=india+economy&hl=en-IN&gl=IN&ceid=IN:en',
-  'https://news.google.com/rss/search?q=india+sports&hl=en-IN&gl=IN&ceid=IN:en',
-];
 
 async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
