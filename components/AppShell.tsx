@@ -312,8 +312,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {section === "news" ? (
-        <div className="hidden border-b-2 border-[#1E3A5F] bg-[#070B14] lg:block">
-          <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
+        <div className="hidden border-b-2 border-[#1E3A5F] bg-[#070B14] lg:block overflow-visible">
+          <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 overflow-visible">
             <div className="flex items-center gap-0">
               {NAV_ITEMS.map((item) => {
                 if (item.isAdmin && !isAdmin) return null;

@@ -31,26 +31,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Auto-cleanup: Remove old articles if there are more than 100
-    const totalArticles = await prisma.news.count({ where })
-    if (totalArticles > 100) {
-      const articlesToDelete = await prisma.news.findMany({
-        where,
-        orderBy: { created_at: 'asc' },
-        take: totalArticles - 100,
-        select: { id: true }
-      })
-      
-      if (articlesToDelete.length > 0) {
-        await prisma.news.deleteMany({
-          where: {
-            id: { in: articlesToDelete.map(a => a.id) }
-          }
-        })
-        console.log(`[NEWS_CLEANUP] Deleted ${articlesToDelete.length} old articles to maintain 100 article limit`)
-      }
-    }
-
     const articles = await prisma.news.findMany({
       where,
       orderBy: { created_at: 'desc' },

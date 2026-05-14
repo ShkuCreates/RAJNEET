@@ -10,12 +10,12 @@ export default function LiveScoresWidget() {
         <h3 className="text-xl font-bold text-white">IPL Live Scores</h3>
       </div>
       <iframe
-        src="https://www.cricbuzz.com/cricket-match/live-scores"
+        src="https://www.espncricinfo.com/ci/engine/match/index.html?view=live"
         width="100%"
         height="500px"
         frameBorder="0"
         className="rounded-lg"
-        title="Cricbuzz Live Scores"
+        title="ESPN Cricinfo Live Scores"
       />
     </div>
   );

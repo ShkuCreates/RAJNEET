@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import Parser from 'rss-parser';
+import { generateBrandedCoverImage } from "@/lib/automation/cloudinary";
 
 async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -484,7 +486,18 @@ export async function POST(req: Request) {
         // Use keyword mapping for category - no Gemini needed
         const category = enforceValidCategory(art.category, art.title);
         const sourceImage = extractArticleImage(art);
-        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+        
+        // Use Cloudinary branded cover image for better reliability
+        let cover_image_url = sourceImage;
+        if (!sourceImage) {
+          try {
+            const tempSlug = art.title.substring(0, 50).toLowerCase().replace(/[^a-z0-9]/g, '-');
+            cover_image_url = await generateBrandedCoverImage(art.title, category, tempSlug);
+          } catch (e) {
+            console.error('Failed to generate cover image:', e);
+            cover_image_url = `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+          }
+        }
 
         // Only use Gemini for body generation (not category classification)
         const bodyPrompt = `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
@@ -626,7 +639,18 @@ export async function GET(req: Request) {
         // Use keyword mapping for category - no Gemini needed
         const category = enforceValidCategory(art.category, art.title);
         const sourceImage = extractArticleImage(art);
-        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+        
+        // Use Cloudinary branded cover image for better reliability
+        let cover_image_url = sourceImage;
+        if (!sourceImage) {
+          try {
+            const tempSlug = art.title.substring(0, 50).toLowerCase().replace(/[^a-z0-9]/g, '-');
+            cover_image_url = await generateBrandedCoverImage(art.title, category, tempSlug);
+          } catch (e) {
+            console.error('Failed to generate cover image:', e);
+            cover_image_url = `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+          }
+        }
 
         // Only use Gemini for body generation (not category classification)
         const bodyPrompt = `You are a senior political journalist writing for RAJNEET, India's top civic debate platform.
