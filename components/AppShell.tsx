@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronDown, Menu, Shield, X } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  MessagesSquare,
+  Newspaper,
+  Radio,
+  Shield,
+  TrendingUp,
+  User,
+} from "lucide-react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -39,15 +50,16 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Finance", category: "Finance", href: null },
   { label: "Entertainment", category: "Entertainment", href: null },
   { label: "Others", category: "Others", href: null },
+  { label: "World", category: "World", href: null },
   { label: "Debates", href: "/debates", isDebate: true },
   { label: "Premium", href: "/premium", isPremium: true },
 ];
 
-const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"] as const;
+const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others", "World"] as const;
 const DEBATE_OPTIONS = [
-  { label: "ONGOING", href: "/live" },
-  { label: "LIVE DEBATE", href: "/debates/live" },
-  { label: "CALENDAR", href: "/debates/calendar" },
+  { label: "Live", href: "/debates" },
+  { label: "Calendar", href: "/debates/calendar" },
+  { label: "Creators", href: "/creators" },
 ] as const;
 const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
   { label: "Manage Post", href: "/admin/manage-news" },
@@ -121,12 +133,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [newsOpen, setNewsOpen] = useState(false);
   const [debatesOpen, setDebatesOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [fetchingNow, setFetchingNow] = useState(false);
   const [now, setNow] = useState(() => new Date());
-  const newsRef = useRef<HTMLDivElement | null>(null);
   const debatesRef = useRef<HTMLDivElement | null>(null);
   const adminRef = useRef<HTMLDivElement | null>(null);
+  const bottomNewsRef = useRef<HTMLDivElement | null>(null);
+  const bottomDebateRef = useRef<HTMLDivElement | null>(null);
+  const bottomAdminRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -136,17 +149,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (newsRef.current && !newsRef.current.contains(target)) setNewsOpen(false);
-      if (debatesRef.current && !debatesRef.current.contains(target)) setDebatesOpen(false);
-      if (adminRef.current && !adminRef.current.contains(target)) setAdminOpen(false);
+      if (newsOpen) {
+        const inside = bottomNewsRef.current?.contains(target);
+        if (!inside) setNewsOpen(false);
+      }
+      if (debatesOpen) {
+        const inside = debatesRef.current?.contains(target) || bottomDebateRef.current?.contains(target);
+        if (!inside) setDebatesOpen(false);
+      }
+      if (adminOpen) {
+        const inside = adminRef.current?.contains(target) || bottomAdminRef.current?.contains(target);
+        if (!inside) setAdminOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
+  }, [newsOpen, debatesOpen, adminOpen]);
 
   useEffect(() => {
-    setMobileOpen(false);
     setNewsOpen(false);
     setDebatesOpen(false);
     setAdminOpen(false);
@@ -181,25 +202,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setNewsOpen(false);
   };
 
-  const handleFetchNow = async () => {
-    try {
-      setFetchingNow(true);
-      const res = await fetch("/api/cron/fetch-news", { cache: "no-store" });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Fetch failed");
-      }
-      toast.success("Fetch started");
-      setAdminOpen(false);
-    } catch (error: any) {
-      toast.error(error?.message || "Unable to start fetch");
-    } finally {
-      setFetchingNow(false);
-    }
+  const goHomeNews = () => {
+    router.push("/");
+    setNewsOpen(false);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050A14] text-white">
+    <div className="flex min-h-screen flex-col bg-[#050A14] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] text-white lg:pb-0">
       <style jsx global>{`
         @keyframes livePulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -215,80 +224,97 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }
       `}</style>
 
-      <header className="border-b border-[rgba(59,130,246,0.15)] bg-[#0A0F1E] shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
-        <div className="mx-auto relative h-[60px] w-full max-w-[1400px] px-4 sm:px-6">
-          {/* Left - Logo */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
-              <img
-                src="/images/rajneet-logo.png"
-                alt="RAJNEET"
-                className="h-8 w-auto rounded-full shadow-[0_0_12px_rgba(245,158,11,0.3)]"
-              />
-              <span className="text-2xl font-heading font-black tracking-tight text-accent-amber">
-                RAJNEET
-              </span>
-            </Link>
-          </div>
+      <div className="sticky top-0 z-[60] bg-[#0A0F1E] shadow-[0_1px_20px_rgba(0,0,0,0.4)] lg:static lg:z-auto lg:shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
+        <header className="border-b border-[rgba(59,130,246,0.15)] bg-[#0A0F1E]">
+          <div className="relative mx-auto h-[60px] w-full max-w-[1400px] px-4 sm:px-6">
+            <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-3">
+              <Link href="/" className="flex items-center gap-3">
+                <img
+                  src="/images/rajneet-logo.png"
+                  alt="RAJNEET"
+                  className="h-8 w-auto rounded-full shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                />
+                <span className="text-2xl font-heading font-black tracking-tight text-accent-amber">
+                  RAJNEET
+                </span>
+              </Link>
+            </div>
 
-          {/* Center - Switcher - thinner & more stretchable */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20">
-            <div className="hidden rounded-[20px] border border-white/10 bg-white/[0.08] backdrop-blur-sm p-1 md:flex shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+            <div className="absolute left-1/2 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
+              <div className="flex rounded-[20px] border border-white/10 bg-white/[0.08] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.1)] backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => setSection("news")}
+                  className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                    section === "news"
+                      ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
+                      : "text-gray-400"
+                  }`}
+                >
+                  NEWS
+                </button>
+                <div className="h-5 w-px bg-white/20" />
+                <button
+                  type="button"
+                  onClick={() => setSection("article")}
+                  className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                    section === "article"
+                      ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
+                      : "text-gray-400"
+                  }`}
+                >
+                  ARTICLE
+                </button>
+              </div>
+            </div>
+
+            <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center gap-3 lg:flex">
+              <div className="h-7 w-px bg-white/10" />
+              <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5">
+                <span className="text-[12px] font-medium text-gray-300">{`${weekday}, ${month} ${day}`}</span>
+                <span className="text-white/30">•</span>
+                <span className="text-lg font-semibold text-white">{time}</span>
+              </div>
+              <div className="h-7 w-px bg-white/10" />
+              <UserLink user={session?.user} />
+            </div>
+          </div>
+        </header>
+
+        <div className="border-t border-white/[0.06] bg-[#070B14] px-3 py-2.5 lg:hidden">
+          <div className="mx-auto flex max-w-[1400px] justify-center">
+            <div className="inline-flex w-full max-w-md rounded-full border border-white/10 bg-white/[0.08] p-1">
               <button
+                type="button"
                 onClick={() => setSection("news")}
-                className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
                   section === "news"
-                    ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
+                    ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"
                     : "text-gray-400"
                 }`}
               >
-                NEWS
+                News
               </button>
-              <div className="w-px h-5 bg-white/20" />
               <button
+                type="button"
                 onClick={() => setSection("article")}
-                className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
+                className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
                   section === "article"
-                    ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
+                    ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"
                     : "text-gray-400"
                 }`}
               >
-                ARTICLE
+                Article
               </button>
             </div>
           </div>
-
-          
-          {/* Right - Date Time + Profile */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden items-center gap-3 md:flex">
-            <div className="h-7 w-px bg-white/10" />
-            
-            <div className="flex items-center gap-3 px-3 py-1.5 bg-white/[0.06] border border-white/10 rounded-lg">
-              <span className="text-[12px] font-medium text-gray-300">{`${weekday}, ${month} ${day}`}</span>
-              <span className="text-white/30">•</span>
-              <span className="text-lg font-semibold text-white">{time}</span>
-            </div>
-            <div className="h-7 w-px bg-white/10" />
-            <UserLink user={session?.user} />
-          </div>
-
-
-
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] md:hidden"
-            aria-label="Open navigation"
-          >
-            <Menu size={18} />
-          </button>
         </div>
-      </header>
+      </div>
 
       {section === "news" ? (
-        <div className="border-b-2 border-[#1E3A5F] bg-[#070B14]">
+        <div className="hidden border-b-2 border-[#1E3A5F] bg-[#070B14] lg:block">
           <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
-            <div className="hidden items-center gap-0 md:flex">
+            <div className="flex items-center gap-0">
               {NAV_ITEMS.map((item) => {
                 if (item.isAdmin && !isAdmin) return null;
                 
@@ -318,6 +344,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 return (
                   <div key={item.label} className="relative" ref={item.isDebate ? debatesRef : undefined}>
                     <button
+                      type="button"
                       onClick={handleClick}
                       className={`relative flex h-full items-center gap-1 px-5 py-2 text-[13px] font-bold uppercase tracking-wider transition-all rounded-lg ${
                         item.isDebate
@@ -347,11 +374,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           <Link
                             key={option.label}
                             href={option.href}
-                            className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation-adjustment text-gray-400 hover:bg-red-500/10 hover:text-red-300"
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors touch-manipulation-adjustment hover:bg-red-500/10 hover:text-red-300"
                           >
-                            {option.label === "ONGOING" && (
-                              <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
+                            {option.label === "Live" && (
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" style={{ animation: "livePulse 1.2s infinite" }} />
                             )}
+                            {option.label === "Calendar" && <CalendarDays size={14} className="shrink-0 opacity-70" />}
                             {option.label}
                           </Link>
                         ))}
@@ -365,6 +393,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               {isAdmin && (
                 <div className="relative" ref={adminRef}>
                   <button
+                    type="button"
                     onClick={() => {
                       setAdminOpen((value) => !value);
                       setNewsOpen(false);
@@ -381,12 +410,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     )}
                   </button>
                   {adminOpen ? (
-                    <div className="absolute left-0 top-full z-30 mt-2 min-w-[200px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                    <div className="absolute left-0 top-full z-[1000] mt-2 min-w-[200px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
                       {ADMIN_DROPDOWN_OPTIONS.map((option) => {
                         if (option.isAction) {
                           return (
                             <button
                               key={option.label}
+                              type="button"
                               onClick={async () => {
                                 setAdminOpen(false);
                                 setFetchingNow(true);
@@ -476,71 +506,255 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-white/10 bg-[#0D1117] p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-6 flex items-center justify-between">
-              <div className="rounded-full border border-white/10 bg-[#1F2937] p-1">
-                <button onClick={() => setSection("news")} className={`rounded-[20px] px-4 py-1.5 text-sm font-semibold ${section === "news" ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white" : "text-gray-300"}`}>NEWS</button>
-                <button onClick={() => setSection("article")} className={`rounded-[20px] px-4 py-1.5 text-sm font-semibold ${section === "article" ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white" : "text-gray-300"}`}>ARTICLE</button>
-              </div>
-              <button onClick={() => setMobileOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10" aria-label="Close navigation">
-                <X size={18} />
+      {(newsOpen || debatesOpen || adminOpen) ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[50] bg-black/50 lg:hidden"
+          aria-label="Close menu"
+          onClick={() => {
+            setNewsOpen(false);
+            setDebatesOpen(false);
+            setAdminOpen(false);
+          }}
+        />
+      ) : null}
+
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-[55] flex items-end justify-between gap-0 border-t border-white/10 bg-[#080d18]/95 px-0.5 pb-[max(0.4rem,env(safe-area-inset-bottom,0px))] pt-1.5 backdrop-blur-md lg:hidden"
+        role="navigation"
+        aria-label="Main mobile navigation"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setNewsOpen(false);
+            setDebatesOpen(false);
+            setAdminOpen(false);
+            router.push("/live");
+          }}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+            pathname === "/live" ? "text-red-500" : "text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <Radio className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+          <span className="max-w-full truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">Live</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setNewsOpen(false);
+            setDebatesOpen(false);
+            setAdminOpen(false);
+            router.push("/trending");
+          }}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+            pathname === "/trending" ? "text-[#3B82F6]" : "text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <TrendingUp className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+          <span className="max-w-full truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">Trending</span>
+        </button>
+
+        <div ref={bottomNewsRef} className="relative flex min-w-0 flex-1 flex-col items-center">
+          <button
+            type="button"
+            onClick={() => {
+              setNewsOpen((v) => !v);
+              setDebatesOpen(false);
+              setAdminOpen(false);
+            }}
+            className={`flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+              newsOpen || (!!activeCategory && pathname === "/")
+                ? "text-[#3B82F6]"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <Newspaper className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+            <span className="flex max-w-full items-center gap-0.5 truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">
+              News
+              {newsOpen ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
+            </span>
+          </button>
+          {newsOpen ? (
+            <div
+              className="absolute bottom-full left-1/2 z-[60] mb-2 w-[min(19rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-hidden rounded-xl border border-white/10 bg-[#111827] py-2 shadow-2xl"
+              style={{ animation: "dropdownIn 150ms ease" }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  goHomeNews();
+                  setDebatesOpen(false);
+                  setAdminOpen(false);
+                }}
+                className="flex w-full border-b border-white/5 px-4 py-3 text-left text-sm font-semibold text-white hover:bg-white/[0.06]"
+              >
+                All news
               </button>
-            </div>
-
-            <div className="mb-6 text-sm">
-              <div className="mb-3 text-[#6B7280]">{`${weekday}, ${month} ${day}`}</div>
-              <div className="text-lg font-semibold text-[#F9FAFB]">{time} <span className="rounded-full bg-[#3B82F6] px-2 py-1 text-[11px] text-white">IST</span></div>
-            </div>
-
-            <div className="mb-6">
-              <UserLink user={session?.user} />
-            </div>
-
-            {section === "news" ? (
-              <div className="space-y-4">
-                <button onClick={() => { router.push("/live"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-2xl border border-white/10 px-4 py-4 text-left text-[#EF4444]">
-                  <span className="h-2 w-2 rounded-full bg-[#EF4444]" style={{ animation: "livePulse 1.2s infinite" }} />
-                  LIVE
+              {NEWS_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => goToCategory(option)}
+                  className={`flex w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                    activeCategory === option ? "bg-[rgba(59,130,246,0.12)] text-white" : "text-gray-400 hover:bg-white/[0.05] hover:text-white"
+                  }`}
+                >
+                  {option}
                 </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
-                <div className="rounded-2xl border border-white/10 p-2">
-                  <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">News</div>
-                  {NEWS_OPTIONS.map((option) => (
-                    <button key={option} onClick={() => { goToCategory(option); setMobileOpen(false); }} className="flex w-full items-center rounded-xl px-3 py-3 text-left text-white hover:bg-white/[0.04]">
-                      {option}
-                    </button>
-                  ))}
-                </div>
+        <div ref={bottomDebateRef} className="relative flex min-w-0 flex-1 flex-col items-center">
+          <button
+            type="button"
+            onClick={() => {
+              setDebatesOpen((v) => !v);
+              setNewsOpen(false);
+              setAdminOpen(false);
+            }}
+            className={`flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+              debatesOpen || pathname.startsWith("/debates") || pathname === "/creators"
+                ? "text-red-400"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <MessagesSquare className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+            <span className="flex max-w-full items-center gap-0.5 truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">
+              Debate
+              {debatesOpen ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
+            </span>
+          </button>
+          {debatesOpen ? (
+            <div
+              className="absolute bottom-full left-1/2 z-[60] mb-2 w-[min(17rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-hidden rounded-xl border border-red-500/20 bg-[#111827] py-2 shadow-2xl"
+              style={{ animation: "dropdownIn 150ms ease" }}
+            >
+              {DEBATE_OPTIONS.map((option) => (
+                <Link
+                  key={option.href}
+                  href={option.href}
+                  onClick={() => setDebatesOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-red-500/10 hover:text-red-200"
+                >
+                  {option.label === "Live" && (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" style={{ animation: "livePulse 1.2s infinite" }} />
+                  )}
+                  {option.label === "Calendar" && <CalendarDays size={14} className="shrink-0 opacity-70" />}
+                  {option.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
-                <div className="rounded-2xl border border-white/10 p-2">
-                  <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Debates</div>
-                  {DEBATE_OPTIONS.map((option) => (
-                    <Link key={option.label} href={option.href} onClick={() => setMobileOpen(false)} className="flex w-full items-center rounded-xl px-3 py-3 text-left text-white hover:bg-white/[0.04]">
-                      {option.label === "ONGOING" && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" style={{ animation: "livePulse 1.2s infinite" }} />
-                      )}
+        <button
+          type="button"
+          onClick={() => {
+            setNewsOpen(false);
+            setDebatesOpen(false);
+            setAdminOpen(false);
+            router.push("/premium");
+          }}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+            pathname === "/premium" ? "text-amber-400" : "text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <Crown className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+          <span className="max-w-full truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">Premium</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setNewsOpen(false);
+            setDebatesOpen(false);
+            setAdminOpen(false);
+            if (session?.user) router.push("/profile");
+            else void signIn("google");
+          }}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+            pathname === "/profile" ? "text-[#3B82F6]" : "text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <User className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+          <span className="max-w-full truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">Profile</span>
+        </button>
+
+        {isAdmin ? (
+          <div ref={bottomAdminRef} className="relative flex min-w-0 flex-1 flex-col items-center">
+            <button
+              type="button"
+              onClick={() => {
+                setAdminOpen((v) => !v);
+                setNewsOpen(false);
+                setDebatesOpen(false);
+              }}
+              className={`flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
+                adminOpen || pathname.startsWith("/admin") ? "text-amber-400" : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Shield className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+              <span className="flex max-w-full items-center gap-0.5 truncate px-0.5 text-[9px] font-bold uppercase tracking-tight sm:text-[10px]">
+                Admin
+                {adminOpen ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
+              </span>
+            </button>
+            {adminOpen ? (
+              <div
+                className="absolute bottom-full right-0 z-[60] mb-2 max-h-[min(24rem,70vh)] w-[min(20rem,calc(100vw-1rem))] overflow-y-auto rounded-xl border border-amber-500/25 bg-[#111827] py-2 shadow-2xl sm:right-auto sm:left-1/2 sm:-translate-x-1/2"
+                style={{ animation: "dropdownIn 150ms ease" }}
+              >
+                {ADMIN_DROPDOWN_OPTIONS.map((option) => {
+                  if (option.isAction) {
+                    return (
+                      <button
+                        key={option.label}
+                        type="button"
+                        onClick={async () => {
+                          setAdminOpen(false);
+                          setFetchingNow(true);
+                          toast.info("Fetching news...");
+                          try {
+                            const res = await fetch("/api/admin/fetch-news", { method: "POST" });
+                            const data = await res.json();
+                            if (res.ok) {
+                              toast.success(`Fetched ${data.saved} news articles!`);
+                            } else {
+                              toast.error(data.error || "Failed to fetch news");
+                            }
+                          } catch (e: any) {
+                            toast.error(e.message || "Failed to fetch news");
+                          } finally {
+                            setFetchingNow(false);
+                          }
+                        }}
+                        disabled={fetchingNow}
+                        className="flex w-full px-4 py-2.5 text-left text-sm font-medium text-amber-100 hover:bg-amber-500/15 disabled:opacity-50"
+                      >
+                        {fetchingNow ? "Fetching…" : option.label}
+                      </button>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={option.label}
+                      href={option.href ?? "/"}
+                      onClick={() => setAdminOpen(false)}
+                      className="block px-4 py-2.5 text-sm font-medium text-amber-100 hover:bg-amber-500/15"
+                    >
                       {option.label}
                     </Link>
-                  ))}
-                </div>
-
-                {isAdmin ? (
-                  <div className="rounded-2xl border border-amber-500/20 p-2">
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">Admin</div>
-                    <button onClick={() => { router.push("/admin/analytics"); setMobileOpen(false); }} className="flex w-full rounded-xl px-3 py-3 text-left text-amber-100 hover:bg-amber-500/10">Analytics</button>
-                    <button onClick={() => { router.push("/admin/post-news"); setMobileOpen(false); }} className="flex w-full rounded-xl px-3 py-3 text-left text-amber-100 hover:bg-amber-500/10">Post News</button>
-                    <button onClick={() => { router.push("/admin/manage-news"); setMobileOpen(false); }} className="flex w-full rounded-xl px-3 py-3 text-left text-amber-100 hover:bg-amber-500/10">Manage News</button>
-                    <button onClick={() => { router.push("/admin/automation-logs"); setMobileOpen(false); }} className="flex w-full rounded-xl px-3 py-3 text-left text-amber-100 hover:bg-amber-500/10">Automation Logs</button>
-                    <button onClick={handleFetchNow} className="flex w-full rounded-xl px-3 py-3 text-left text-amber-100 hover:bg-amber-500/10">Run Fetch Now</button>
-                  </div>
-                ) : null}
+                  );
+                })}
               </div>
             ) : null}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </nav>
     </div>
   );
 }
