@@ -3,6 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import Parser from 'rss-parser';
+
+const parser = new Parser();
+
+// High-quality Indian news RSS feeds
+const RSS_FEEDS = [
+  'https://www.thehindu.com/news/national/feeder/default.rss',
+  'https://indianexpress.com/section/india/feed/',
+  'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms',
+  'https://www.ndtv.com/india-news/rss',
+  'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml',
+  'https://news.google.com/rss/search?q=india+politics&hl=en-IN&gl=IN&ceid=IN:en',
+  'https://news.google.com/rss/search?q=india+economy&hl=en-IN&gl=IN&ceid=IN:en',
+  'https://news.google.com/rss/search?q=india+sports&hl=en-IN&gl=IN&ceid=IN:en',
+];
 
 async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -98,6 +113,125 @@ function extractArticleImage(art: any) {
   if (art.og_image) return art.og_image;
   if (Array.isArray(art.images) && art.images[0]) return art.images[0];
   return null;
+}
+
+const MAX_ARTICLE_AGE_MS = 48 * 60 * 60 * 1000;
+
+/** Fetched first (wire-style + major Indian outlets), then Google topic feeds. */
+const RSS_FEEDS_PRIORITY = [
+  "https://www.pib.gov.in/rssfeed.aspx?ModId=6",
+  "https://aninews.in/rss/india.xml",
+  "https://www.thehindu.com/news/national/feeder/default.rss",
+  "https://indianexpress.com/section/india/feed/",
+  "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
+  "https://www.ndtv.com/india-news/rss",
+  "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
+];
+
+const RSS_FEEDS_GOOGLE = [
+  "https://news.google.com/rss/search?q=india+politics&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://news.google.com/rss/search?q=india+economy&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://news.google.com/rss/search?q=india+sports&hl=en-IN&gl=IN&ceid=IN:en",
+];
+
+function decodeXmlText(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .trim();
+}
+
+function stripHtmlTags(s: string): string {
+  return s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractXmlTag(block: string, tag: string): string {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const m = block.match(re);
+  if (!m) return "";
+  return decodeXmlText(m[1].trim());
+}
+
+function splitRssItems(xml: string): string[] {
+  const re = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+  const parts: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(xml)) !== null) {
+    parts.push(m[1]);
+    if (parts.length >= 14) break;
+  }
+  return parts;
+}
+
+function articleAgeOk(pubDate?: string): boolean {
+  if (!pubDate) return false;
+  const t = new Date(pubDate).getTime();
+  if (!Number.isFinite(t)) return false;
+  return Date.now() - t <= MAX_ARTICLE_AGE_MS;
+}
+
+async function fetchRssFeedArticles(feedUrl: string, perFeedLimit = 8): Promise<any[]> {
+  try {
+    const res = await fetch(feedUrl, {
+      headers: { "User-Agent": "RAJNEET/1.0 (+https://rajneet.co.in)" },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      console.log(`RSS non-OK ${res.status}: ${feedUrl}`);
+      return [];
+    }
+    const xml = await res.text();
+    const innerBlocks = splitRssItems(xml);
+    const host = (() => {
+      try {
+        return new URL(feedUrl).hostname;
+      } catch {
+        return "rss";
+      }
+    })();
+    const out: any[] = [];
+    for (const inner of innerBlocks.slice(0, perFeedLimit)) {
+      let title = extractXmlTag(inner, "title");
+      title = stripHtmlTags(title);
+      let link =
+        extractXmlTag(inner, "link").replace(/<[^>]+>/g, "").trim() ||
+        extractXmlTag(inner, "guid").replace(/<[^>]+>/g, "").trim();
+      const pubDate =
+        extractXmlTag(inner, "pubDate") ||
+        extractXmlTag(inner, "dc:date") ||
+        extractXmlTag(inner, "published");
+      const description =
+        extractXmlTag(inner, "description") || extractXmlTag(inner, "summary") || "";
+      if (!title || !link) continue;
+      if (!articleAgeOk(pubDate)) continue;
+      out.push({
+        title,
+        description: stripHtmlTags(description).slice(0, 500),
+        content: stripHtmlTags(description).slice(0, 800),
+        link,
+        pubDate: pubDate || new Date().toISOString(),
+        image_url: null as string | null,
+        category: "politics",
+        source: `rss:${host}`,
+      });
+    }
+    return out;
+  } catch (e: any) {
+    console.error(`RSS fetch error ${feedUrl}:`, e?.message || e);
+    return [];
+  }
+}
+
+async function fetchAllRssArticles(): Promise<any[]> {
+  const ordered = [...RSS_FEEDS_PRIORITY, ...RSS_FEEDS_GOOGLE];
+  const batches = await Promise.all(ordered.map((u) => fetchRssFeedArticles(u, 8)));
+  return batches.flat();
 }
 
 // Multiple API configurations for different news sources
@@ -198,7 +332,7 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
       let url = `${config.baseUrl}?`;
       
       if (apiName === 'newsdata') {
-        url += `apikey=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}`;
+        url += `apikey=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}&timeframe=12&prioritydomain=top`;
       } else if (apiName === 'currents') {
         url += `apiKey=${apiKey}&keywords=${encodeURIComponent(query)}${config.queryParams}`;
       } else if (apiName === 'gnews') {
@@ -272,47 +406,52 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
   return results;
 }
 
-// Main function to fetch from all APIs
+// Main function to fetch from RSS (fresh) + all APIs
 async function fetchFromAllAPIs(query: string): Promise<any[]> {
-  const allResults: any[] = [];
+  const rssArticles = await fetchAllRssArticles();
+  const allResults: any[] = [...rssArticles];
+
   const apiNames = ['newsdata', 'currents', 'gnews'];
-  
-  console.log('Fetching news from all APIs...');
-  
-  // Fetch from all APIs concurrently
-  const apiPromises = apiNames.map(apiName => 
-    fetchFromAPIWithFallback(apiName, query).catch(error => {
+
+  console.log('Fetching news from RSS + APIs...');
+
+  const apiPromises = apiNames.map((apiName) =>
+    fetchFromAPIWithFallback(apiName, query).catch((error) => {
       console.error(`Error fetching from ${apiName}:`, error.message);
       return [];
     })
   );
-  
+
   const results = await Promise.all(apiPromises);
-  
-  // Combine all results
+
   results.forEach((apiResults, index) => {
     if (apiResults.length > 0) {
       console.log(`${apiNames[index]}: ${apiResults.length} articles`);
       allResults.push(...apiResults);
     }
   });
-  
-  console.log(`Total articles from all APIs: ${allResults.length}`);
-  
-  // Remove duplicates based on URL
+
+  console.log(`Total articles before dedupe: ${allResults.length}`);
+
   const uniqueArticles: any[] = [];
   const seenUrls = new Set<string>();
-  
+
   for (const article of allResults) {
     if (article.link && !seenUrls.has(article.link)) {
       seenUrls.add(article.link);
       uniqueArticles.push(article);
     }
   }
-  
-  console.log(`Unique articles after deduplication: ${uniqueArticles.length}`);
-  
-  return uniqueArticles.slice(0, 20); // Limit to 20 total articles
+
+  uniqueArticles.sort((a, b) => {
+    const ta = new Date(a.pubDate || 0).getTime();
+    const tb = new Date(b.pubDate || 0).getTime();
+    return tb - ta;
+  });
+
+  console.log(`Unique articles after dedupe: ${uniqueArticles.length}`);
+
+  return uniqueArticles.slice(0, 40);
 }
 
 export async function POST(req: Request) {
@@ -344,6 +483,15 @@ export async function POST(req: Request) {
         where: { source_url: art.link }
       });
       if (existing) { skipped.push(art.title); continue; }
+
+      if (art.pubDate) {
+        const pubTs = new Date(art.pubDate).getTime();
+        if (Number.isFinite(pubTs) && Date.now() - pubTs > MAX_ARTICLE_AGE_MS) {
+          console.log("Skipping old article:", art.title);
+          skipped.push("too-old");
+          continue;
+        }
+      }
 
       try {
         const rawSummary = art.description || art.content || art.title;
@@ -477,6 +625,15 @@ export async function GET(req: Request) {
         where: { source_url: art.link }
       });
       if (existing) { skipped.push(art.title); continue; }
+
+      if (art.pubDate) {
+        const pubTs = new Date(art.pubDate).getTime();
+        if (Number.isFinite(pubTs) && Date.now() - pubTs > MAX_ARTICLE_AGE_MS) {
+          console.log("Skipping old article:", art.title);
+          skipped.push("too-old");
+          continue;
+        }
+      }
 
       try {
         const rawSummary = art.description || art.content || art.title;

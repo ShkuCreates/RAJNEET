@@ -242,40 +242,6 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
             <UserLink user={user} />
           </div>
 
-          {/* Navigation Bar */}
-          <div className="absolute left-1/2 top-full z-10 hidden md:flex">
-            <button
-              onClick={() => router.push('/dashboard/live')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              LIVE
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="text-xl">📰</span>
-              NEWS
-            </button>
-            <button
-              onClick={() => router.push('/debates')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-            >
-              <span className="text-xl">🗳️</span>
-              DEBATE
-            </button>
-            {isAdmin && (
-              <button
-                onClick={() => router.push('/admin')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors"
-              >
-                <span className="text-xl">⚙️</span>
-                ADMIN
-              </button>
-            )}
-          </div>
-
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -288,8 +254,8 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
       </header>
 
       {section === "news" ? (
-        <div className="border-b-2 border-[#1E3A5F] bg-[#070B14]">
-          <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center gap-8 px-4 sm:px-6">
+        <div className="relative z-[200] border-b-2 border-[#1E3A5F] bg-[#070B14] overflow-visible">
+          <div className="mx-auto flex min-h-[52px] w-full max-w-[1400px] items-center gap-8 overflow-visible px-4 py-1 sm:px-6">
             <div className="hidden items-center gap-3 md:flex">
               <button
                 onClick={() => router.push("/dashboard/live")}
@@ -302,6 +268,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
 
               <div className="relative" ref={newsRef}>
                 <button
+                  type="button"
                   onClick={() => {
                     setNewsOpen((value) => !value);
                     setDebatesOpen(false);
@@ -316,7 +283,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
                   <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-[#3B82F6] transition-all duration-200 ${currentNav === "news" ? "opacity-100" : "opacity-0"}`} />
                 </button>
                 {newsOpen ? (
-                  <div className="absolute left-0 top-full z-30 mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                  <div className="absolute left-0 top-full z-[1000] mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
                     {NEWS_OPTIONS.map((option) => (
                       <button
                         key={option}
@@ -336,6 +303,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
 
               <div className="relative" ref={debatesRef}>
                 <button
+                  type="button"
                   onClick={() => {
                     setDebatesOpen((value) => !value);
                     setNewsOpen(false);
@@ -350,7 +318,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
                   <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-[#3B82F6] transition-all duration-200 ${currentNav === "debates" ? "opacity-100" : "opacity-0"}`} />
                 </button>
                 {debatesOpen ? (
-                  <div className="absolute left-0 top-full z-30 mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                  <div className="absolute left-0 top-full z-[1000] mt-2 min-w-[180px] overflow-hidden rounded-[10px] border border-[rgba(59,130,246,0.2)] bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
                     <Link href="/debates" className="flex items-center gap-3 border-l-2 border-transparent px-4 py-3 text-sm font-medium text-gray-400 transition-colors hover:border-[#3B82F6] hover:bg-[rgba(59,130,246,0.08)] hover:text-white">
                       <span className={`h-2 w-2 rounded-full ${isDebateLive ? "bg-green-500" : "bg-red-500"}`} style={{ animation: "livePulse 1.2s infinite" }} />
                       Live
@@ -366,6 +334,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
               {isAdmin ? (
                 <div className="relative" ref={adminRef}>
                   <button
+                    type="button"
                     onClick={() => {
                       setAdminOpen((value) => !value);
                       setNewsOpen(false);
@@ -381,7 +350,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
                     <span className={`absolute inset-x-0 -bottom-[8px] h-0.5 bg-amber-400 transition-all duration-200 ${currentNav === "admin" ? "opacity-100" : "opacity-0"}`} />
                   </button>
                   {adminOpen ? (
-                    <div className="absolute left-0 top-full z-30 mt-2 min-w-[220px] overflow-hidden rounded-[10px] border border-amber-500/20 bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
+                    <div className="absolute left-0 top-full z-[1000] mt-2 min-w-[220px] overflow-hidden rounded-[10px] border border-amber-500/20 bg-[#111827] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
                       <Link href="/admin/analytics" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Analytics</Link>
                       <Link href="/admin/post-news" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Post News</Link>
                       <Link href="/admin/manage-news" className="flex items-center border-l-2 border-transparent px-4 py-3 text-sm font-medium text-amber-100 transition-colors hover:border-amber-400 hover:bg-amber-500/10">Manage News</Link>

@@ -21,12 +21,14 @@ export async function GET() {
     startOfMonth.setDate(now.getDate() - 30);
 
     const [
+      /** Lifetime: no date filter */
       articlesCount,
       pollsCount,
       votesCount,
       viewsToday,
       viewsWeek,
       viewsMonth,
+      /** All-time page views: no date filter */
       viewsTotal,
       upvotesTotal,
       commentsTotal,

@@ -363,7 +363,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
               {/* Admin Dropdown */}
               {isAdmin && (
-                <div className="relative" ref={debatesRef}>
+                <div className="relative" ref={adminRef}>
                   <button
                     onClick={() => {
                       setAdminOpen((value) => !value);

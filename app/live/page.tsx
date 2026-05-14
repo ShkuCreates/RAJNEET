@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import LiveDebatesClient from "@/components/debates/LiveDebatesClient";
@@ -12,7 +12,7 @@ export default function LiveDebatesPage() {
   const [session, setSession] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState("sports");
 
-  useState(() => {
+  useEffect(() => {
     getServerSession(authOptions).then(setSession);
   }, []);
 
