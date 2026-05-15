@@ -54,15 +54,14 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Entertainment", category: "Entertainment", href: null },
   { label: "Others", category: "Others", href: null },
   { label: "World", category: "World", href: null },
-  { label: "Debates", href: "/debates", isDebate: true },
+  { label: "Debates", href: null, isDebate: true },
   { label: "Premium", href: "/premium", isPremium: true },
 ];
 
 const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others", "World"] as const;
 const DEBATE_OPTIONS = [
-  { label: "Live", href: "/debates" },
+  { label: "Ongoing", href: "/debates" },
   { label: "Calendar", href: "/debates/calendar" },
-  { label: "Creators", href: "/creators" },
 ] as const;
 const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
   { label: "Manage Post", href: "/admin/manage-news" },
@@ -346,7 +345,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       onClick={handleClick}
                       className={`relative flex h-full items-center gap-1 px-5 py-2 text-[13px] font-bold uppercase tracking-wider transition-all rounded-lg ${
                         item.isDebate
-                          ? pathname.startsWith("/debates") || pathname === "/live"
+                          ? pathname.startsWith("/debates")
                             ? "bg-red-500 text-white shadow-lg"
                             : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
                           : isActive 
@@ -362,7 +361,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       {isActive && !item.isDebate && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
                       )}
-                      {item.isDebate && (pathname.startsWith("/debates") || pathname === "/live") && (
+                      {item.isDebate && pathname.startsWith("/debates") && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 rounded-b-lg" />
                       )}
                     </button>
@@ -374,7 +373,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             href={option.href}
                             className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors touch-manipulation-adjustment hover:bg-red-500/10 hover:text-red-300"
                           >
-                            {option.label === "Live" && (
+                            {option.label === "Ongoing" && (
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" style={{ animation: "livePulse 1.2s infinite" }} />
                             )}
                             {option.label === "Calendar" && <CalendarDays size={14} className="shrink-0 opacity-70" />}
@@ -744,7 +743,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 setAdminOpen(false);
               }}
               className={`flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors ${
-                debatesOpen || pathname.startsWith("/debates") || pathname === "/creators"
+                debatesOpen || pathname.startsWith("/debates")
                   ? "text-red-400"
                   : "text-gray-500 hover:text-gray-300"
               }`}
@@ -767,7 +766,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     onClick={() => setDebatesOpen(false)}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-red-500/10 hover:text-red-200"
                   >
-                    {option.label === "Live" && (
+                    {option.label === "Ongoing" && (
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" style={{ animation: "livePulse 1.2s infinite" }} />
                     )}
                     {option.label === "Calendar" && <CalendarDays size={14} className="shrink-0 opacity-70" />}
