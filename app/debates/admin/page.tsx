@@ -1,25 +1,141 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Plus, Trash2, Play, Clock, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default async function DebatesAdminPage() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email || session.user.role !== "ADMIN") {
-    redirect("/");
-  }
+type Debate = {
+  id: string;
+  topic: string;
+  description: string | null;
+  status: string;
+  scheduled_at: Date | null;
+  created_at: Date;
+};
 
-  const debates = await prisma.debate.findMany({
-    orderBy: {
-      created_at: "desc",
-    },
-  });
+export default function DebatesAdminPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [debates, setDebates] = useState<Debate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session?.user?.email || session.user.role !== "ADMIN") {
+      router.push("/");
+      return;
+    }
+    fetchDebates();
+  }, [session, router]);
+
+  const fetchDebates = async () => {
+    try {
+      const res = await fetch("/api/debates");
+      if (res.ok) {
+        const data = await res.json();
+        setDebates(data.debates || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch debates:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSchedule = async () => {
+    const topic = prompt("Enter debate topic:");
+    if (!topic) return;
+    
+    const description = prompt("Enter description (optional):") || "";
+    const scheduledStr = prompt("Enter scheduled date/time (YYYY-MM-DD HH:MM IST):");
+    
+    try {
+      const scheduledAt = scheduledStr ? new Date(scheduledStr) : null;
+      
+      const res = await fetch("/api/debates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          description,
+          scheduled_at: scheduledAt?.toISOString(),
+        }),
+      });
+      
+      if (res.ok) {
+        toast.success("Debate scheduled successfully!");
+        fetchDebates();
+      } else {
+        toast.error("Failed to schedule debate");
+      }
+    } catch (e) {
+      toast.error("Invalid date format. Please use YYYY-MM-DD HH:MM");
+    }
+  };
+
+  const handleStart = async (id: string) => {
+    if (!confirm("Start this debate?")) return;
+    try {
+      const res = await fetch(`/api/debates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "live" }),
+      });
+      if (res.ok) {
+        toast.success("Debate started!");
+        fetchDebates();
+      } else {
+        toast.error("Failed to start debate");
+      }
+    } catch (e) {
+      toast.error("Error starting debate");
+    }
+  };
+
+  const handleEnd = async (id: string) => {
+    if (!confirm("End this debate?")) return;
+    try {
+      const res = await fetch(`/api/debates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "completed" }),
+      });
+      if (res.ok) {
+        toast.success("Debate ended!");
+        fetchDebates();
+      } else {
+        toast.error("Failed to end debate");
+      }
+    } catch (e) {
+      toast.error("Error ending debate");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this debate?")) return;
+    try {
+      const res = await fetch(`/api/debates/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Debate deleted!");
+        fetchDebates();
+      } else {
+        toast.error("Failed to delete debate");
+      }
+    } catch (e) {
+      toast.error("Error deleting debate");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050A14] px-6 py-12 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050A14] px-6 py-12">
@@ -30,36 +146,7 @@ export default async function DebatesAdminPage() {
             <p className="text-gray-400">Schedule and manage debates on RAJNEET.</p>
           </div>
           <button
-            onClick={async () => {
-              const topic = prompt("Enter debate topic:");
-              if (!topic) return;
-              
-              const description = prompt("Enter description (optional):") || "";
-              const scheduledStr = prompt("Enter scheduled date/time (YYYY-MM-DD HH:MM IST):");
-              
-              try {
-                const scheduledAt = scheduledStr ? new Date(scheduledStr) : null;
-                
-                const res = await fetch("/api/debates", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    topic,
-                    description,
-                    scheduled_at: scheduledAt?.toISOString(),
-                  }),
-                });
-                
-                if (res.ok) {
-                  toast.success("Debate scheduled successfully!");
-                  window.location.reload();
-                } else {
-                  toast.error("Failed to schedule debate");
-                }
-              } catch (e) {
-                toast.error("Invalid date format. Please use YYYY-MM-DD HH:MM");
-              }
-            }}
+            onClick={handleSchedule}
             className="flex items-center gap-2 px-4 py-2 bg-accent-blue text-white text-sm font-bold rounded-lg hover:bg-accent-blue/90 transition-colors"
           >
             <Plus size={18} />
@@ -106,24 +193,7 @@ export default async function DebatesAdminPage() {
                   <div className="flex items-center gap-2">
                     {debate.status === "upcoming" && (
                       <button
-                        onClick={async () => {
-                          if (!confirm("Start this debate?")) return;
-                          try {
-                            const res = await fetch(`/api/debates/${debate.id}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ status: "live" }),
-                            });
-                            if (res.ok) {
-                              toast.success("Debate started!");
-                              window.location.reload();
-                            } else {
-                              toast.error("Failed to start debate");
-                            }
-                          } catch (e) {
-                            toast.error("Error starting debate");
-                          }
-                        }}
+                        onClick={() => handleStart(debate.id)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors"
                       >
                         <Play size={14} />
@@ -132,46 +202,14 @@ export default async function DebatesAdminPage() {
                     )}
                     {debate.status === "live" && (
                       <button
-                        onClick={async () => {
-                          if (!confirm("End this debate?")) return;
-                          try {
-                            const res = await fetch(`/api/debates/${debate.id}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ status: "completed" }),
-                            });
-                            if (res.ok) {
-                              toast.success("Debate ended!");
-                              window.location.reload();
-                            } else {
-                              toast.error("Failed to end debate");
-                            }
-                          } catch (e) {
-                            toast.error("Error ending debate");
-                          }
-                        }}
+                        onClick={() => handleEnd(debate.id)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors"
                       >
                         End
                       </button>
                     )}
                     <button
-                      onClick={async () => {
-                        if (!confirm("Delete this debate?")) return;
-                        try {
-                          const res = await fetch(`/api/debates/${debate.id}`, {
-                            method: "DELETE",
-                          });
-                          if (res.ok) {
-                            toast.success("Debate deleted!");
-                            window.location.reload();
-                          } else {
-                            toast.error("Failed to delete debate");
-                          }
-                        } catch (e) {
-                          toast.error("Error deleting debate");
-                        }
-                      }}
+                      onClick={() => handleDelete(debate.id)}
                       className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={18} />
