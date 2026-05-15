@@ -129,7 +129,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [section, setSection] = useState<"news" | "article">("news");
   const [newsOpen, setNewsOpen] = useState(false);
   const [debatesOpen, setDebatesOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -242,37 +241,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="absolute left-1/2 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
               <div className="flex rounded-[20px] border border-white/10 bg-white/[0.08] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.1)] backdrop-blur-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSection("news");
-                    localStorage.setItem("rajneet-section", "news");
-                    window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "news" } }));
-                  }}
+                <Link
+                  href="/"
                   className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
-                    section === "news"
+                    pathname === "/"
                       ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                       : "text-gray-400"
                   }`}
                 >
                   NEWS
-                </button>
+                </Link>
                 <div className="h-5 w-px bg-white/20" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSection("article");
-                    localStorage.setItem("rajneet-section", "article");
-                    window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "article" } }));
-                  }}
+                <Link
+                  href="/article"
                   className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
-                    section === "article"
+                    pathname.startsWith("/article")
                       ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
                       : "text-gray-400"
                   }`}
                 >
                   ARTICLE
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -292,42 +281,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="border-t border-white/[0.06] bg-[#070B14] px-3 py-2.5 lg:hidden">
           <div className="mx-auto flex max-w-[1400px] justify-center">
             <div className="inline-flex w-full max-w-md rounded-full border border-white/10 bg-white/[0.08] p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setSection("news");
-                  localStorage.setItem("rajneet-section", "news");
-                  window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "news" } }));
-                }}
+              <Link
+                href="/"
                 className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
-                  section === "news"
+                  pathname === "/"
                     ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"
                     : "text-gray-400"
                 }`}
               >
                 News
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSection("article");
-                  localStorage.setItem("rajneet-section", "article");
-                  window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "article" } }));
-                }}
+              </Link>
+              <Link
+                href="/article"
                 className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
-                  section === "article"
+                  pathname.startsWith("/article")
                     ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"
                     : "text-gray-400"
                 }`}
               >
                 Article
-              </button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {section === "news" ? (
+      {pathname === "/" ? (
         <div className="hidden border-b-2 border-[#1E3A5F] bg-[#070B14] lg:block overflow-visible">
           <div className="mx-auto flex h-[52px] w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 overflow-visible">
             <div className="flex items-center gap-0">
