@@ -9,9 +9,32 @@ import { SubmitArticleModal } from "./SubmitArticleModal";
 
 export default function ArticleFeed({ initialArticles, currentUser }: { initialArticles: any[], currentUser: any }) {
   const [articles, setArticles] = useState(initialArticles);
-  const [activeTab, setActiveTab] = useState("trending");
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem("rajneet-article-tab");
+    return saved === "trending" || saved === "latest" ? saved : "trending";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleTabChange = (e: any) => {
+      if (e.detail?.tab) {
+        setActiveTab(e.detail.tab);
+      }
+    };
+
+    const handleSubmitArticle = () => {
+      setIsSubmitModalOpen(true);
+    };
+
+    window.addEventListener("rajneet-article-tab", handleTabChange);
+    window.addEventListener("rajneet-article-submit", handleSubmitArticle);
+
+    return () => {
+      window.removeEventListener("rajneet-article-tab", handleTabChange);
+      window.removeEventListener("rajneet-article-submit", handleSubmitArticle);
+    };
+  }, []);
 
   const filteredArticles = articles.filter(article => {
     if (searchQuery) {
@@ -52,7 +75,10 @@ export default function ArticleFeed({ initialArticles, currentUser }: { initialA
             </button>
             <div className="h-6 w-px bg-white/10" />
             <button
-              onClick={() => setActiveTab("trending")}
+              onClick={() => {
+                setActiveTab("trending");
+                localStorage.setItem("rajneet-article-tab", "trending");
+              }}
               className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
                 activeTab === "trending"
                   ? "bg-accent-blue text-white"
@@ -63,7 +89,10 @@ export default function ArticleFeed({ initialArticles, currentUser }: { initialA
               Trending
             </button>
             <button
-              onClick={() => setActiveTab("latest")}
+              onClick={() => {
+                setActiveTab("latest");
+                localStorage.setItem("rajneet-article-tab", "latest");
+              }}
               className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
                 activeTab === "latest"
                   ? "bg-accent-blue text-white"
