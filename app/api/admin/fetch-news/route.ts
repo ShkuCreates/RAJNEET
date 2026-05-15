@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { seoOptimize } from "@/lib/automation/seoOptimize";
+import Parser from 'rss-parser';
 
 export const dynamic = "force-dynamic";
 
@@ -43,13 +44,49 @@ function enforceValidCategory(rawCategory?: string, title?: string): string {
 
 function extractArticleImage(art: any) {
   if (art.image_url) return art.image_url;
+  if (art.image) return art.image;
   if (art.enclosure?.url) return art.enclosure.url;
+  if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.$?.url) return art["media:content"][0].$.url;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.url) return art["media:content"][0].url;
+  if (art["media:content"]?.$?.url) return art["media:content"].$.url;
   if (art["media:content"]?.url) return art["media:content"].url;
   if (art.og_image) return art.og_image;
   if (Array.isArray(art.images) && art.images[0]) return art.images[0];
   return null;
 }
+
+function decodeXmlText(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .trim();
+}
+
+function stripHtmlTags(s: string): string {
+  return s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractFirstImageFromHtml(html: string): string | null {
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/i;
+  const match = html.match(imgRegex);
+  return match ? match[1] : null;
+}
+
+const RSS_FEEDS = [
+  "https://www.pib.gov.in/rssfeed.aspx?ModId=6",
+  "https://aninews.in/rss/india.xml",
+  "https://www.thehindu.com/news/national/feeder/default.rss",
+  "https://indianexpress.com/section/india/feed/",
+  "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
+  "https://www.ndtv.com/india-news/rss",
+  "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
+];
 
 export async function POST(req: Request) {
   try {
@@ -59,110 +96,91 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("Fetching news from NewsData API...");
-    
-    if (!process.env.NEWSDATA_API_KEY) {
-      throw new Error("NEWSDATA_API_KEY is not set in environment variables");
-    }
-
-    const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=politics%20India&language=en`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[NEWSDATA_API_ERROR]", response.status, errorText);
-      throw new Error(`NewsData API error: ${response.status} - ${errorText || "Unknown error"}`);
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("[NEWSDATA_API_INVALID_RESPONSE]", text);
-      throw new Error("NewsData API returned non-JSON response");
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError: any) {
-      console.error("[NEWSDATA_API_PARSE_ERROR]", parseError);
-      throw new Error("Failed to parse NewsData API response");
-    }
-    
-    if (!data.results) {
-      throw new Error(data.message || "Failed to fetch news from API");
-    }
-
-    const fetchedArticles = data.results;
-    const articlesToProcess = fetchedArticles.slice(0, 15);
+    console.log("Fetching news from RSS feeds...");
+    const parser = new Parser();
     const savedArticles = [];
     const skipped = [];
 
-    for (const art of articlesToProcess) {
-      if (!art.title) { skipped.push("no-title"); continue; }
-
-      const existing = await prisma.news.findFirst({
-        where: { source_url: art.link }
-      });
-      if (existing) { skipped.push(art.title); continue; }
-
+    for (const feedUrl of RSS_FEEDS) {
       try {
-        const rawSummary = art.description || art.content || art.title;
-        const category = enforceValidCategory(art.category, art.title);
-        const sourceImage = extractArticleImage(art);
-        const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
-
-        const seoData = await seoOptimize({
-          headline: art.title,
-          summary: rawSummary,
-          category,
-          state_name: "National",
-          cover_image_url: undefined,
-          published_at: art.pubDate || new Date().toISOString()
-        });
-
-        const status = "PUBLISHED";
-
-        const newArt = await prisma.news.create({
-          data: {
-            headline: art.title?.trim() || '',
-            summary: seoData.clean_summary || rawSummary.substring(0, 200),
-            body: seoData.seo_body || rawSummary,
-            category,
-            source_url: art.link,
-            cover_image_url,
-            status,
-            geo_level: "NATIONAL",
-            state: "National",
-            posted_by: undefined,
-            
-            seo_title: seoData.seo_title,
-            meta_description: seoData.meta_description,
-            slug: seoData.slug,
-            focus_keywords: seoData.focus_keywords,
-            schema_markup: seoData.schema_markup,
-            seo_body: seoData.seo_body,
-            seo_score: seoData.seo_score,
-            primary_keyword: seoData.primary_keyword,
-            is_trending: seoData.is_trending,
-            priority: seoData.priority
-          }
-        });
-        savedArticles.push(newArt);
-        console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
+        console.log(`Fetching RSS feed: ${feedUrl}`);
         
-      } catch (articleError: any) {
-        console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
+        const feed = await parser.parseURL(feedUrl);
+        const items = feed.items || [];
+        console.log(`Got ${items.length} items from ${feedUrl}`);
+
+        for (const item of items.slice(0, 3)) {
+          if (!item.title) { skipped.push("no-title"); continue; }
+
+          const link = item.link || item.guid;
+          if (!link) { skipped.push("no-link"); continue; }
+
+          const existing = await prisma.news.findFirst({
+            where: { source_url: link }
+          });
+          if (existing) { skipped.push(`duplicate: ${item.title.substring(0, 30)}`); continue; }
+
+          try {
+            const rawTitle = decodeXmlText(item.title);
+            const rawDescription = item.contentSnippet || item.content || item.summary || rawTitle;
+            const cleanedDescription = stripHtmlTags(decodeXmlText(rawDescription));
+            const category = enforceValidCategory(item.categories?.[0], rawTitle);
+            const sourceImage = extractArticleImage(item);
+            const cover_image_url = sourceImage || `/api/og?title=${encodeURIComponent(rawTitle)}&category=${encodeURIComponent(category)}`;
+
+            const seoData = await seoOptimize({
+              headline: rawTitle,
+              summary: cleanedDescription,
+              category,
+              state_name: "National",
+              cover_image_url: sourceImage,
+              published_at: item.pubDate || new Date().toISOString()
+            });
+
+            const newArt = await prisma.news.create({
+              data: {
+                headline: rawTitle.trim(),
+                summary: seoData.clean_summary || cleanedDescription.substring(0, 200),
+                body: seoData.seo_body || cleanedDescription,
+                category,
+                source_url: link,
+                cover_image_url,
+                status: "PUBLISHED",
+                geo_level: "NATIONAL",
+                state: "National",
+                posted_by: undefined,
+                seo_title: seoData.seo_title,
+                meta_description: seoData.meta_description,
+                slug: seoData.slug,
+                focus_keywords: seoData.focus_keywords,
+                schema_markup: seoData.schema_markup,
+                seo_body: seoData.seo_body,
+                seo_score: seoData.seo_score,
+                primary_keyword: seoData.primary_keyword,
+                is_trending: seoData.is_trending,
+                priority: seoData.priority
+              }
+            });
+            
+            savedArticles.push(newArt);
+            console.log(`✓ Saved: ${rawTitle.substring(0, 50)}`);
+            
+          } catch (articleError: any) {
+            console.error(`✗ Failed to process: ${item.title?.substring(0, 50)} — ${articleError.message}`);
+            continue;
+          }
+        }
+      } catch (feedError: any) {
+        console.error(`Failed to fetch RSS feed ${feedUrl}:`, feedError.message);
         continue;
       }
     }
 
     return NextResponse.json({ 
       success: true, 
-      fetched: fetchedArticles.length,
       saved: savedArticles.length,
-      skipped: skipped.length
+      skipped: skipped.length,
+      feedsFetched: RSS_FEEDS.length
     });
   } catch (error: any) {
     console.error("[ADMIN_FETCH_NEWS_ERROR]", error);
