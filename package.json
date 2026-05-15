@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npx next build",
-    "start": "npx next start",
+    "build": "next build",
+    "start": "next start",
     "postinstall": "prisma generate",
     "lint": "next lint",
     "audit:fix": "npm audit fix --force"

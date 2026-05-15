@@ -23,7 +23,11 @@ const nextConfig = {
       }
     ],
   },
-  turbo: false,
+  experimental: {
+    turbo: {
+      root: __dirname,
+    },
+  },
 }
 
 module.exports = nextConfig
