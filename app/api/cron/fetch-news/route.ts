@@ -94,12 +94,27 @@ function enforceValidCategory(rawCategory?: string, title?: string): string {
 
 function extractArticleImage(art: any) {
   if (art.image_url) return art.image_url;
+  if (art.image) return art.image;
   if (art.enclosure?.url) return art.enclosure.url;
+  if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.$?.url) return art["media:content"][0].$.url;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.url) return art["media:content"][0].url;
+  if (art["media:content"]?.$?.url) return art["media:content"].$.url;
   if (art["media:content"]?.url) return art["media:content"].url;
   if (art.og_image) return art.og_image;
   if (Array.isArray(art.images) && art.images[0]) return art.images[0];
   return null;
+}
+
+async function validateImageUrl(url: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 const MAX_ARTICLE_AGE_MS = 48 * 60 * 60 * 1000;
@@ -163,6 +178,12 @@ function articleAgeOk(pubDate?: string): boolean {
   return Date.now() - t <= MAX_ARTICLE_AGE_MS;
 }
 
+function extractFirstImageFromHtml(html: string): string | null {
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/i;
+  const match = html.match(imgRegex);
+  return match ? match[1] : null;
+}
+
 async function fetchRssFeedArticles(feedUrl: string, perFeedLimit = 8): Promise<any[]> {
   try {
     const res = await fetch(feedUrl, {
@@ -197,13 +218,29 @@ async function fetchRssFeedArticles(feedUrl: string, perFeedLimit = 8): Promise<
         extractXmlTag(inner, "description") || extractXmlTag(inner, "summary") || "";
       if (!title || !link) continue;
       if (!articleAgeOk(pubDate)) continue;
+      
+      let image_url = null;
+      
+      const enclosureUrlMatch = inner.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+      if (enclosureUrlMatch) image_url = enclosureUrlMatch[1];
+      
+      const mediaContentMatch = inner.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+      if (!image_url && mediaContentMatch) image_url = mediaContentMatch[1];
+      
+      const mediaThumbnailMatch = inner.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
+      if (!image_url && mediaThumbnailMatch) image_url = mediaThumbnailMatch[1];
+      
+      if (!image_url) {
+        image_url = extractFirstImageFromHtml(description);
+      }
+      
       out.push({
         title,
         description: stripHtmlTags(description).slice(0, 500),
         content: stripHtmlTags(description).slice(0, 800),
         link,
         pubDate: pubDate || new Date().toISOString(),
-        image_url: null as string | null,
+        image_url,
         category: "politics",
         source: `rss:${host}`,
       });
@@ -485,7 +522,15 @@ export async function POST(req: Request) {
 
         // Use keyword mapping for category - no Gemini needed
         const category = enforceValidCategory(art.category, art.title);
-        const sourceImage = extractArticleImage(art);
+        let sourceImage = extractArticleImage(art);
+        
+        // Validate image URL if we have one
+        if (sourceImage) {
+          const isValid = await validateImageUrl(sourceImage);
+          if (!isValid) {
+            sourceImage = null;
+          }
+        }
         
         // Use Cloudinary branded cover image for better reliability
         let cover_image_url = sourceImage;
@@ -638,7 +683,15 @@ export async function GET(req: Request) {
 
         // Use keyword mapping for category - no Gemini needed
         const category = enforceValidCategory(art.category, art.title);
-        const sourceImage = extractArticleImage(art);
+        let sourceImage = extractArticleImage(art);
+        
+        // Validate image URL if we have one
+        if (sourceImage) {
+          const isValid = await validateImageUrl(sourceImage);
+          if (!isValid) {
+            sourceImage = null;
+          }
+        }
         
         // Use Cloudinary branded cover image for better reliability
         let cover_image_url = sourceImage;

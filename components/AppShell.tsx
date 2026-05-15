@@ -244,7 +244,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex rounded-[20px] border border-white/10 bg-white/[0.08] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.1)] backdrop-blur-sm">
                 <button
                   type="button"
-                  onClick={() => setSection("news")}
+                  onClick={() => {
+                    setSection("news");
+                    localStorage.setItem("rajneet-section", "news");
+                    window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "news" } }));
+                  }}
                   className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                     section === "news"
                       ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
@@ -256,7 +260,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="h-5 w-px bg-white/20" />
                 <button
                   type="button"
-                  onClick={() => setSection("article")}
+                  onClick={() => {
+                    setSection("article");
+                    localStorage.setItem("rajneet-section", "article");
+                    window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "article" } }));
+                  }}
                   className={`rounded-[16px] px-12 py-1.5 text-sm font-semibold uppercase tracking-wider transition-all duration-250 active:scale-[0.98] ${
                     section === "article"
                       ? "scale-100 bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
@@ -286,7 +294,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="inline-flex w-full max-w-md rounded-full border border-white/10 bg-white/[0.08] p-1">
               <button
                 type="button"
-                onClick={() => setSection("news")}
+                onClick={() => {
+                  setSection("news");
+                  localStorage.setItem("rajneet-section", "news");
+                  window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "news" } }));
+                }}
                 className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
                   section === "news"
                     ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"
@@ -297,7 +309,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </button>
               <button
                 type="button"
-                onClick={() => setSection("article")}
+                onClick={() => {
+                  setSection("article");
+                  localStorage.setItem("rajneet-section", "article");
+                  window.dispatchEvent(new CustomEvent("rajneet-section-change", { detail: { section: "article" } }));
+                }}
                 className={`flex-1 rounded-full py-2 text-center text-xs font-bold uppercase tracking-wider sm:text-sm ${
                   section === "article"
                     ? "bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white shadow-[0_4px_16px_rgba(59,130,246,0.35)]"

@@ -149,6 +149,8 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
           alt={news.headline}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:brightness-110"
           referrerPolicy="no-referrer"
+          loading="lazy"
+          decoding="async"
           onError={(event) => {
             const img = event.currentTarget as HTMLImageElement;
             if (img.dataset.fallbackApplied === "1") return;
