@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, TrendingUp, Clock, DollarSign, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import SubmitArticleModal from "./SubmitArticleModal";
+import { SubmitArticleModal } from "./SubmitArticleModal";
 
 export default function ArticleFeed({ initialArticles, currentUser }: { initialArticles: any[], currentUser: any }) {
   const [articles, setArticles] = useState(initialArticles);
@@ -160,8 +160,24 @@ export default function ArticleFeed({ initialArticles, currentUser }: { initialA
       <SubmitArticleModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
-        onSuccess={() => {
-          // Refresh articles
+        onSubmit={async (articleData) => {
+          try {
+            const res = await fetch("/api/articles", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(articleData)
+            });
+            if (res.ok) {
+              // Refresh articles after submission
+              const refreshRes = await fetch("/api/articles");
+              if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                setArticles(data.articles || []);
+              }
+            }
+          } catch (e) {
+            console.error("Failed to submit article:", e);
+          }
         }}
       />
     </div>
