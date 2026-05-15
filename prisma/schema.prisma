@@ -106,6 +106,7 @@ model News {
   seo_score       Int      @default(0)
   primary_keyword String?
   is_trending     Boolean  @default(false)
+  is_pinned       Boolean  @default(false)
   priority        String   @default("normal") // normal, high
 
   author     User?      @relation(fields: [posted_by], references: [id])
@@ -251,6 +252,7 @@ model Article {
   status          String   @default("pending_review") // pending_review, approved, rejected
   is_featured     Boolean  @default(false)
   is_verified     Boolean  @default(false)
+  is_pinned       Boolean  @default(false)
   view_count      Int      @default(0)
   upvote_count    Int      @default(0)
   word_count      Int      @default(0)

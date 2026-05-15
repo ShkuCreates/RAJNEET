@@ -59,3 +59,56 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, is_pinned } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    const updatedArticle = await prisma.news.update({
+      where: { id },
+      data: { is_pinned }
+    });
+
+    return NextResponse.json({ success: true, article: updatedArticle });
+  } catch (error) {
+    console.error("[ADMIN_NEWS_PATCH]", error);
+    return NextResponse.json({ success: false, error: "Internal Error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    await prisma.news.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[ADMIN_NEWS_DELETE]", error);
+    return NextResponse.json({ success: false, error: "Internal Error" }, { status: 500 });
+  }
+}

@@ -5,7 +5,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ManageNewsPage() {
   const news = await prisma.news.findMany({
-    orderBy: { created_at: "desc" },
+    orderBy: [
+      { is_pinned: "desc" },
+      { created_at: "desc" }
+    ],
     include: {
       author: { select: { name: true } }
     }
