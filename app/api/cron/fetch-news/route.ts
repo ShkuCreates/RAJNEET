@@ -108,12 +108,16 @@ function extractArticleImage(art: any) {
 async function validateImageUrl(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(url, { 
+      method: 'GET', 
+      signal: controller.signal,
+      headers: { 'Range': 'bytes=0-0' }
+    });
     clearTimeout(timeoutId);
-    return res.ok;
+    return res.ok || res.status === 206;
   } catch {
-    return false;
+    return true; // Be more lenient - trust the source URL
   }
 }
 
