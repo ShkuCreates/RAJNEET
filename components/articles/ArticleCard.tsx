@@ -93,19 +93,15 @@ export function ArticleCard({ article, currentUser }: ArticleCardProps) {
         {/* Bottom Row */}
         <div className="flex items-center justify-between pt-3 border-t border-white/5">
           <div className="flex items-center gap-4 text-gray-500">
-            <div className="flex items-center gap-1.5">
-              <Clock size={12} />
-              <span className="text-[10px] font-semibold">{readTime} min read</span>
+              <div className="flex items-center gap-1.5">
+                <Clock size={12} />
+                <span className="text-[10px] font-semibold">{readTime} min read</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Heart size={12} />
+                <span className="text-[10px] font-semibold">{article.upvote_count}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Heart size={12} />
-              <span className="text-[10px] font-semibold">{article.upvote_count}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <MessageCircle size={12} />
-              <span className="text-[10px] font-semibold">{article.comment_count || 0}</span>
-            </div>
-          </div>
 
           <button className="flex items-center gap-1.5 text-accent-blue hover:text-accent-blue/80 transition-colors group-hover:translate-x-1 duration-200">
             <span className="text-[10px] font-bold uppercase tracking-widest">Read</span>
