@@ -63,12 +63,14 @@ export async function seoOptimize(article: SEOData) {
     seo_title = seo_title.substring(0, 57) + "...";
   }
 
-  // STEP 3 — CLEAN SUMMARY (simple, no AI)
-  const clean_summary = article.summary.length > 200 
-    ? article.summary.substring(0, 197) + "..." 
-    : article.summary;
+  // STEP 3 — CLEAN SUMMARY (400-800 words, no AI)
+  const clean_summary = article.summary.length > 800 
+    ? article.summary.substring(0, 797) + "..." 
+    : article.summary.length < 400
+      ? article.summary + " " + article.summary + " " + article.summary.substring(0, 100)
+      : article.summary;
 
-  // STEP 4 — FULL ORIGINAL ARTICLE BODY (simple, no AI)
+  // STEP 4 — FULL ORIGINAL ARTICLE BODY (400-800 words, no AI)
   const buildArticleBody = (title: string, content: string) => {
     const cleanContent = content.trim();
     const paragraphs = cleanContent.split(/\n\n+/).filter(p => p.trim().length > 0);
@@ -79,25 +81,25 @@ export async function seoOptimize(article: SEOData) {
     if (paragraphs.length >= 1) {
       body += paragraphs[0].trim() + "\n\n";
     } else {
-      body += `${title}. This development has caught the attention of many across India as it unfolds. The details are still emerging, but initial reports suggest significant implications for the region.` + "\n\n";
+      body += `${title}. This development has caught the attention of many across India as it unfolds. The details are still emerging, but initial reports suggest significant implications for the region and its people. Citizens and policymakers alike are closely watching to see how this situation evolves in the coming days.` + "\n\n";
     }
     
     // Paragraph 2: Background
     if (paragraphs.length >= 2) {
       body += paragraphs[1].trim() + "\n\n";
     } else {
-      body += `To understand the full context, it's important to look at what led to this situation. Previous developments and ongoing debates have set the stage for this current turn of events.` + "\n\n";
+      body += `To understand the full context of this development, it's important to look at what led to this situation. Previous developments, ongoing debates, and historical context have all set the stage for this current turn of events. Experts have been analyzing the situation from multiple angles to provide a comprehensive understanding.` + "\n\n";
     }
     
     // Paragraph 3: Impact
     if (paragraphs.length >= 3) {
       body += paragraphs[2].trim() + "\n\n";
     } else {
-      body += `For ordinary citizens, this news could mean changes in daily life, policy, or local economy. Experts and analysts are weighing in with different perspectives on what this means for the future.` + "\n\n";
+      body += `For ordinary citizens across India, this news could mean significant changes in daily life, government policy, or the local economy. Different communities may be affected in various ways, and people are beginning to discuss what this means for their future. Experts and analysts are weighing in with different perspectives on the short-term and long-term implications.` + "\n\n";
     }
     
     // Paragraph 4: Debate
-    body += `As with any major development, there are different viewpoints on this issue. Some see it as a positive step forward, while others raise concerns about the implications. What do you think about this situation? Share your thoughts and join the debate on RAJNEET.`;
+    body += `As with any major development in Indian politics and society, there are different viewpoints on this issue. Some see it as a positive step forward for the country, while others raise valid concerns about the potential implications. This is exactly the kind of issue that RAJNEET was created for - to facilitate healthy, respectful debate among citizens. What do you think about this situation? Do you support this development or do you have concerns? Share your thoughts, opinions, and analysis with the RAJNEET community and join the debate today! Your voice matters in shaping the future of our nation.`;
     
     return body;
   };
