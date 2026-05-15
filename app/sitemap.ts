@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://rajneet.co.in'
 
+  let newsUrls: MetadataRoute.Sitemap = []
   let articleUrls: MetadataRoute.Sitemap = []
 
   try {
@@ -14,14 +15,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 1000,
     })
 
-    articleUrls = news.map((article) => ({
+    newsUrls = news.map((article) => ({
       url: `${baseUrl}/news/${article.slug}`,
       lastModified: article.created_at,
       changeFrequency: 'daily' as const,
       priority: 0.8,
     }))
+
+    const articles = await prisma.article.findMany({
+      where: { status: 'approved' },
+      select: { slug: true, created_at: true },
+      orderBy: { created_at: 'desc' },
+      take: 1000,
+    })
+
+    articleUrls = articles.map((article) => ({
+      url: `${baseUrl}/articles/${article.slug}`,
+      lastModified: article.created_at,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
   } catch (error) {
-    console.error('Sitemap article fetch error:', error)
+    console.error('Sitemap fetch error:', error)
   }
 
   const staticUrls: MetadataRoute.Sitemap = [
@@ -30,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'hourly' as const,
       priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/article`,
+      lastModified: new Date(),
+      changeFrequency: 'hourly' as const,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/polls`,
@@ -45,5 +66,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  return [...staticUrls, ...articleUrls]
+  return [...staticUrls, ...newsUrls, ...articleUrls]
 }
