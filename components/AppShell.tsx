@@ -553,7 +553,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => {
-              router.push("/monetize");
+              router.push("/article/monetize");
             }}
             className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 transition-colors text-gray-500 hover:text-gray-300"
           >

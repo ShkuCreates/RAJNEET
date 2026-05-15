@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArticleCard } from "./ArticleCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, TrendingUp, Clock, DollarSign, Zap } from "lucide-react";
@@ -102,12 +103,13 @@ export default function ArticleFeed({ initialArticles, currentUser }: { initialA
               <Clock size={14} />
               Latest
             </button>
-            <button
+            <Link
+              href="/article/monetize"
               className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
               <DollarSign size={14} />
               Monetization
-            </button>
+            </Link>
             <button
               className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
