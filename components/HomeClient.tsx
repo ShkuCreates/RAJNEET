@@ -8,7 +8,6 @@ import NewsFeed from "@/components/news/NewsFeed";
 import ArticleFeed from "@/components/articles/ArticleFeed";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import IplScoreWidget from "@/components/home/IplScoreWidget";
 
 type NewsResponse = {
   news: any[];
@@ -131,11 +130,6 @@ export default function HomeClient() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-6 py-8">
-      {/* IPL Score Widget */}
-      <div className="mb-6">
-        <IplScoreWidget />
-      </div>
-
       <div className="flex flex-col gap-8">
         <div className="flex-1">
           {activeSection === "news" ? (

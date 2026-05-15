@@ -31,11 +31,8 @@ export async function GET(request: NextRequest) {
         word_count: true,
         upvote_count: true,
         created_at: true,
-        _count: {
-          select: {
-            opinions: true,
-          },
-        },
+        cover_image_url: true,
+        slug: true,
       },
     });
 
