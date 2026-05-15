@@ -1,61 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { seoOptimize } from "@/lib/automation/seoOptimize";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Parser from 'rss-parser';
 import { generateBrandedCoverImage } from "@/lib/automation/cloudinary";
-
-async function callGroqWithRetry(prompt: string, maxRetries = 2): Promise<string> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(
-        'https://api.groq.com/openai/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
-          },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            messages: [
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            max_tokens: 500,
-            temperature: 0.7
-          })
-        }
-      )
-
-      if (response.status === 429) {
-        const waitTime = attempt * 5000 // only 5s wait, Groq recovers fast
-        console.log(`Groq rate limited. Waiting ${waitTime/1000}s`)
-        await new Promise(resolve => setTimeout(resolve, waitTime))
-        continue
-      }
-
-      if (!response.ok) {
-        const err = await response.text()
-        throw new Error(`Groq error ${response.status}: ${err}`)
-      }
-
-      const data = await response.json()
-      return data.choices?.[0]?.message?.content?.trim() || ''
-
-    } catch (err) {
-      if (attempt === maxRetries) {
-        console.error('Groq failed after retries:', err)
-        return ''
-      }
-      await new Promise(resolve => setTimeout(resolve, 2000))
-    }
-  }
-  return ''
-}
 
 function enforceValidCategory(rawCategory?: string, title?: string): string {
   if (!rawCategory && !title) return "POLITICAL";
