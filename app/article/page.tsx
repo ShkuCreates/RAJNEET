@@ -29,7 +29,7 @@ export default function ArticlePage() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-6 py-8">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
       {loading ? (
         <div className="flex min-h-[320px] items-center justify-center rounded-[32px] border border-white/10 bg-[#111827]">
           <div className="flex items-center gap-3 text-sm text-gray-400">

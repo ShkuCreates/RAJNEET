@@ -55,6 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sora.variable} ${inter.variable} dark`}>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4497767570737848"
