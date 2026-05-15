@@ -62,7 +62,7 @@ export default function ArticleFeed({ initialArticles, currentUser }: { initialA
   return (
     <div className="space-y-8">
       {/* Top Navigation Bar for Articles */}
-      <div className="rounded-[32px] border border-white/10 bg-[#111827] px-6 py-4 shadow-2xl">
+      <div className="hidden lg:block rounded-[32px] border border-white/10 bg-[#111827] px-6 py-4 shadow-2xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* Left Section: Tabs */}
           <div className="flex items-center gap-2">
