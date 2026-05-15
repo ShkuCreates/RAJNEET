@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && next build",
+    "build": "prisma db push --accept-data-loss && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "next lint",
