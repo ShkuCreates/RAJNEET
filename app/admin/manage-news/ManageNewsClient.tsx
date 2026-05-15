@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, RefreshCw, ExternalLink, Trash2, Pin, PinOff, Edit } from "lucide-react";
+import { Search, RefreshCw, ExternalLink, Trash2, Pin, PinOff, Edit, CheckSquare, Square } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -9,11 +9,27 @@ export default function ManageNewsClient({ initialNews }: { initialNews: any[] }
   const [news, setNews] = useState(initialNews);
   const [isRefreshing, setIsRefreshing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const filteredNews = news.filter(item => 
     item.headline.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.slug && item.slug.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredNews.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredNews.map(n => n.id));
+    }
+  };
 
   const getScoreBadge = (score: number) => {
     if (score >= 80) return <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase rounded-full border border-green-500/20">Strong ({score})</span>;
@@ -78,6 +94,87 @@ export default function ManageNewsClient({ initialNews }: { initialNews: any[] }
     }
   };
 
+  const handleBulkPin = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Pin ${selectedIds.length} selected articles?`)) return;
+    
+    try {
+      setIsBulkProcessing(true);
+      await Promise.all(
+        selectedIds.map(id => 
+          fetch(`/api/admin/news`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, is_pinned: true })
+          })
+        )
+      );
+      
+      setNews(prev => prev.map(n => 
+        selectedIds.includes(n.id) ? { ...n, is_pinned: true } : n
+      ));
+      
+      toast.success(`Pinned ${selectedIds.length} articles!`);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast.error("Failed to bulk pin: " + e.message);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkUnpin = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Unpin ${selectedIds.length} selected articles?`)) return;
+    
+    try {
+      setIsBulkProcessing(true);
+      await Promise.all(
+        selectedIds.map(id => 
+          fetch(`/api/admin/news`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, is_pinned: false })
+          })
+        )
+      );
+      
+      setNews(prev => prev.map(n => 
+        selectedIds.includes(n.id) ? { ...n, is_pinned: false } : n
+      ));
+      
+      toast.success(`Unpinned ${selectedIds.length} articles!`);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast.error("Failed to bulk unpin: " + e.message);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} selected articles? This cannot be undone!`)) return;
+    
+    try {
+      setIsBulkProcessing(true);
+      await Promise.all(
+        selectedIds.map(id => 
+          fetch(`/api/admin/news?id=${id}`, { method: "DELETE" })
+        )
+      );
+      
+      setNews(prev => prev.filter(n => !selectedIds.includes(n.id)));
+      
+      toast.success(`Deleted ${selectedIds.length} articles!`);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast.error("Failed to bulk delete: " + e.message);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="relative">
@@ -91,10 +188,57 @@ export default function ManageNewsClient({ initialNews }: { initialNews: any[] }
         />
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-2xl p-4 flex items-center justify-between">
+          <div className="text-accent-blue font-bold">
+            {selectedIds.length} article{selectedIds.length !== 1 ? 's' : ''} selected
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBulkPin}
+              disabled={isBulkProcessing}
+              className="px-4 py-2 bg-accent-amber/20 text-accent-amber rounded-xl font-bold text-sm hover:bg-accent-amber/30 transition-colors disabled:opacity-50"
+            >
+              Bulk Pin
+            </button>
+            <button
+              onClick={handleBulkUnpin}
+              disabled={isBulkProcessing}
+              className="px-4 py-2 bg-gray-500/20 text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-500/30 transition-colors disabled:opacity-50"
+            >
+              Bulk Unpin
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkProcessing}
+              className="px-4 py-2 bg-red-500/20 text-red-400 rounded-xl font-bold text-sm hover:bg-red-500/30 transition-colors disabled:opacity-50"
+            >
+              Bulk Delete
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-4 py-2 bg-white/5 text-gray-400 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-[#111827] border border-white/5 rounded-[32px] overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-white/[0.02] border-b border-white/5">
             <tr>
+              <th className="p-6 w-12">
+                <button 
+                  onClick={toggleSelectAll}
+                  className="text-gray-500 hover:text-white transition-colors"
+                >
+                  {selectedIds.length === filteredNews.length && filteredNews.length > 0 
+                    ? <CheckSquare size={18} /> 
+                    : <Square size={18} />}
+                </button>
+              </th>
               <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Article</th>
               <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">SEO Score</th>
               <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Status</th>
@@ -104,7 +248,17 @@ export default function ManageNewsClient({ initialNews }: { initialNews: any[] }
           </thead>
           <tbody className="divide-y divide-white/5">
             {filteredNews.map((item) => (
-              <tr key={item.id} className={`hover:bg-white/[0.01] transition-colors ${item.is_pinned ? 'bg-accent-amber/5' : ''}`}>
+              <tr key={item.id} className={`hover:bg-white/[0.01] transition-colors ${item.is_pinned ? 'bg-accent-amber/5' : ''} ${selectedIds.includes(item.id) ? 'bg-accent-blue/5' : ''}`}>
+                <td className="p-6">
+                  <button 
+                    onClick={() => toggleSelect(item.id)}
+                    className="text-gray-500 hover:text-white transition-colors"
+                  >
+                    {selectedIds.includes(item.id) 
+                      ? <CheckSquare size={18} /> 
+                      : <Square size={18} />}
+                  </button>
+                </td>
                 <td className="p-6">
                   {item.is_pinned && <span className="inline-flex items-center gap-1 text-accent-amber text-[10px] font-bold mb-1">📌 Pinned</span>}
                   <h4 className="text-sm font-bold text-white mb-1 line-clamp-1">{item.headline}</h4>
