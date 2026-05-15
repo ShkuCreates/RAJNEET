@@ -487,14 +487,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <main className="flex-1">{section === "article" ? (
-        <div className="mx-auto flex min-h-[calc(100vh-168px)] max-w-[1200px] items-center justify-center px-6 py-12 text-center">
-          <div className="rounded-[28px] border border-white/10 bg-[#111827] px-8 py-16 shadow-2xl">
-            <h1 className="mb-3 text-3xl font-semibold text-white">Coming Soon</h1>
-            <p className="text-base text-gray-400">Articles section launching soon. Stay tuned.</p>
-          </div>
-        </div>
-      ) : children}</main>
+      <main className="flex-1">{children}</main>
 
       <footer className="border-t border-[rgba(59,130,246,0.1)] bg-[#070B14]">
         <div className="mx-auto flex min-h-[56px] w-full max-w-[1400px] flex-col items-center justify-between gap-3 px-4 py-3 text-center md:flex-row md:px-6 md:text-left">
