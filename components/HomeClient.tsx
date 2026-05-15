@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell, Loader2, Newspaper, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import NewsFeed from "@/components/news/NewsFeed";
+import { NewsSkeleton } from "@/components/Skeletons";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
@@ -105,12 +106,7 @@ export default function HomeClient() {
           ) : null}
 
           {loading ? (
-            <div className="flex min-h-[320px] items-center justify-center rounded-[32px] border border-white/10 bg-[#111827]">
-              <div className="flex items-center gap-3 text-sm text-gray-400">
-                <Loader2 size={18} className="animate-spin" />
-                Loading latest news...
-              </div>
-            </div>
+            <NewsSkeleton />
           ) : news.length > 0 ? (
             <NewsFeed initialNews={news} currentUser={session?.user} />
           ) : (
