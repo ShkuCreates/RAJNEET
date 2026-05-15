@@ -62,6 +62,7 @@ const NEWS_OPTIONS = ["Politics", "Sports", "Finance", "Entertainment", "Others"
 const DEBATE_OPTIONS = [
   { label: "Ongoing", href: "/debates" },
   { label: "Calendar", href: "/debates/calendar" },
+  { label: "Admin", href: "/debates/admin", isAdmin: true },
 ] as const;
 const ADMIN_DROPDOWN_OPTIONS: NavItem[] = [
   { label: "Manage Post", href: "/admin/manage-news" },
@@ -367,7 +368,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </button>
                     {item.isDebate && debatesOpen ? (
                       <div className="absolute left-0 top-full z-50 mt-2 min-w-[180px] overflow-visible rounded-lg border border-red-500/20 bg-[#111827] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.6)]" style={{ animation: "dropdownIn 150ms ease" }}>
-                        {DEBATE_OPTIONS.map((option) => (
+                        {DEBATE_OPTIONS.filter(opt => !opt.isAdmin || isAdmin).map((option) => (
                           <Link
                             key={option.label}
                             href={option.href}
@@ -377,6 +378,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" style={{ animation: "livePulse 1.2s infinite" }} />
                             )}
                             {option.label === "Calendar" && <CalendarDays size={14} className="shrink-0 opacity-70" />}
+                            {option.label === "Admin" && <Shield size={14} className="shrink-0 opacity-70" />}
                             {option.label}
                           </Link>
                         ))}
