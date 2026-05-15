@@ -58,7 +58,15 @@ export default function HomeClient() {
         setLoading(true);
         const newsData = await fetchNews(selectedCategory || undefined);
         if (cancelled) return;
-        setNews(Array.isArray(newsData.news) ? newsData.news : []);
+        
+        let sortedNews = Array.isArray(newsData.news) ? newsData.news : [];
+        sortedNews = sortedNews.sort((a, b) => {
+          if (a.is_pinned && !b.is_pinned) return -1;
+          if (!a.is_pinned && b.is_pinned) return 1;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        
+        setNews(sortedNews);
         setLatestFetchAt(newsData.latestFetchAt ?? null);
       } catch (error) {
         if (cancelled) return;

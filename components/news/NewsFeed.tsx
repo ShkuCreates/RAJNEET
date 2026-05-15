@@ -3,6 +3,7 @@
 import NewsCard from "./NewsCard";
 import { motion, AnimatePresence } from "framer-motion";
 import AdBanner from "@/components/ads/AdBanner";
+import { Pin } from "lucide-react";
 
 export default function NewsFeed({ initialNews, currentUser }: { initialNews: any[], currentUser: any }) {
   // Remove duplicates based on id
@@ -152,6 +153,12 @@ function LargeNewsCard({ news, currentUser }: { news: any; currentUser: any }) {
       onClick={openArticle}
       className="group relative cursor-pointer overflow-hidden rounded-[32px] border border-white/5 bg-[#111827] shadow-2xl transition-all duration-300 hover:border-accent-blue/30 hover:shadow-accent-blue/20"
     >
+      {news.is_pinned && (
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-full bg-accent-amber/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-accent-amber border border-accent-amber/30 shadow-lg">
+          <Pin size={12} />
+          Pinned
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-5">
         <div className="lg:col-span-3 relative aspect-[16/9] lg:aspect-auto">
           <img
