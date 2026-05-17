@@ -85,12 +85,8 @@ function extractFirstImageFromHtml(html: string): string | null {
 }
 
 const RSS_FEEDS = [
-  "https://www.pib.gov.in/rssfeed.aspx?ModId=6",
-  "https://aninews.in/rss/india.xml",
   "https://www.thehindu.com/news/national/feeder/default.rss",
-  "https://indianexpress.com/section/india/feed/",
   "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
-  "https://www.ndtv.com/india-news/rss",
   "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
 ];
 

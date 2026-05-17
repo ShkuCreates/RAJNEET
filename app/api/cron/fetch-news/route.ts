@@ -71,14 +71,10 @@ async function validateImageUrl(url: string): Promise<boolean> {
 
 const MAX_ARTICLE_AGE_MS = 48 * 60 * 60 * 1000;
 
-/** Fetched first (wire-style + major Indian outlets), then Google topic feeds. */
+/** Working RSS feeds only */
 const RSS_FEEDS_PRIORITY = [
-  "https://www.pib.gov.in/rssfeed.aspx?ModId=6",
-  "https://aninews.in/rss/india.xml",
   "https://www.thehindu.com/news/national/feeder/default.rss",
-  "https://indianexpress.com/section/india/feed/",
   "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
-  "https://www.ndtv.com/india-news/rss",
   "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
 ];
 
