@@ -27,11 +27,7 @@ export async function POST(req: Request) {
     const { 
       topic, 
       description, 
-      image_url,
       scheduled_at, 
-      duration_minutes = 60,
-      max_for_participants = 5,
-      max_against_participants = 5,
     } = body;
 
     if (!topic) {
@@ -42,13 +38,9 @@ export async function POST(req: Request) {
       data: {
         topic,
         description,
-        image_url,
         created_by: session.user.id || "",
         status: "upcoming",
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
-        duration_minutes,
-        max_for_participants,
-        max_against_participants,
       },
     });
 
