@@ -497,34 +497,37 @@ async function processArticles(art: any, category: string) {
   };
 
   const buildArticleBody = (title: string, description: string, content: string) => {
-    const allContent = [content, description, title].filter(Boolean).join(" ");
-    const cleanText = stripHtmlTags(decodeXmlText(allContent)).trim();
-    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+    const allContent = [content, description].filter(Boolean).join("\n\n");
+    let cleanText = stripHtmlTags(decodeXmlText(allContent)).trim();
     
-    let body = "";
-    
-    if (sentences.length >= 3) {
-      const numSentences = Math.min(sentences.length, 10);
-      const allSentences = sentences.slice(0, numSentences);
-      const paragraphs: string[] = [];
-      
-      let currentParagraph = "";
-      for (let i = 0; i < allSentences.length; i++) {
-        currentParagraph += allSentences[i] + " ";
-        if ((i + 1) % 3 === 0 || i === allSentences.length - 1) {
-          paragraphs.push(currentParagraph.trim());
-          currentParagraph = "";
-        }
-      }
-      
-      body = paragraphs.join("\n\n");
-    } else {
-      body += `${title}. ` + cleanText + "\n\n";
-      body += `This is an important development that has caught the attention of people across India. The news is being widely discussed and has significant implications for the region.` + "\n\n";
-      body += `According to initial reports, ${cleanText.substring(0, Math.min(cleanText.length, 400))}. This situation is evolving rapidly, and more details are expected to emerge in the coming hours and days.`;
+    if (!cleanText || cleanText.length < 100) {
+      cleanText = stripHtmlTags(decodeXmlText(title + " " + (description || "") + " " + (content || ""))).trim();
     }
     
-    return body;
+    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+    
+    if (sentences.length === 0) {
+      return cleanText || title;
+    }
+    
+    const paragraphs: string[] = [];
+    let currentParagraph = "";
+    
+    for (let i = 0; i < sentences.length; i++) {
+      currentParagraph += sentences[i] + " ";
+      if ((i + 1) % 3 === 0 || i === sentences.length - 1) {
+        if (currentParagraph.trim().length > 0) {
+          paragraphs.push(currentParagraph.trim());
+        }
+        currentParagraph = "";
+      }
+    }
+    
+    if (paragraphs.length === 0) {
+      return cleanText || title;
+    }
+    
+    return paragraphs.join("\n\n");
   };
 
   const seoData = generateSimpleSeoData(art.title, art.description, art.content);

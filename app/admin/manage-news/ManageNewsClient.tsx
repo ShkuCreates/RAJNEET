@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, RefreshCw, ExternalLink, Trash2, Pin, PinOff, Edit, CheckSquare, Square } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
 export default function ManageNewsClient({ initialNews }: { initialNews: any[] }) {
+  const router = useRouter();
   const [news, setNews] = useState(initialNews);
   const [isRefreshing, setIsRefreshing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -298,6 +300,7 @@ export default function ManageNewsClient({ initialNews }: { initialNews: any[] }
                       <RefreshCw size={16} className={isRefreshing === item.id ? "animate-spin" : ""} />
                     </button>
                     <button 
+                      onClick={() => router.push(`/admin/edit-news?id=${item.id}`)}
                       className="p-2 hover:bg-accent-amber/10 text-gray-500 hover:text-accent-amber rounded-lg transition-all"
                       title="Edit"
                     >

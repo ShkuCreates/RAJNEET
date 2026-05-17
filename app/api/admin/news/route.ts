@@ -69,15 +69,29 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { id, is_pinned } = body;
+    const { id, is_pinned, ...updates } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
+    const data: any = {};
+    
+    if (is_pinned !== undefined) data.is_pinned = is_pinned;
+    if (updates.headline) data.headline = updates.headline;
+    if (updates.summary) data.summary = updates.summary;
+    if (updates.body) data.body = updates.body;
+    if (updates.category) data.category = updates.category;
+    if (updates.geo_level) data.geo_level = updates.geo_level;
+    if (updates.state !== undefined) data.state = updates.state;
+    if (updates.district !== undefined) data.district = updates.district;
+    if (updates.source_url !== undefined) data.source_url = updates.source_url;
+    if (updates.cover_image_url !== undefined) data.cover_image_url = updates.cover_image_url;
+    if (updates.status) data.status = updates.status;
+
     const updatedArticle = await prisma.news.update({
       where: { id },
-      data: { is_pinned }
+      data
     });
 
     return NextResponse.json({ success: true, article: updatedArticle });
