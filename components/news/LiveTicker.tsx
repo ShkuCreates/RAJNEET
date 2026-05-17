@@ -21,7 +21,7 @@ export default function LiveTicker() {
         if (!res.ok) throw new Error('Ticker fetch failed')
         const data = await res.json()
         const items: TickerItem[] = data.map((item: any, index: number) => ({
-          id: `ticker-${index}`,
+          id: `ticker-${Date.now()}-${index}`,
           headline: item.headline,
           category: item.category,
           urgency: index < 3 ? 'high' : index < 8 ? 'medium' : 'low'
@@ -31,7 +31,14 @@ export default function LiveTicker() {
         console.error('Ticker fetch error:', error)
       }
     }
+    
     fetchTickerNews()
+    
+    const interval = setInterval(() => {
+      fetchTickerNews()
+    }, 60000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   const getUrgencyColor = (urgency: string) => {
