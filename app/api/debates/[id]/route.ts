@@ -24,11 +24,7 @@ export async function PATCH(
     }
     if (body.topic) data.topic = body.topic;
     if (body.description !== undefined) data.description = body.description;
-    if (body.image_url !== undefined) data.image_url = body.image_url;
     if (body.scheduled_at) data.scheduled_at = new Date(body.scheduled_at);
-    if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes;
-    if (body.max_for_participants !== undefined) data.max_for_participants = body.max_for_participants;
-    if (body.max_against_participants !== undefined) data.max_against_participants = body.max_against_participants;
 
     const debate = await prisma.debate.update({
       where: { id },

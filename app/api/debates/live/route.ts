@@ -20,28 +20,8 @@ export async function GET() {
             avatar_url: true
           }
         },
-        arguments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar_url: true
-              }
-            }
-          }
-        },
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar_url: true
-              }
-            }
-          }
-        }
+        arguments: true,
+        participants: true,
       },
       orderBy: [
         { status: "asc" }, // live first, then upcoming
@@ -57,9 +37,6 @@ export async function GET() {
         description: debate.description,
         status: debate.status,
         scheduled_at: debate.scheduled_at?.toISOString(),
-        ends_at: debate.ends_at?.toISOString(),
-        participant_count: debate.participant_count,
-        winner_side: debate.winner_side,
         created_by: debate.created_by,
         arguments: debate.arguments,
         participants: debate.participants
