@@ -16,14 +16,23 @@ export async function PATCH(
 
     const { id } = params;
     const body = await req.json();
-    const { status } = body;
+    
+    const data: any = {};
+    if (body.status) {
+      data.status = body.status;
+      if (body.status === "live") data.scheduled_at = new Date();
+    }
+    if (body.topic) data.topic = body.topic;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.image_url !== undefined) data.image_url = body.image_url;
+    if (body.scheduled_at) data.scheduled_at = new Date(body.scheduled_at);
+    if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes;
+    if (body.max_for_participants !== undefined) data.max_for_participants = body.max_for_participants;
+    if (body.max_against_participants !== undefined) data.max_against_participants = body.max_against_participants;
 
     const debate = await prisma.debate.update({
       where: { id },
-      data: {
-        status,
-        ...(status === "live" ? { scheduled_at: new Date() } : {}),
-      },
+      data,
     });
 
     return NextResponse.json({ success: true, debate });

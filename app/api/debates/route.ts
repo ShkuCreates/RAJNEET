@@ -24,7 +24,15 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { topic, description, scheduled_at } = body;
+    const { 
+      topic, 
+      description, 
+      image_url,
+      scheduled_at, 
+      duration_minutes = 60,
+      max_for_participants = 5,
+      max_against_participants = 5,
+    } = body;
 
     if (!topic) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -34,9 +42,13 @@ export async function POST(req: Request) {
       data: {
         topic,
         description,
+        image_url,
         created_by: session.user.id || "",
         status: "upcoming",
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+        duration_minutes,
+        max_for_participants,
+        max_against_participants,
       },
     });
 

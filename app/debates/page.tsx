@@ -5,11 +5,14 @@ import { useSession } from "next-auth/react";
 import LiveDebatesClient from "@/components/debates/LiveDebatesClient";
 import UpcomingDebatesClient from "@/components/debates/UpcomingDebatesClient";
 import ScheduleDebateForm from "@/components/debates/ScheduleDebateForm";
+import ManageDebatesClient from "@/components/debates/ManageDebatesClient";
 
 type Tab = "ongoing" | "calendar" | "admin";
+type AdminTab = "schedule" | "manage";
 
 export default function DebatesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("ongoing");
+  const [adminSubTab, setAdminSubTab] = useState<AdminTab>("schedule");
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -53,7 +56,33 @@ export default function DebatesPage() {
             <UpcomingDebatesClient currentUser={session?.user} />
           )}
           {activeTab === "admin" && isAdmin && (
-            <ScheduleDebateForm />
+            <div>
+              <div className="flex gap-2 mb-6 border-b border-white/10 pb-2">
+                <button
+                  onClick={() => setAdminSubTab("schedule")}
+                  className={`px-6 py-3 text-sm font-bold uppercase tracking-wider rounded-t-xl transition-all ${
+                    adminSubTab === "schedule"
+                      ? "bg-accent-amber/10 text-accent-amber border-t border-l border-r border-accent-amber/30"
+                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  Schedule
+                </button>
+                <button
+                  onClick={() => setAdminSubTab("manage")}
+                  className={`px-6 py-3 text-sm font-bold uppercase tracking-wider rounded-t-xl transition-all ${
+                    adminSubTab === "manage"
+                      ? "bg-accent-blue/10 text-accent-blue border-t border-l border-r border-accent-blue/30"
+                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  Manage
+                </button>
+              </div>
+              
+              {adminSubTab === "schedule" && <ScheduleDebateForm />}
+              {adminSubTab === "manage" && <ManageDebatesClient />}
+            </div>
           )}
         </div>
       </div>
