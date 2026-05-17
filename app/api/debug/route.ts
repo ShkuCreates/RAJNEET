@@ -21,7 +21,9 @@ export async function GET() {
       latest: sample?.headline,
       status: sample?.status,
       category: sample?.category,
-      created_at: sample?.created_at
+      created_at: sample?.created_at,
+      cover_image_url: sample?.cover_image_url,
+      source_url: sample?.source_url
     })
   } catch (error) {
     console.error('Debug endpoint error:', error)

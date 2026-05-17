@@ -44,28 +44,28 @@ function extractArticleImage(art: any) {
   if (art.image_url) return art.image_url;
   if (art.image) return art.image;
   if (art.enclosure?.url) return art.enclosure.url;
+  if (art.enclosure) return art.enclosure;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.$?.url) return art["media:content"][0].$.url;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.url) return art["media:content"][0].url;
   if (art["media:content"]?.$?.url) return art["media:content"].$.url;
   if (art["media:content"]?.url) return art["media:content"].url;
+  if (Array.isArray(art["media:thumbnail"]) && art["media:thumbnail"]?.[0]?.$?.url) return art["media:thumbnail"][0].$.url;
+  if (Array.isArray(art["media:thumbnail"]) && art["media:thumbnail"]?.[0]?.url) return art["media:thumbnail"][0].url;
+  if (art["media:thumbnail"]?.$?.url) return art["media:thumbnail"].$.url;
+  if (art["media:thumbnail"]?.url) return art["media:thumbnail"].url;
   if (art.og_image) return art.og_image;
   if (Array.isArray(art.images) && art.images[0]) return art.images[0];
+  if (art.thumbnail) return art.thumbnail;
   return null;
 }
 
 async function validateImageUrl(url: string): Promise<boolean> {
+  if (!url) return false;
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(url, { 
-      method: 'GET', 
-      signal: controller.signal,
-      headers: { 'Range': 'bytes=0-0' }
-    });
-    clearTimeout(timeoutId);
-    return res.ok || res.status === 206;
+    new URL(url); // Basic URL validation
+    return true; // Be very lenient - trust the source URL
   } catch {
-    return true; // Be more lenient - trust the source URL
+    return false;
   }
 }
 
@@ -227,7 +227,7 @@ const API_CONFIGS = {
       process.env.CURRENTS_API_KEY,
       process.env.CURRENTS_API_KEY_2,
       process.env.CURRENTS_API_KEY_3,
-      "test_currents_api_key" // Add test key for verification
+      "test_currents_api_key"
     ].filter(Boolean),
     baseUrl: "https://api.currentsapi.services/v1/search",
     queryParams: "&language=en&limit=10"
@@ -321,13 +321,11 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
         const errorText = await response.text();
         console.error(`[${apiName.toUpperCase()}_API_ERROR] Key ${apiKey.substring(0, 10)}...:`, response.status, errorText);
         
-        // If it's a rate limit or quota issue, try next key
         if (response.status === 429 || response.status === 401 || response.status === 403) {
           errors.push(`Key ${apiKey.substring(0, 10)}...: ${response.status} - Rate limited/Quota exceeded`);
           continue;
         }
         
-        // For other errors like invalid parameters, don't retry with other keys
         if (response.status === 422 || response.status === 400) {
           console.log(`Parameter error with ${apiName}, skipping this API`);
           return [];
@@ -361,11 +359,9 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
       
       console.log(`✓ Success with ${apiName} key ${apiKey.substring(0, 10)}...: ${articles.length} articles`);
       
-      // Normalize articles to common format
       const normalizedArticles = articles.map((article: any) => normalizeArticle(article, apiName));
       results.push(...normalizedArticles);
       
-      // If we got results, don't try more keys for this API
       break;
       
     } catch (error: any) {
@@ -382,7 +378,6 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
   return results;
 }
 
-// Main function to fetch from RSS (fresh) + all APIs
 async function fetchFromAllAPIs(query: string): Promise<any[]> {
   const rssArticles = await fetchAllRssArticles();
   const allResults: any[] = [...rssArticles];
@@ -430,7 +425,139 @@ async function fetchFromAllAPIs(query: string): Promise<any[]> {
   return uniqueArticles.slice(0, 40);
 }
 
-export async function POST(req: Request) {
+async function processArticles(art: any, category: string) {
+  const rawSummary = art.description || art.content || art.title;
+  
+  let sourceImage = extractArticleImage(art);
+  
+  if (sourceImage) {
+    const isValid = await validateImageUrl(sourceImage);
+    if (!isValid) {
+      sourceImage = null;
+    }
+  }
+  
+  let cover_image_url = sourceImage;
+  if (!sourceImage) {
+    try {
+      const tempSlug = art.title.substring(0, 50).toLowerCase().replace(/[^a-z0-9]/g, '-');
+      cover_image_url = await generateBrandedCoverImage(art.title, category, tempSlug);
+    } catch (e) {
+      console.error('Failed to generate cover image:', e);
+      cover_image_url = `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
+    }
+  }
+
+  const generateSimpleSeoData = (headline: string, description: string, content: string) => {
+    const seoTitle = headline.length > 60 ? headline.substring(0, 57) + "..." : headline;
+    
+    const fullText = [description, content, headline].filter(Boolean).join(" ");
+    const cleanText = stripHtmlTags(decodeXmlText(fullText));
+    
+    let cleanSummary = cleanText.substring(0, 250);
+    if (cleanSummary.length === 250) {
+      const lastPeriod = cleanSummary.lastIndexOf('.');
+      const lastSpace = cleanSummary.lastIndexOf(' ');
+      const cutOff = Math.max(lastPeriod, lastSpace);
+      if (cutOff > 100) {
+        cleanSummary = cleanSummary.substring(0, cutOff + 1);
+      }
+    }
+    
+    const metaDesc = cleanSummary.length > 160 ? cleanSummary.substring(0, 157) + "..." : cleanSummary;
+    const slug = headline
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .substring(0, 100);
+    const focusKeywords = headline
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(word => word.length > 3)
+      .slice(0, 5);
+    
+    return {
+      seo_title: seoTitle,
+      meta_description: metaDesc,
+      slug,
+      focus_keywords: focusKeywords,
+      primary_keyword: focusKeywords[0] || category.toLowerCase(),
+      clean_summary: cleanSummary,
+      is_trending: false,
+      priority: "normal",
+      seo_score: 75,
+      schema_markup: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "NewsArticle",
+        headline: seoTitle,
+        description: metaDesc,
+        datePublished: art.pubDate || new Date().toISOString(),
+      })
+    };
+  };
+
+  const buildArticleBody = (title: string, description: string, content: string) => {
+    const allContent = [content, description, title].filter(Boolean).join(" ");
+    const cleanText = stripHtmlTags(decodeXmlText(allContent)).trim();
+    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+    
+    let body = "";
+    
+    if (sentences.length >= 2) {
+      const numSentences = Math.min(sentences.length, 5);
+      const firstPart = sentences.slice(0, numSentences).join(' ').trim();
+      body += firstPart + "\n\n";
+      
+      if (sentences.length > numSentences) {
+        const secondPart = sentences.slice(numSentences, numSentences + 3).join(' ').trim();
+        if (secondPart.length > 50) {
+          body += secondPart + "\n\n";
+        }
+      }
+    } else {
+      body += `${title}. This is an important development that has caught the attention of people across India. The news is being widely discussed and has significant implications for the region.` + "\n\n";
+      body += `According to initial reports, ${cleanText.substring(0, Math.min(cleanText.length, 300))}. This situation is evolving rapidly, and more details are expected to emerge in the coming hours and days.` + "\n\n";
+    }
+    
+    body += `This story is still developing, and there are multiple perspectives on what this means for India. Some view this as a positive step forward, while others have concerns about the implications. What do you think about this development? Join the debate on RAJNEET and share your opinion with the community.`;
+    
+    return body;
+  };
+
+  const seoData = generateSimpleSeoData(art.title, art.description, art.content);
+  const articleBody = buildArticleBody(art.title, art.description, art.content);
+
+  const status = "PUBLISHED";
+
+  return prisma.news.create({
+    data: {
+      headline: art.title?.trim() || '',
+      summary: seoData.clean_summary || rawSummary.substring(0, 200),
+      body: articleBody,
+      category,
+      source_url: art.link,
+      cover_image_url,
+      status,
+      geo_level: "NATIONAL",
+      state: "National",
+      posted_by: undefined,
+      
+      seo_title: seoData.seo_title,
+      meta_description: seoData.meta_description,
+      slug: seoData.slug,
+      focus_keywords: seoData.focus_keywords,
+      schema_markup: seoData.schema_markup,
+      seo_body: articleBody,
+      seo_score: seoData.seo_score,
+      primary_keyword: seoData.primary_keyword,
+      is_trending: seoData.is_trending,
+      priority: seoData.priority
+    }
+  });
+}
+
+async function handleRequest(req: Request) {
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret");
   
@@ -445,16 +572,13 @@ export async function POST(req: Request) {
     console.log("Fetching news from multiple APIs...");
     
     const fetchedArticles = await fetchFromAllAPIs("politics India");
-    // Limit to 15 articles per run
     const articlesToProcess = fetchedArticles.slice(0, 15);
     const savedArticles = [];
     const skipped = [];
 
     for (const art of articlesToProcess) {
-      // Skip articles without a title
       if (!art.title) { skipped.push("no-title"); continue; }
 
-      // Check duplicate
       const existing = await prisma.news.findFirst({
         where: { source_url: art.link }
       });
@@ -470,146 +594,15 @@ export async function POST(req: Request) {
       }
 
       try {
-        const rawSummary = art.description || art.content || art.title;
-
-        // Use keyword mapping for category - no AI needed
         const category = enforceValidCategory(art.category, art.title);
-        let sourceImage = extractArticleImage(art);
-        
-        // Validate image URL if we have one
-        if (sourceImage) {
-          const isValid = await validateImageUrl(sourceImage);
-          if (!isValid) {
-            sourceImage = null;
-          }
-        }
-        
-        // Use Cloudinary branded cover image for better reliability
-        let cover_image_url = sourceImage;
-        if (!sourceImage) {
-          try {
-            const tempSlug = art.title.substring(0, 50).toLowerCase().replace(/[^a-z0-9]/g, '-');
-            cover_image_url = await generateBrandedCoverImage(art.title, category, tempSlug);
-          } catch (e) {
-            console.error('Failed to generate cover image:', e);
-            cover_image_url = `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
-          }
-        }
-
-        // Generate simple SEO data without AI calls
-        const generateSimpleSeoData = (headline: string, summary: string) => {
-          const seoTitle = headline.length > 60 ? headline.substring(0, 57) + "..." : headline;
-          const metaDesc = summary.length > 160 ? summary.substring(0, 157) + "..." : summary;
-          const slug = headline
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '')
-            .substring(0, 100);
-          const focusKeywords = headline
-            .toLowerCase()
-            .replace(/[^a-z0-9\s]/g, '')
-            .split(/\s+/)
-            .filter(word => word.length > 3)
-            .slice(0, 5);
-          
-          return {
-            seo_title: seoTitle,
-            meta_description: metaDesc,
-            slug,
-            focus_keywords: focusKeywords,
-            primary_keyword: focusKeywords[0] || category.toLowerCase(),
-            clean_summary: summary.substring(0, 200),
-            is_trending: false,
-            priority: 0,
-            seo_score: 75,
-            schema_markup: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "NewsArticle",
-              headline: seoTitle,
-              description: metaDesc,
-              datePublished: art.pubDate || new Date().toISOString(),
-            })
-          };
-        };
-
-        // Build article body with minor modifications to avoid exact duplication
-        const buildArticleBody = (title: string, content: string) => {
-          const cleanContent = content.trim();
-          const paragraphs = cleanContent.split(/\n\n+/).filter(p => p.trim().length > 0);
-          
-          let body = "";
-          
-          // Paragraph 1: Lead
-          if (paragraphs.length >= 1) {
-            body += paragraphs[0].trim() + "\n\n";
-          } else {
-            body += `${title}. This development has caught the attention of many across India as it unfolds. The details are still emerging, but initial reports suggest significant implications for the region.` + "\n\n";
-          }
-          
-          // Paragraph 2: Background
-          if (paragraphs.length >= 2) {
-            body += paragraphs[1].trim() + "\n\n";
-          } else {
-            body += `To understand the full context, it's important to look at what led to this situation. Previous developments and ongoing debates have set the stage for this current turn of events.` + "\n\n";
-          }
-          
-          // Paragraph 3: Impact
-          if (paragraphs.length >= 3) {
-            body += paragraphs[2].trim() + "\n\n";
-          } else {
-            body += `For ordinary citizens, this news could mean changes in daily life, policy, or local economy. Experts and analysts are weighing in with different perspectives on what this means for the future.` + "\n\n";
-          }
-          
-          // Paragraph 4: Debate
-          body += `As with any major development, there are different viewpoints on this issue. Some see it as a positive step forward, while others raise concerns about the implications. What do you think about this situation? Share your thoughts and join the debate on RAJNEET.`;
-          
-          return body;
-        };
-
-        const seoData = generateSimpleSeoData(art.title, rawSummary);
-        const articleBody = buildArticleBody(art.title, rawSummary);
-
-        const status = "PUBLISHED"; // Post all articles
-
-        const newArt = await prisma.news.create({
-          data: {
-            headline: art.title?.trim() || '',
-            summary: seoData.clean_summary || rawSummary.substring(0, 200),
-            body: articleBody,
-            category,
-            source_url: art.link,
-            cover_image_url,
-            status,
-            geo_level: "NATIONAL",
-            state: "National",
-            posted_by: undefined,
-            
-            // SEO Fields
-            seo_title: seoData.seo_title,
-            meta_description: seoData.meta_description,
-            slug: seoData.slug,
-            focus_keywords: seoData.focus_keywords,
-            schema_markup: seoData.schema_markup,
-            seo_body: articleBody,
-            seo_score: seoData.seo_score,
-            primary_keyword: seoData.primary_keyword,
-            is_trending: seoData.is_trending,
-            priority: seoData.priority
-          }
-        });
+        const newArt = await processArticles(art, category);
         savedArticles.push(newArt);
         console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
       } catch (articleError: any) {
         console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
-        // Continue to next article even if one fails
         continue;
       }
     }
-
-    // Auto Poll Generation (every 10 articles)
-    const count24h = await prisma.news.count({
-      where: { created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
-    });
 
     return NextResponse.json({ 
       success: true, 
@@ -625,197 +618,10 @@ export async function POST(req: Request) {
   }
 }
 
+export async function POST(req: Request) {
+  return handleRequest(req);
+}
+
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get("secret");
-  
-  const session = await getServerSession(authOptions);
-  const isAdmin = session?.user?.role === "ADMIN";
-
-  if (process.env.NODE_ENV === "production" && !isAdmin && secret !== process.env.CRON_SECRET) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  try {
-    console.log("Fetching news from multiple APIs...");
-    
-    const fetchedArticles = await fetchFromAllAPIs("politics India");
-    // Limit to 15 articles per run
-    const articlesToProcess = fetchedArticles.slice(0, 15);
-    const savedArticles = [];
-    const skipped = [];
-
-    for (const art of articlesToProcess) {
-      // Skip articles without a title
-      if (!art.title) { skipped.push("no-title"); continue; }
-
-      // Check duplicate
-      const existing = await prisma.news.findFirst({
-        where: { source_url: art.link }
-      });
-      if (existing) { skipped.push(art.title); continue; }
-
-      if (art.pubDate) {
-        const pubTs = new Date(art.pubDate).getTime();
-        if (Number.isFinite(pubTs) && Date.now() - pubTs > MAX_ARTICLE_AGE_MS) {
-          console.log("Skipping old article:", art.title);
-          skipped.push("too-old");
-          continue;
-        }
-      }
-
-      try {
-        const rawSummary = art.description || art.content || art.title;
-
-        // Use keyword mapping for category - no AI needed
-        const category = enforceValidCategory(art.category, art.title);
-        let sourceImage = extractArticleImage(art);
-        
-        // Validate image URL if we have one
-        if (sourceImage) {
-          const isValid = await validateImageUrl(sourceImage);
-          if (!isValid) {
-            sourceImage = null;
-          }
-        }
-        
-        // Use Cloudinary branded cover image for better reliability
-        let cover_image_url = sourceImage;
-        if (!sourceImage) {
-          try {
-            const tempSlug = art.title.substring(0, 50).toLowerCase().replace(/[^a-z0-9]/g, '-');
-            cover_image_url = await generateBrandedCoverImage(art.title, category, tempSlug);
-          } catch (e) {
-            console.error('Failed to generate cover image:', e);
-            cover_image_url = `/api/og?title=${encodeURIComponent(art.title)}&category=${encodeURIComponent(category)}`;
-          }
-        }
-
-        // Generate simple SEO data without AI calls
-        const generateSimpleSeoData = (headline: string, summary: string) => {
-          const seoTitle = headline.length > 60 ? headline.substring(0, 57) + "..." : headline;
-          const metaDesc = summary.length > 160 ? summary.substring(0, 157) + "..." : summary;
-          const slug = headline
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '')
-            .substring(0, 100);
-          const focusKeywords = headline
-            .toLowerCase()
-            .replace(/[^a-z0-9\s]/g, '')
-            .split(/\s+/)
-            .filter(word => word.length > 3)
-            .slice(0, 5);
-          
-          return {
-            seo_title: seoTitle,
-            meta_description: metaDesc,
-            slug,
-            focus_keywords: focusKeywords,
-            primary_keyword: focusKeywords[0] || category.toLowerCase(),
-            clean_summary: summary.substring(0, 200),
-            is_trending: false,
-            priority: 0,
-            seo_score: 75,
-            schema_markup: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "NewsArticle",
-              headline: seoTitle,
-              description: metaDesc,
-              datePublished: art.pubDate || new Date().toISOString(),
-            })
-          };
-        };
-
-        // Build article body with minor modifications to avoid exact duplication
-        const buildArticleBody = (title: string, content: string) => {
-          const cleanContent = content.trim();
-          const paragraphs = cleanContent.split(/\n\n+/).filter(p => p.trim().length > 0);
-          
-          let body = "";
-          
-          // Paragraph 1: Lead
-          if (paragraphs.length >= 1) {
-            body += paragraphs[0].trim() + "\n\n";
-          } else {
-            body += `${title}. This development has caught the attention of many across India as it unfolds. The details are still emerging, but initial reports suggest significant implications for the region.` + "\n\n";
-          }
-          
-          // Paragraph 2: Background
-          if (paragraphs.length >= 2) {
-            body += paragraphs[1].trim() + "\n\n";
-          } else {
-            body += `To understand the full context, it's important to look at what led to this situation. Previous developments and ongoing debates have set the stage for this current turn of events.` + "\n\n";
-          }
-          
-          // Paragraph 3: Impact
-          if (paragraphs.length >= 3) {
-            body += paragraphs[2].trim() + "\n\n";
-          } else {
-            body += `For ordinary citizens, this news could mean changes in daily life, policy, or local economy. Experts and analysts are weighing in with different perspectives on what this means for the future.` + "\n\n";
-          }
-          
-          // Paragraph 4: Debate
-          body += `As with any major development, there are different viewpoints on this issue. Some see it as a positive step forward, while others raise concerns about the implications. What do you think about this situation? Share your thoughts and join the debate on RAJNEET.`;
-          
-          return body;
-        };
-
-        const seoData = generateSimpleSeoData(art.title, rawSummary);
-        const articleBody = buildArticleBody(art.title, rawSummary);
-
-        const status = "PUBLISHED"; // Post all articles
-
-        const newArt = await prisma.news.create({
-          data: {
-            headline: art.title?.trim() || '',
-            summary: seoData.clean_summary || rawSummary.substring(0, 200),
-            body: articleBody,
-            category,
-            source_url: art.link,
-            cover_image_url,
-            status,
-            geo_level: "NATIONAL",
-            state: "National",
-            posted_by: undefined,
-            
-            // SEO Fields
-            seo_title: seoData.seo_title,
-            meta_description: seoData.meta_description,
-            slug: seoData.slug,
-            focus_keywords: seoData.focus_keywords,
-            schema_markup: seoData.schema_markup,
-            seo_body: articleBody,
-            seo_score: seoData.seo_score,
-            primary_keyword: seoData.primary_keyword,
-            is_trending: seoData.is_trending,
-            priority: seoData.priority
-          }
-        });
-        savedArticles.push(newArt);
-        console.log(`✓ Saved: ${art.title.substring(0, 50)}`);
-      } catch (articleError: any) {
-        console.error(`✗ Failed to process: ${art.title?.substring(0, 50)} — ${articleError.message}`);
-        // Continue to next article even if one fails
-        continue;
-      }
-    }
-
-    // Auto Poll Generation (every 10 articles)
-    const count24h = await prisma.news.count({
-      where: { created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
-    });
-
-    return NextResponse.json({ 
-      success: true, 
-      fetched: fetchedArticles.length,
-      saved: savedArticles.length,
-      skipped: skipped.length,
-      published: savedArticles.filter(a => a.status === "PUBLISHED").length,
-      draft: savedArticles.filter(a => a.status === "DRAFT").length,
-    });
-  } catch (error: any) {
-    console.error("Cron error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+  return handleRequest(req);
 }

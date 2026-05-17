@@ -46,12 +46,18 @@ function extractArticleImage(art: any) {
   if (art.image_url) return art.image_url;
   if (art.image) return art.image;
   if (art.enclosure?.url) return art.enclosure.url;
+  if (art.enclosure) return art.enclosure;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.$?.url) return art["media:content"][0].$.url;
   if (Array.isArray(art["media:content"]) && art["media:content"]?.[0]?.url) return art["media:content"][0].url;
   if (art["media:content"]?.$?.url) return art["media:content"].$.url;
   if (art["media:content"]?.url) return art["media:content"].url;
+  if (Array.isArray(art["media:thumbnail"]) && art["media:thumbnail"]?.[0]?.$?.url) return art["media:thumbnail"][0].$.url;
+  if (Array.isArray(art["media:thumbnail"]) && art["media:thumbnail"]?.[0]?.url) return art["media:thumbnail"][0].url;
+  if (art["media:thumbnail"]?.$?.url) return art["media:thumbnail"].$.url;
+  if (art["media:thumbnail"]?.url) return art["media:thumbnail"].url;
   if (art.og_image) return art.og_image;
   if (Array.isArray(art.images) && art.images[0]) return art.images[0];
+  if (art.thumbnail) return art.thumbnail;
   return null;
 }
 

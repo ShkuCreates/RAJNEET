@@ -132,8 +132,7 @@ export default function NewsCard({ news, currentUser }: { news: any; currentUser
   )}&category=${encodeURIComponent(news.category || "POLITICAL")}`;
   const isGenericCover =
     typeof news.cover_image_url === "string" &&
-    (news.cover_image_url.includes("unsplash.com") ||
-      news.cover_image_url.includes("photo-1504711434969-e33886168f5c"));
+    news.cover_image_url.includes("photo-1504711434969-e33886168f5c");
   const normalizedCover = normalizeImageUrl(news.cover_image_url);
   const displayCoverUrl = !normalizedCover || isGenericCover ? ogFallbackUrl : normalizedCover;
 
