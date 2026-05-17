@@ -205,8 +205,14 @@ async function fetchRssFeedArticles(feedUrl: string, perFeedLimit = 8): Promise<
 }
 
 async function fetchAllRssArticles(): Promise<any[]> {
-  const ordered = [...RSS_FEEDS_PRIORITY, ...RSS_FEEDS_GOOGLE];
-  const batches = await Promise.all(ordered.map((u) => fetchRssFeedArticles(u, 8)));
+  const ordered = [...RSS_FEEDS_PRIORITY];
+  const batches: any[] = [];
+  
+  for (const u of ordered) {
+    const articles = await fetchRssFeedArticles(u, 5);
+    batches.push(articles);
+  }
+  
   return batches.flat();
 }
 
@@ -382,25 +388,22 @@ async function fetchFromAllAPIs(query: string): Promise<any[]> {
   const rssArticles = await fetchAllRssArticles();
   const allResults: any[] = [...rssArticles];
 
-  const apiNames = ['newsdata', 'currents', 'gnews'];
+  const apiNames = ['newsdata'];
 
   console.log('Fetching news from RSS + APIs...');
 
-  const apiPromises = apiNames.map((apiName) =>
-    fetchFromAPIWithFallback(apiName, query).catch((error) => {
-      console.error(`Error fetching from ${apiName}:`, error.message);
-      return [];
-    })
-  );
-
-  const results = await Promise.all(apiPromises);
-
-  results.forEach((apiResults, index) => {
-    if (apiResults.length > 0) {
-      console.log(`${apiNames[index]}: ${apiResults.length} articles`);
-      allResults.push(...apiResults);
+  for (const apiName of apiNames) {
+    try {
+      const apiResults = await fetchFromAPIWithFallback(apiName, query);
+      if (apiResults.length > 0) {
+        console.log(`${apiName}: ${apiResults.length} articles`);
+        allResults.push(...apiResults);
+        break;
+      }
+    } catch (error) {
+      console.error(`Error fetching from ${apiName}:`, error);
     }
-  });
+  }
 
   console.log(`Total articles before dedupe: ${allResults.length}`);
 
@@ -422,7 +425,7 @@ async function fetchFromAllAPIs(query: string): Promise<any[]> {
 
   console.log(`Unique articles after dedupe: ${uniqueArticles.length}`);
 
-  return uniqueArticles.slice(0, 40);
+  return uniqueArticles.slice(0, 20);
 }
 
 async function processArticles(art: any, category: string) {
@@ -569,10 +572,10 @@ async function handleRequest(req: Request) {
   }
 
   try {
-    console.log("Fetching news from multiple APIs...");
+    console.log("Fetching news from RSS...");
     
     const fetchedArticles = await fetchFromAllAPIs("politics India");
-    const articlesToProcess = fetchedArticles.slice(0, 15);
+    const articlesToProcess = fetchedArticles.slice(0, 8);
     const savedArticles = [];
     const skipped = [];
 
