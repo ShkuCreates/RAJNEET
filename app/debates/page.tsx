@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import LiveDebatesClient from "@/components/debates/LiveDebatesClient";
+import UpcomingDebatesClient from "@/components/debates/UpcomingDebatesClient";
+import ScheduleDebateForm from "@/components/debates/ScheduleDebateForm";
 
 type Tab = "ongoing" | "calendar" | "admin";
 
@@ -48,20 +50,10 @@ export default function DebatesPage() {
             <LiveDebatesClient currentUser={session?.user} />
           )}
           {activeTab === "calendar" && (
-            <div className="min-h-[400px] rounded-[32px] border border-white/10 bg-[#111827] px-8 py-16 text-center shadow-2xl">
-              <div className="mx-auto">
-                <h1 className="mb-3 text-3xl font-semibold text-white">Calendar Section</h1>
-                <p className="text-base text-gray-400">Upcoming debates with slot management</p>
-              </div>
-            </div>
+            <UpcomingDebatesClient currentUser={session?.user} />
           )}
           {activeTab === "admin" && isAdmin && (
-            <div className="min-h-[400px] rounded-[32px] border border-white/10 bg-[#111827] px-8 py-16 text-center shadow-2xl">
-              <div className="mx-auto">
-                <h1 className="mb-3 text-3xl font-semibold text-white">Admin Section</h1>
-                <p className="text-base text-gray-400">Schedule and manage debates</p>
-              </div>
-            </div>
+            <ScheduleDebateForm />
           )}
         </div>
       </div>
