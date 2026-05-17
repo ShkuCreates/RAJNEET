@@ -74,6 +74,28 @@ export default function DebateSection({
     }
   };
 
+  const handleLike = async (opinionId: string) => {
+    if (!allowInteraction || !currentUser) {
+      onRequireLogin?.();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/opinions/${opinionId}/like`, { method: 'POST' })
+      const data = await res.json()
+      
+      if (res.ok) {
+        setComments(prev => prev.map(op =>
+          op.id === opinionId
+            ? { ...op, like_count: data.liked ? (op.like_count || 0) + 1 : (op.like_count || 0) - 1 }
+            : op
+        ))
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+    }
+  }
+
   const getTagStyle = (t: string) => {
     switch(t) {
       case "FACT": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
@@ -197,20 +219,10 @@ export default function DebateSection({
             
             <div className="flex items-center gap-4 text-xs text-muted-foreground pl-4">
               <button
-                onClick={() => {
-                  if (!allowInteraction || !currentUser) onRequireLogin?.();
-                }}
+                onClick={() => handleLike(c.id)}
                 className="flex items-center gap-1 hover:text-green-500 transition-colors"
               >
-                <ThumbsUp size={14} /> {c.upvotes}
-              </button>
-              <button
-                onClick={() => {
-                  if (!allowInteraction || !currentUser) onRequireLogin?.();
-                }}
-                className="flex items-center gap-1 hover:text-red-500 transition-colors"
-              >
-                <ThumbsDown size={14} /> {c.downvotes}
+                <ThumbsUp size={14} /> {c.like_count || 0}
               </button>
               <button className="flex items-center gap-1 hover:text-primary transition-colors ml-2">
                 Reply

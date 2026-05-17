@@ -60,7 +60,7 @@ export default function ArticlePageClient({ article }: { article: any }) {
       }
     };
     fetchOpinions();
-    const id = window.setInterval(fetchOpinions, 7000);
+    const id = window.setInterval(fetchOpinions, 30000);
     return () => {
       mounted = false;
       window.clearInterval(id);

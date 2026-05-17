@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { X } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type PopupType = "welcome" | "interaction" | null;
@@ -17,8 +17,12 @@ const LoginPopupContext = createContext<LoginPopupContextType | undefined>(undef
 export function LoginPopupProvider({ children }: { children: ReactNode }) {
   const [popupType, setPopupType] = useState<PopupType>(null);
   const [welcomeShown, setWelcomeShown] = useState(false);
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
 
   useEffect(() => {
+    if (isLoggedIn) return;
+    
     const hasShownWelcome = localStorage.getItem('rajneet_welcome_shown');
     if (hasShownWelcome) {
       setWelcomeShown(true);
@@ -26,15 +30,16 @@ export function LoginPopupProvider({ children }: { children: ReactNode }) {
     }
 
     const timer = setTimeout(() => {
-      if (!welcomeShown) {
+      if (!welcomeShown && !isLoggedIn) {
         setPopupType("welcome");
       }
     }, 30000);
 
     return () => clearTimeout(timer);
-  }, [welcomeShown]);
+  }, [welcomeShown, isLoggedIn]);
 
   const showPopup = (type: PopupType) => {
+    if (isLoggedIn && type === "welcome") return;
     setPopupType(type);
   };
 
@@ -50,7 +55,7 @@ export function LoginPopupProvider({ children }: { children: ReactNode }) {
     <LoginPopupContext.Provider value={{ showPopup, hidePopup }}>
       {children}
       <AnimatePresence>
-        {popupType && (
+        {popupType && !isLoggedIn && (
           <LoginPopup type={popupType} onClose={hidePopup} />
         )}
       </AnimatePresence>

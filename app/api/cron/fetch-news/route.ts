@@ -503,23 +503,26 @@ async function processArticles(art: any, category: string) {
     
     let body = "";
     
-    if (sentences.length >= 2) {
-      const numSentences = Math.min(sentences.length, 5);
-      const firstPart = sentences.slice(0, numSentences).join(' ').trim();
-      body += firstPart + "\n\n";
+    if (sentences.length >= 3) {
+      const numSentences = Math.min(sentences.length, 10);
+      const allSentences = sentences.slice(0, numSentences);
+      const paragraphs: string[] = [];
       
-      if (sentences.length > numSentences) {
-        const secondPart = sentences.slice(numSentences, numSentences + 3).join(' ').trim();
-        if (secondPart.length > 50) {
-          body += secondPart + "\n\n";
+      let currentParagraph = "";
+      for (let i = 0; i < allSentences.length; i++) {
+        currentParagraph += allSentences[i] + " ";
+        if ((i + 1) % 3 === 0 || i === allSentences.length - 1) {
+          paragraphs.push(currentParagraph.trim());
+          currentParagraph = "";
         }
       }
+      
+      body = paragraphs.join("\n\n");
     } else {
-      body += `${title}. This is an important development that has caught the attention of people across India. The news is being widely discussed and has significant implications for the region.` + "\n\n";
-      body += `According to initial reports, ${cleanText.substring(0, Math.min(cleanText.length, 300))}. This situation is evolving rapidly, and more details are expected to emerge in the coming hours and days.` + "\n\n";
+      body += `${title}. ` + cleanText + "\n\n";
+      body += `This is an important development that has caught the attention of people across India. The news is being widely discussed and has significant implications for the region.` + "\n\n";
+      body += `According to initial reports, ${cleanText.substring(0, Math.min(cleanText.length, 400))}. This situation is evolving rapidly, and more details are expected to emerge in the coming hours and days.`;
     }
-    
-    body += `This story is still developing, and there are multiple perspectives on what this means for India. Some view this as a positive step forward, while others have concerns about the implications. What do you think about this development? Join the debate on RAJNEET and share your opinion with the community.`;
     
     return body;
   };
