@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Users, Flame, CheckCircle2, XCircle } from "lucide-react";
+import { Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
@@ -9,25 +9,12 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
-  image_url?: string;
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
-  ends_at?: string;
-  duration_minutes: number;
-  winner_side?: string;
-  max_for_participants: number;
-  max_against_participants: number;
-  audience_count: number;
-  votes_for: number;
-  votes_against: number;
-  participant_count: number;
-  total_likes: number;
-  created_by: any;
-  arguments: any[];
-  participants: any[];
+  created_at: string;
 };
 
-export default function UpcomingDebatesClient({ currentUser }: { currentUser: any }) {
+export default function UpcomingDebatesClient() {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
@@ -39,40 +26,16 @@ export default function UpcomingDebatesClient({ currentUser }: { currentUser: an
   const fetchDebates = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/debates/live");
-      if (!res.ok) throw new Error("Failed to fetch debates");
-      const data = await res.json();
-      setDebates(data.debates || []);
+      const res = await fetch("/api/debates");
+      if (res.ok) {
+        const data = await res.json();
+        setDebates(data.debates || []);
+      }
     } catch (error) {
       console.error("Error fetching debates:", error);
       setDebates([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleJoinAsDebater = async (debateId: string, side: "FOR" | "AGAINST") => {
-    if (!session?.user) {
-      toast.error("Please login first");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/debates/${debateId}/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ side }),
-      });
-
-      if (res.ok) {
-        toast.success(`Joined the debate as ${side}!`);
-        fetchDebates();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to join debate");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to join debate");
     }
   };
 
@@ -101,13 +64,6 @@ export default function UpcomingDebatesClient({ currentUser }: { currentUser: an
   return (
     <div className="space-y-6">
       {upcomingDebates.map((debate) => {
-        const forParticipants = debate.participants?.filter((p: any) => p.side === "FOR").length || 0;
-        const againstParticipants = debate.participants?.filter((p: any) => p.side === "AGAINST").length || 0;
-        const forFull = forParticipants >= debate.max_for_participants;
-        const againstFull = againstParticipants >= debate.max_against_participants;
-        const forPct = Math.round((forParticipants / debate.max_for_participants) * 100);
-        const againstPct = Math.round((againstParticipants / debate.max_against_participants) * 100);
-
         return (
           <div key={debate.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-accent-blue/30 transition-all shadow-xl">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -129,72 +85,10 @@ export default function UpcomingDebatesClient({ currentUser }: { currentUser: an
                       }
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    <span>{debate.duration_minutes} minutes</span>
-                  </div>
-                </div>
-
-                {/* Progress Bars */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                  <div>
-                    <div className="flex justify-between text-sm font-semibold mb-2">
-                      <span className="text-green-500">
-                        FOR Side {forParticipants}/{debate.max_for_participants}
-                      </span>
-                      {forFull ? <CheckCircle2 size={16} className="text-green-500" /> : null}
-                    </div>
-                    <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
-                      <div 
-                        className="bg-green-500 h-full transition-all duration-700" 
-                        style={{ width: `${forPct}%` }} 
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm font-semibold mb-2">
-                      <span className="text-red-500">
-                        AGAINST Side {againstParticipants}/{debate.max_against_participants}
-                      </span>
-                      {againstFull ? <CheckCircle2 size={16} className="text-red-500" /> : null}
-                    </div>
-                    <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
-                      <div 
-                        className="bg-red-500 h-full transition-all duration-700" 
-                        style={{ width: `${againstPct}%` }} 
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col gap-3 min-w-[160px]">
-                <button
-                  onClick={() => handleJoinAsDebater(debate.id, "FOR")}
-                  disabled={forFull || !session?.user}
-                  className={`px-4 py-3 text-sm font-semibold rounded-lg transition-all ${
-                    forFull
-                      ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      : "bg-green-500/20 text-green-500 border border-green-500/30 hover:bg-green-500 hover:text-white"
-                  }`}
-                >
-                  {forFull ? "FOR Full" : "Join as FOR"}
-                </button>
-                
-                <button
-                  onClick={() => handleJoinAsDebater(debate.id, "AGAINST")}
-                  disabled={againstFull || !session?.user}
-                  className={`px-4 py-3 text-sm font-semibold rounded-lg transition-all ${
-                    againstFull
-                      ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      : "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white"
-                  }`}
-                >
-                  {againstFull ? "AGAINST Full" : "Join as AGAINST"}
-                </button>
-                
                 <button className="px-4 py-3 text-sm font-semibold rounded-lg bg-white/5 text-white hover:bg-white/10 transition-all">
                   Join as Audience
                 </button>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Calendar, Clock, Users, Flame, Bell, Play, Eye } from "lucide-react";
+import { Calendar, Flame, Bell, Play } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -15,22 +15,9 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
-  image_url?: string;
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
-  ends_at?: string;
-  duration_minutes: number;
-  winner_side?: string;
-  max_for_participants: number;
-  max_against_participants: number;
-  audience_count: number;
-  votes_for: number;
-  votes_against: number;
-  participant_count: number;
-  total_likes: number;
-  created_by: any;
-  arguments: any[];
-  participants: any[];
+  created_at: string;
 };
 
 export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProps) {
@@ -40,22 +27,22 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
   const router = useRouter();
 
   useEffect(() => {
-    fetchLiveDebates();
+    fetchDebates();
   }, []);
 
-  const fetchLiveDebates = async () => {
+  const fetchDebates = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/debates/live");
+      const res = await fetch("/api/debates");
       
       if (!res.ok) {
-        throw new Error("Failed to fetch live debates");
+        throw new Error("Failed to fetch debates");
       }
       
       const data = await res.json();
       setDebates(data.debates || []);
     } catch (error) {
-      console.error("Error fetching live debates:", error);
+      console.error("Error fetching debates:", error);
       setDebates([]);
     } finally {
       setLoading(false);
@@ -70,19 +57,6 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
 
     try {
       setIsSubscribed(true);
-      const res = await fetch("/api/debates/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          email: currentUser.email,
-          topicPreferences: ["live-debates"],
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Subscription failed");
-      }
       toast.success("We will notify you when live debates start.");
     } catch (error: any) {
       toast.error(error?.message || "Unable to save your preference right now.");
@@ -111,10 +85,6 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
         {!loading && liveDebates.length > 0 && (
           <div className="space-y-6">
             {liveDebates.map((debate) => {
-              const totalVotes = debate.votes_for + debate.votes_against;
-              const forPct = totalVotes ? Math.round((debate.votes_for / totalVotes) * 100) : 0;
-              const againstPct = totalVotes ? 100 - forPct : 0;
-              
               return (
               <div key={debate.id} className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 shadow-2xl">
                 <div className="flex items-start justify-between mb-4">
@@ -122,20 +92,6 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                     <div className="flex items-center gap-2 px-3 py-1 bg-red-500/20 rounded-full">
                       <Flame size={16} className="text-red-400" />
                       <span className="text-sm font-semibold text-red-400">LIVE NOW</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-300 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <Users size={14} />
-                        <span>{debate.participant_count} participants</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye size={14} />
-                        <span>{debate.audience_count} watching</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Bell size={14} />
-                        <span>{debate.total_likes} likes</span>
-                      </div>
                     </div>
                   </div>
                   <Link
@@ -151,45 +107,6 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                 {debate.description && (
                   <p className="text-gray-300 mb-4">{debate.description}</p>
                 )}
-                
-                {/* Vote Percentage Bar */}
-                <div className="mb-6">
-                  <div className="flex justify-between text-sm font-semibold mb-2">
-                    <span className="text-green-500">FOR {forPct}%</span>
-                    <span className="text-red-500">AGAINST {againstPct}%</span>
-                  </div>
-                  <div className="w-full h-3 rounded-full flex overflow-hidden bg-white/10">
-                    <div 
-                      className="bg-green-500 transition-all duration-700" 
-                      style={{ width: `${forPct}%` }} 
-                    />
-                    <div 
-                      className="bg-red-500 transition-all duration-700" 
-                      style={{ width: `${againstPct}%` }} 
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white/[0.05] rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">FOR Side</h3>
-                    <div className="text-white">
-                      {debate.participants?.filter((p: any) => p.side === "FOR").length || 0} / {debate.max_for_participants} debaters
-                    </div>
-                  </div>
-                  <div className="bg-white/[0.05] rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">AGAINST Side</h3>
-                    <div className="text-white">
-                      {debate.participants?.filter((p: any) => p.side === "AGAINST").length || 0} / {debate.max_against_participants} debaters
-                    </div>
-                  </div>
-                  <div className="bg-white/[0.05] rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Duration</h3>
-                    <div className="text-white">
-                      {debate.duration_minutes} minutes
-                    </div>
-                  </div>
-                </div>
               </div>
             );
             })}
@@ -234,25 +151,20 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                       <h3 className="text-lg font-bold text-white mb-2 group-hover:text-red-400 transition-colors">
                         {debate.topic}
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={14} />
-                          <span>
-                            {debate.scheduled_at 
-                              ? new Date(debate.scheduled_at).toLocaleString("en-IN", {
+                      {debate.scheduled_at && (
+                        <div className="flex items-center gap-4 text-sm text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Calendar size={14} />
+                            <span>
+                              {new Date(debate.scheduled_at).toLocaleString("en-IN", {
                                   dateStyle: "medium",
                                   timeStyle: "short",
                                   timeZone: "Asia/Kolkata",
-                                })
-                              : "Schedule to be announced"
-                            }
-                          </span>
+                                })}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Users size={14} />
-                          <span>{debate.participant_count} participants</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                     <button
                       onClick={() => router.push(`/debates/${debate.id}`)}

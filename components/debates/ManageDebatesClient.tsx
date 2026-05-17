@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Edit, Trash2, PlaySquare, Pause, CheckCircle2, ExternalLink } from "lucide-react";
+import { Trash2, PlaySquare, Pause, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -9,17 +9,8 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
-  image_url?: string;
   status: string;
   scheduled_at?: string;
-  ends_at?: string;
-  duration_minutes: number;
-  max_for_participants: number;
-  max_against_participants: number;
-  audience_count: number;
-  votes_for: number;
-  votes_against: number;
-  participant_count: number;
   created_at: string;
 };
 
@@ -106,7 +97,6 @@ export default function ManageDebatesClient() {
             <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Topic</th>
             <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Status</th>
             <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Schedule</th>
-            <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Participants</th>
             <th className="p-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Actions</th>
           </tr>
         </thead>
@@ -140,9 +130,6 @@ export default function ManageDebatesClient() {
                   <span className="text-xs text-gray-600">Not scheduled</span>
                 )}
               </td>
-              <td className="p-6 text-center">
-                <span className="text-sm text-gray-300">{debate.participant_count} / {debate.max_for_participants + debate.max_against_participants}</span>
-              </td>
               <td className="p-6 text-right">
                 <div className="flex items-center justify-end gap-2">
                   {debate.status === "upcoming" && (
@@ -157,7 +144,7 @@ export default function ManageDebatesClient() {
                   {debate.status === "live" && (
                     <button 
                       onClick={() => handleUpdateStatus(debate.id, "completed")}
-                      className="p-2 hover:bg-accent-amber/10 text-gray-500 hover:text-accent-amber rounded-lg transition-all"
+                      className="p-2 hover:bg-amber-500/10 text-gray-500 hover:text-amber-500 rounded-lg transition-all"
                       title="End Debate"
                     >
                       <Pause size={16} />
