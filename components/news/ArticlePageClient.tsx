@@ -13,6 +13,8 @@ export default function ArticlePageClient({ article }: { article: any }) {
   const authResolved = status !== "loading";
   const isLoggedIn = status === "authenticated" && Boolean(session?.user);
   const [stanceCounts, setStanceCounts] = useState({ FOR: 0, NEUTRAL: 0, AGAINST: 0 });
+  const [extractedArticle, setExtractedArticle] = useState<any>(null);
+  const [isLoadingExtracted, setIsLoadingExtracted] = useState(false);
   const { showPopup } = useLoginPopup();
 
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -36,9 +38,29 @@ export default function ArticlePageClient({ article }: { article: any }) {
       return "Original Source";
     }
   }, [article.source_url]);
-  const bodyHtml = article.seo_body || article.body || "";
-  const summaryText = stripHtml(article.summary || article.body || "");
-  const hasReadableBody = Boolean(stripHtml(article.seo_body || article.body || "").trim());
+
+  const bodyHtml = extractedArticle?.content || article.seo_body || article.body || "";
+  const summaryText = extractedArticle?.description || stripHtml(article.summary || article.body || "");
+  const hasReadableBody = Boolean(bodyHtml?.trim());
+
+  useEffect(() => {
+    if (!article.source_url) return;
+    let mounted = true;
+    const fetchExtracted = async () => {
+      setIsLoadingExtracted(true);
+      try {
+        const res = await fetch(`/api/news/article?url=${encodeURIComponent(article.source_url)}`);
+        const data = await res.json();
+        if (mounted && data?.content) setExtractedArticle(data);
+      } catch (e) {
+        console.error("Failed to extract article:", e);
+      } finally {
+        if (mounted) setIsLoadingExtracted(false);
+      }
+    };
+    fetchExtracted();
+    return () => { mounted = false; };
+  }, [article.source_url]);
 
   useEffect(() => {
     let mounted = true;
