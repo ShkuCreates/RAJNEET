@@ -69,7 +69,7 @@ async function validateImageUrl(url: string): Promise<boolean> {
   }
 }
 
-const MAX_ARTICLE_AGE_MS = 48 * 60 * 60 * 1000;
+const MAX_ARTICLE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Working RSS feeds only */
 const RSS_FEEDS_PRIORITY = [
@@ -310,7 +310,7 @@ async function fetchFromAPIWithFallback(apiName: string, query: string): Promise
       let url = `${config.baseUrl}?`;
       
       if (apiName === 'newsdata') {
-        url += `apikey=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}&timeframe=12&prioritydomain=top`;
+        url += `apikey=${apiKey}&q=${encodeURIComponent(query)}${config.queryParams}&prioritydomain=top`;
       } else if (apiName === 'currents') {
         url += `apiKey=${apiKey}&keywords=${encodeURIComponent(query)}${config.queryParams}`;
       } else if (apiName === 'gnews') {

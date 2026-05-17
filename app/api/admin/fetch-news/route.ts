@@ -90,6 +90,15 @@ const RSS_FEEDS = [
   "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
 ];
 
+const MAX_ARTICLE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function articleAgeOk(pubDate?: string): boolean {
+  if (!pubDate) return true;
+  const t = new Date(pubDate).getTime();
+  if (!Number.isFinite(t)) return true;
+  return Date.now() - t <= MAX_ARTICLE_AGE_MS;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -111,11 +120,14 @@ export async function POST(req: Request) {
         const items = feed.items || [];
         console.log(`Got ${items.length} items from ${feedUrl}`);
 
-        for (const item of items.slice(0, 3)) {
+        for (const item of items.slice(0, 8)) {
           if (!item.title) { skipped.push("no-title"); continue; }
 
           const link = item.link || item.guid;
           if (!link) { skipped.push("no-link"); continue; }
+          
+          const pubDate = item.pubDate || item.isoDate;
+          if (!articleAgeOk(pubDate)) { skipped.push("too-old"); continue; }
 
           const existing = await prisma.news.findFirst({
             where: { source_url: link }
