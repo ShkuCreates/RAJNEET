@@ -121,121 +121,127 @@ export default function EditNewsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <button 
-          onClick={() => router.push("/admin/manage-news")}
-          className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors"
-        >
-          ← Back
-        </button>
-        <h1 className="text-2xl font-bold">Edit News Article</h1>
-      </div>
-      
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card border border-border p-6 rounded-xl shadow-sm">
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Headline</label>
-          <input
-            {...form.register("headline")}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-1 focus:ring-primary"
-            placeholder="Main headline of the news..."
-          />
-          {form.formState.errors.headline && <p className="text-xs text-red-500">{form.formState.errors.headline.message}</p>}
+    <div className="min-h-screen bg-[#050A14] p-8 md:p-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-12">
+          <button 
+            onClick={() => router.push("/admin/manage-news")}
+            className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors"
+          >
+            ← Back
+          </button>
+          <div>
+            <h1 className="text-3xl font-heading font-black text-white uppercase tracking-tight">Edit News Article</h1>
+            <p className="text-gray-500 font-medium">Update the article details and content.</p>
+          </div>
         </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Short Summary (max 300 chars)</label>
-          <textarea
-            {...form.register("summary")}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-1 focus:ring-primary h-20 resize-none"
-            placeholder="A brief summary for the feed..."
-          />
-          {form.formState.errors.summary && <p className="text-xs text-red-500">{form.formState.errors.summary.message}</p>}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
+        
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-[#111827] border border-white/5 p-8 rounded-[32px] shadow-xl">
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Category</label>
-            <select {...form.register("category")} className="w-full p-2 border border-input bg-background rounded-md">
-              <option value="POLITICAL">Politics</option>
-              <option value="FINANCE">Finance</option>
-              <option value="SPORTS">Sports</option>
-              <option value="WORLD">World</option>
-              <option value="ENTERTAINMENT">Entertainment</option>
-              <option value="CRIMINAL">Criminal</option>
-              <option value="INFRASTRUCTURE">Infrastructure</option>
-              <option value="ENVIRONMENT">Environment</option>
-              <option value="HEALTH">Health</option>
-              <option value="TECHNOLOGY">Technology</option>
-              <option value="OTHERS">Others</option>
-            </select>
+            <label className="text-sm font-semibold text-gray-300">Headline</label>
+            <input
+              {...form.register("headline")}
+              className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue/50 transition-colors"
+              placeholder="Main headline of the news..."
+            />
+            {form.formState.errors.headline && <p className="text-xs text-red-500">{form.formState.errors.headline.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Geographic Level</label>
-            <select {...form.register("geo_level")} className="w-full p-2 border border-input bg-background rounded-md">
-              <option value="NATIONAL">National</option>
-              <option value="INTERNATIONAL">International</option>
-              <option value="STATE">By State</option>
-              <option value="DISTRICT">By District</option>
-            </select>
+            <label className="text-sm font-semibold text-gray-300">Short Summary (max 300 chars)</label>
+            <textarea
+              {...form.register("summary")}
+              className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue/50 transition-colors h-24 resize-none"
+              placeholder="A brief summary for the feed..."
+            />
+            {form.formState.errors.summary && <p className="text-xs text-red-500">{form.formState.errors.summary.message}</p>}
           </div>
-        </div>
 
-        {(geoLevel === "STATE" || geoLevel === "DISTRICT") && (
-          <div className="grid md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">State</label>
-              <select {...form.register("state")} className="w-full p-2 border border-input bg-background rounded-md">
-                <option value="">Select State</option>
-                {states.map(s => <option key={s} value={s}>{s}</option>)}
+              <label className="text-sm font-semibold text-gray-300">Category</label>
+              <select {...form.register("category")} className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white focus:outline-none focus:border-accent-blue/50 transition-colors">
+                <option value="POLITICAL">Politics</option>
+                <option value="FINANCE">Finance</option>
+                <option value="SPORTS">Sports</option>
+                <option value="WORLD">World</option>
+                <option value="ENTERTAINMENT">Entertainment</option>
+                <option value="CRIMINAL">Criminal</option>
+                <option value="INFRASTRUCTURE">Infrastructure</option>
+                <option value="ENVIRONMENT">Environment</option>
+                <option value="HEALTH">Health</option>
+                <option value="TECHNOLOGY">Technology</option>
+                <option value="OTHERS">Others</option>
               </select>
             </div>
-            {geoLevel === "DISTRICT" && (
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-300">Geographic Level</label>
+              <select {...form.register("geo_level")} className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white focus:outline-none focus:border-accent-blue/50 transition-colors">
+                <option value="NATIONAL">National</option>
+                <option value="INTERNATIONAL">International</option>
+                <option value="STATE">By State</option>
+                <option value="DISTRICT">By District</option>
+              </select>
+            </div>
+          </div>
+
+          {(geoLevel === "STATE" || geoLevel === "DISTRICT") && (
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold">District</label>
-                <select {...form.register("district")} className="w-full p-2 border border-input bg-background rounded-md" disabled={!selectedState}>
-                  <option value="">Select District</option>
-                  {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                <label className="text-sm font-semibold text-gray-300">State</label>
+                <select {...form.register("state")} className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white focus:outline-none focus:border-accent-blue/50 transition-colors">
+                  <option value="">Select State</option>
+                  {states.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-            )}
+              {geoLevel === "DISTRICT" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-300">District</label>
+                  <select {...form.register("district")} className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white focus:outline-none focus:border-accent-blue/50 transition-colors" disabled={!selectedState}>
+                    <option value="">Select District</option>
+                    {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-300">Source URL (Optional)</label>
+            <input
+              {...form.register("source_url")}
+              className="w-full px-4 py-3 border border-white/10 bg-white/[0.02] rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue/50 transition-colors"
+              placeholder="Link to original source..."
+            />
           </div>
-        )}
 
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Source URL (Optional)</label>
-          <input
-            {...form.register("source_url")}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-1 focus:ring-primary"
-            placeholder="Link to original source..."
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Full Article Body</label>
-          <TipTapEditor content={body} onChange={setBody} />
-        </div>
-
-        <div className="flex items-center justify-between pt-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-semibold">Status:</label>
-            <select {...form.register("status")} className="p-1.5 border border-input bg-background rounded-md text-xs font-bold">
-              <option value="PUBLISHED">Published</option>
-              <option value="DRAFT">Draft</option>
-            </select>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-300">Full Article Body</label>
+            <div className="border border-white/10 rounded-2xl overflow-hidden">
+              <TipTapEditor content={body} onChange={setBody} />
+            </div>
           </div>
-          
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-primary text-primary-foreground px-8 py-2 rounded-md font-bold hover:bg-primary/90 disabled:opacity-50 shadow-lg shadow-primary/20"
-          >
-            {isSubmitting ? "Updating..." : "Update Article"}
-          </button>
-        </div>
-      </form>
+
+          <div className="flex items-center justify-between pt-6 border-t border-white/5">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-semibold text-gray-300">Status:</label>
+              <select {...form.register("status")} className="px-3 py-1.5 border border-white/10 bg-white/[0.02] rounded-xl text-xs font-bold text-white focus:outline-none">
+                <option value="PUBLISHED">Published</option>
+                <option value="DRAFT">Draft</option>
+              </select>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-8 py-3 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-accent-blue/20"
+            >
+              {isSubmitting ? "Updating..." : "Update Article"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
