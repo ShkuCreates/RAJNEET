@@ -47,15 +47,12 @@ export default function ArticlePageClient({ article }: { article: any }) {
     if (!article.source_url) return;
     let mounted = true;
     const fetchExtracted = async () => {
-      setIsLoadingExtracted(true);
       try {
         const res = await fetch(`/api/news/article?url=${encodeURIComponent(article.source_url)}`);
         const data = await res.json();
         if (mounted && data?.content) setExtractedArticle(data);
       } catch (e) {
         console.error("Failed to extract article:", e);
-      } finally {
-        if (mounted) setIsLoadingExtracted(false);
       }
     };
     fetchExtracted();
