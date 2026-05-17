@@ -287,17 +287,32 @@ model Debate {
   id               String   @id @default(cuid())
   topic            String
   description      String?  @db.Text
+  image_url        String?
   created_by       String
   status           String   @default("upcoming") // upcoming, live, completed
   scheduled_at     DateTime?
   ends_at          DateTime?
+  duration_minutes Int      @default(60) // Duration of debate in minutes
   winner_side      String?
+  
+  // Max participants per side
+  max_for_participants Int      @default(5)
+  max_against_participants Int  @default(5)
+  
+  // Stats
+  audience_count    Int      @default(0)
+  votes_for         Int      @default(0)
+  votes_against     Int      @default(0)
   participant_count Int      @default(0)
+  total_likes       Int      @default(0)
+  
   created_at       DateTime @default(now())
 
   arguments DebateArgument[]
   participants DebateParticipant[]
   juryVotes JuryVote[]
+  audience DebateAudience[]
+  debateVotes DebateVote[]
 }
 
 model DebateArgument {
@@ -320,7 +335,35 @@ model DebateParticipant {
   debate_id String
   user_id   String
   side      String   // FOR, AGAINST
+  is_muted  Boolean  @default(false)
+  is_camera_on Boolean @default(true)
+  is_mic_on Boolean @default(true)
   joined_at DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, user_id])
+}
+
+model DebateAudience {
+  id        String   @id @default(cuid())
+  debate_id String
+  user_id   String
+  joined_at DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, user_id])
+}
+
+model DebateVote {
+  id        String   @id @default(cuid())
+  debate_id String
+  user_id   String
+  side      String   // FOR, AGAINST
+  created_at DateTime @default(now())
 
   debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)

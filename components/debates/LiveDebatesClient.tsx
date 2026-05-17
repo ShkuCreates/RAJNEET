@@ -15,11 +15,19 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
+  image_url?: string;
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
   ends_at?: string;
-  participant_count: number;
+  duration_minutes: number;
   winner_side?: string;
+  max_for_participants: number;
+  max_against_participants: number;
+  audience_count: number;
+  votes_for: number;
+  votes_against: number;
+  participant_count: number;
+  total_likes: number;
   created_by: any;
   arguments: any[];
   participants: any[];
@@ -102,7 +110,12 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
 
         {!loading && liveDebates.length > 0 && (
           <div className="space-y-6">
-            {liveDebates.map((debate) => (
+            {liveDebates.map((debate) => {
+              const totalVotes = debate.votes_for + debate.votes_against;
+              const forPct = totalVotes ? Math.round((debate.votes_for / totalVotes) * 100) : 0;
+              const againstPct = totalVotes ? 100 - forPct : 0;
+              
+              return (
               <div key={debate.id} className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 shadow-2xl">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -110,14 +123,18 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                       <Flame size={16} className="text-red-400" />
                       <span className="text-sm font-semibold text-red-400">LIVE NOW</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-300">
+                    <div className="flex items-center gap-4 text-sm text-gray-300 flex-wrap">
                       <div className="flex items-center gap-1">
                         <Users size={14} />
                         <span>{debate.participant_count} participants</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Eye size={14} />
-                        <span>Watching</span>
+                        <span>{debate.audience_count} watching</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Bell size={14} />
+                        <span>{debate.total_likes} likes</span>
                       </div>
                     </div>
                   </div>
@@ -135,22 +152,47 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                   <p className="text-gray-300 mb-4">{debate.description}</p>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Vote Percentage Bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm font-semibold mb-2">
+                    <span className="text-green-500">FOR {forPct}%</span>
+                    <span className="text-red-500">AGAINST {againstPct}%</span>
+                  </div>
+                  <div className="w-full h-3 rounded-full flex overflow-hidden bg-white/10">
+                    <div 
+                      className="bg-green-500 transition-all duration-700" 
+                      style={{ width: `${forPct}%` }} 
+                    />
+                    <div 
+                      className="bg-red-500 transition-all duration-700" 
+                      style={{ width: `${againstPct}%` }} 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white/[0.05] rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-gray-400 mb-2">FOR Side</h3>
                     <div className="text-white">
-                      {debate.arguments?.filter((arg) => arg.side === "FOR").length || 0} arguments
+                      {debate.participants?.filter((p: any) => p.side === "FOR").length || 0} / {debate.max_for_participants} debaters
                     </div>
                   </div>
                   <div className="bg-white/[0.05] rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-gray-400 mb-2">AGAINST Side</h3>
                     <div className="text-white">
-                      {debate.arguments?.filter((arg) => arg.side === "AGAINST").length || 0} arguments
+                      {debate.participants?.filter((p: any) => p.side === "AGAINST").length || 0} / {debate.max_against_participants} debaters
+                    </div>
+                  </div>
+                  <div className="bg-white/[0.05] rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Duration</h3>
+                    <div className="text-white">
+                      {debate.duration_minutes} minutes
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 
