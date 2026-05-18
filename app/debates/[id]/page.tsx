@@ -573,12 +573,26 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                   <h2 className="text-xl md:text-2xl font-bold text-accent-blue">Host</h2>
                 </div>
                 
-                <div className="relative flex-1 bg-[#0F172A] border-2 border-accent-blue/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
-                    <User size={40} className="text-gray-400" />
-                  </div>
-                  <p className="text-white text-base font-semibold truncate w-full text-center">
-                    Host
+                <div className="relative flex-1 bg-[#0F172A] border-2 border-accent-blue/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px] overflow-hidden">
+                  {userRole === "HOST" && localStream ? (
+                    <video
+                      autoPlay
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover"
+                      ref={(el) => {
+                        if (el && userRole === "HOST") {
+                          el.srcObject = localStream;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                      <User size={40} className="text-gray-400" />
+                    </div>
+                  )}
+                  <p className={`text-white text-base font-semibold truncate w-full text-center ${userRole === "HOST" && localStream ? 'absolute bottom-4 left-4 right-4 bg-black/50 px-2 py-1 rounded-lg' : ''}`}>
+                    {userRole === "HOST" && session?.user?.name ? session.user.name : "Host"}
                   </p>
                 </div>
               </div>
@@ -638,6 +652,51 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Vote Tracker */}
+          <div className="max-w-4xl mx-auto mt-12 mb-8">
+            <div className="bg-[#111827] border border-white/10 rounded-[32px] p-6 shadow-2xl">
+              <h3 className="text-xl font-bold text-white mb-6 text-center">Current Votes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                {/* Against */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-bold text-red-400">Against</span>
+                    <span className="text-gray-400">
+                      {userVote === "AGAINST" ? "Your Vote" : "0%"}
+                    </span>
+                  </div>
+                  <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-500 ${userVote === "AGAINST" ? 'bg-red-500' : 'bg-red-500/30'}`}
+                      style={{ width: userVote === "AGAINST" ? "50%" : "0%" }}
+                    />
+                  </div>
+                </div>
+
+                {/* For */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-bold text-green-400">For</span>
+                    <span className="text-gray-400">
+                      {userVote === "FOR" ? "Your Vote" : "0%"}
+                    </span>
+                  </div>
+                  <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-500 ${userVote === "FOR" ? 'bg-green-500' : 'bg-green-500/30'}`}
+                      style={{ width: userVote === "FOR" ? "50%" : "0%" }}
+                    />
+                  </div>
+                </div>
+              </div>
+              {!userVote && (
+                <p className="text-center text-gray-400 text-sm">
+                  Vote to see the results!
+                </p>
+              )}
             </div>
           </div>
 
