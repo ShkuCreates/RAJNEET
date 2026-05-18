@@ -94,7 +94,7 @@ model News {
   geo_level       String   // DISTRICT, STATE, NATIONAL, INTERNATIONAL
   state           String?
   district        String?
-  status          String   @default("DRAFT") // DRAFT, PUBLISHED
+  status          String   @default("PUBLISHED") // DRAFT, PUBLISHED
   posted_by       String?
   created_at      DateTime @default(now())
 
