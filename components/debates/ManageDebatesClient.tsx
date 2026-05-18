@@ -14,13 +14,17 @@ type Debate = {
   created_at: string;
 };
 
-export default function ManageDebatesClient() {
+type ManageDebatesClientProps = {
+  refreshKey?: number;
+};
+
+export default function ManageDebatesClient({ refreshKey }: ManageDebatesClientProps) {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDebates();
-  }, []);
+  }, [refreshKey]);
 
   const fetchDebates = async () => {
     try {

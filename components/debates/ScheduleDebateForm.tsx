@@ -6,9 +6,10 @@ import { toast } from "sonner";
 
 type ScheduleDebateFormProps = {
   onClose?: () => void;
+  onSuccess?: () => void;
 };
 
-export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps) {
+export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebateFormProps) {
   const [formData, setFormData] = useState({
     topic: "",
     description: "",
@@ -51,6 +52,7 @@ export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps)
           max_for_participants: "5",
           max_against_participants: "5",
         });
+        onSuccess?.();
         onClose?.();
       } else {
         const data = await res.json();

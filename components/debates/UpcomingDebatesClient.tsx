@@ -18,7 +18,11 @@ type Debate = {
   participants: { side: string }[];
 };
 
-export default function UpcomingDebatesClient() {
+type UpcomingDebatesClientProps = {
+  refreshKey?: number;
+};
+
+export default function UpcomingDebatesClient({ refreshKey }: UpcomingDebatesClientProps) {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export default function UpcomingDebatesClient() {
 
   useEffect(() => {
     fetchDebates();
-  }, []);
+  }, [refreshKey]);
 
   const fetchDebates = async () => {
     try {

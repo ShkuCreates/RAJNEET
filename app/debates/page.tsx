@@ -13,8 +13,13 @@ type AdminTab = "schedule" | "manage";
 export default function DebatesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("ongoing");
   const [adminSubTab, setAdminSubTab] = useState<AdminTab>("schedule");
+  const [refreshDebatesKey, setRefreshDebatesKey] = useState(0);
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
+  
+  const handleDebateScheduled = () => {
+    setRefreshDebatesKey(prev => prev + 1);
+  };
 
   const tabs: { id: Tab; label: string; isAdmin?: boolean }[] = [
     { id: "ongoing", label: "Ongoing" },
@@ -53,7 +58,7 @@ export default function DebatesPage() {
             <LiveDebatesClient currentUser={session?.user} />
           )}
           {activeTab === "calendar" && (
-            <UpcomingDebatesClient currentUser={session?.user} />
+            <UpcomingDebatesClient refreshKey={refreshDebatesKey} />
           )}
           {activeTab === "admin" && isAdmin && (
             <div>
@@ -80,8 +85,8 @@ export default function DebatesPage() {
                 </button>
               </div>
               
-              {adminSubTab === "schedule" && <ScheduleDebateForm />}
-              {adminSubTab === "manage" && <ManageDebatesClient />}
+              {adminSubTab === "schedule" && <ScheduleDebateForm onSuccess={handleDebateScheduled} />}
+              {adminSubTab === "manage" && <ManageDebatesClient refreshKey={refreshDebatesKey} />}
             </div>
           )}
         </div>

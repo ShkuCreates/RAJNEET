@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 type LiveDebatesClientProps = {
   currentUser: any;
+  refreshKey?: number;
 };
 
 type Debate = {
@@ -25,7 +26,7 @@ type Debate = {
   participants: { side: string }[];
 };
 
-export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProps) {
+export default function LiveDebatesClient({ currentUser, refreshKey }: LiveDebatesClientProps) {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -35,7 +36,7 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
 
   useEffect(() => {
     fetchDebates();
-  }, []);
+  }, [refreshKey]);
 
   const fetchDebates = async () => {
     try {
