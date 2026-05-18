@@ -24,7 +24,7 @@ export default function DebatesPage() {
   const tabs: { id: Tab; label: string; isAdmin?: boolean }[] = [
     { id: "ongoing", label: "Ongoing" },
     { id: "calendar", label: "Calendar" },
-    ...(isAdmin ? [{ id: "admin", label: "Admin" }] : []),
+    ...(isAdmin ? [{ id: "admin" as Tab, label: "Admin" }] : []),
   ];
 
   return (
