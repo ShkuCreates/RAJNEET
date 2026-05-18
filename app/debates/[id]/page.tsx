@@ -31,12 +31,12 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [votedFor, setVotedFor] = useState<boolean | null>(null);
   const [votesFor, setVotesFor] = useState(124);
   const [votesAgainst, setVotesAgainst] = useState(89);
-  const [audienceCount, setAudienceCount] = useState(456);
-  const [timeRemaining, setTimeRemaining] = useState("42:15");
-  const [isParticipant, setIsParticipant] = useState(true); // Assume participant for now, you'd get this from your data
+  const [audienceCount] = useState(456);
+  const [timeRemaining] = useState("42:15");
+  const [isParticipant] = useState(true); // Assume participant for now, you'd get this from your data
   const [permissionsRequested, setPermissionsRequested] = useState(false);
 
-  const [isHost, setIsHost] = useState(true);
+  const [isHost] = useState(true);
   const [isForSideMuted, setIsForSideMuted] = useState(false);
   const [isAgainstSideMuted, setIsAgainstSideMuted] = useState(false);
 
@@ -193,7 +193,7 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
           </button>
           {participant.side !== "HOST" && (
             <button
-              onClick={() => toggleHandRaise(participant.id, participant.side)}
+              onClick={() => toggleHandRaise(participant.id, participant.side as "FOR" | "AGAINST")}
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
             >
               <Hand size={16} className={participant.isHandRaised ? "text-yellow-400" : "text-gray-400"} />
