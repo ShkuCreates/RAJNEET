@@ -103,6 +103,16 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
     fetchDebate();
   }, [params.id, session?.user?.id, session?.user?.role]);
 
+  // Stop camera stream when component unmounts
+  useEffect(() => {
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        setLocalStream(null);
+      }
+    };
+  }, [localStream]);
+
   // Request media permissions and start local stream
   const startLocalStream = async () => {
     try {
@@ -296,27 +306,27 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
       {(userRole === "AUDIENCE" || localStream) && (
         <div className="p-4 md:p-8">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 md:gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
               {/* AGAINST Side */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-2xl md:text-3xl font-bold text-red-500">Against</h2>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {againstParticipants.map((p) => (
                     <div
                       key={p.id}
-                      className="relative flex-1 bg-[#0F172A] border-2 border-red-500/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]"
+                      className="relative flex-1 bg-[#0F172A] border-2 border-red-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]"
                     >
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
                         {p.user?.avatar_url ? (
                           <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
                         ) : (
-                          <User size={32} className="text-gray-400" />
+                          <User size={40} className="text-gray-400" />
                         )}
                       </div>
-                      <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                      <p className="text-white text-base font-semibold truncate w-full text-center">
                         {p.user?.name}
                       </p>
                     </div>
@@ -334,16 +344,16 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
               </div>
 
               {/* HOST Center */}
-              <div className="flex flex-col justify-center w-full lg:w-auto">
+              <div className="flex flex-col justify-center">
                 <div className="text-center mb-2">
                   <h2 className="text-xl md:text-2xl font-bold text-accent-blue">Host</h2>
                 </div>
                 
-                <div className="relative flex-1 bg-[#0F172A] border-2 border-accent-blue/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                    <User size={32} className="text-gray-400" />
+                <div className="relative flex-1 bg-[#0F172A] border-2 border-accent-blue/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                    <User size={40} className="text-gray-400" />
                   </div>
-                  <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                  <p className="text-white text-base font-semibold truncate w-full text-center">
                     Host
                   </p>
                 </div>
@@ -355,20 +365,20 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                   <h2 className="text-2xl md:text-3xl font-bold text-green-500">For</h2>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {forParticipants.map((p) => (
                     <div
                       key={p.id}
-                      className="relative flex-1 bg-[#0F172A] border-2 border-green-500/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]"
+                      className="relative flex-1 bg-[#0F172A] border-2 border-green-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]"
                     >
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
                         {p.user?.avatar_url ? (
                           <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
                         ) : (
-                          <User size={32} className="text-gray-400" />
+                          <User size={40} className="text-gray-400" />
                         )}
                       </div>
-                      <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                      <p className="text-white text-base font-semibold truncate w-full text-center">
                         {p.user?.name}
                       </p>
                     </div>

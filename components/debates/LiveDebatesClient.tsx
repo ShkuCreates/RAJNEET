@@ -34,6 +34,11 @@ export default function LiveDebatesClient({ currentUser, refreshKey }: LiveDebat
   const router = useRouter();
   const { data: session } = useSession();
 
+  const isParticipant = (debate: Debate) => {
+    if (!session?.user?.id) return false;
+    return debate.participants?.some((p: any) => p.user_id === session.user.id);
+  };
+
   useEffect(() => {
     fetchDebates();
   }, [refreshKey]);
@@ -148,10 +153,10 @@ export default function LiveDebatesClient({ currentUser, refreshKey }: LiveDebat
                       </button>
                       <button
                         onClick={() => router.push(`/debates/${debate.id}`)}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+                        className={`px-4 py-2 ${isParticipant(debate) ? 'bg-accent-blue hover:bg-accent-blue/90' : 'bg-red-500 hover:bg-red-600'} text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2`}
                       >
                         <Play size={16} />
-                        View Debate
+                        {isParticipant(debate) ? 'Take Your Seat' : 'View Debate'}
                       </button>
                     </div>
                   </div>
