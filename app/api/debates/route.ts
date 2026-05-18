@@ -6,12 +6,21 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     console.log("[GET_DEBATES] Fetching all debates...");
-    const debates = await prisma.debate.findMany({
-      orderBy: { created_at: "desc" },
-      include: {
-        participants: true,
-      },
-    });
+    let debates;
+    try {
+      debates = await prisma.debate.findMany({
+        orderBy: { created_at: "desc" },
+        include: {
+          participants: true,
+        },
+      });
+    } catch (includeError) {
+      console.warn("[GET_DEBATES] Failed to include participants, fetching without:", includeError);
+      debates = await prisma.debate.findMany({
+        orderBy: { created_at: "desc" },
+      });
+      debates = debates.map(d => ({ ...d, participants: [] }));
+    }
     console.log("[GET_DEBATES] Found", debates.length, "debates!");
     console.log("[GET_DEBATES] Debates:", debates);
     return NextResponse.json({ success: true, debates });
