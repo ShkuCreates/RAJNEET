@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postinstall": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate && node scripts/migrate.js",
     "lint": "next lint",
     "audit:fix": "npm audit fix --force"
   },
