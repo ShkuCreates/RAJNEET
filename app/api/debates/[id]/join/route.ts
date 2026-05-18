@@ -81,13 +81,25 @@ export async function POST(
           where: { debate_id: id, user_id: session.user.id }
         }).catch(() => null);
         
-        await (prisma as any).debateParticipant.create({
-          data: {
-            debate_id: id,
-            user_id: session.user.id,
-            side,
-          }
-        });
+        try {
+          await (prisma as any).debateParticipant.create({
+            data: {
+              debate_id: id,
+              user_id: session.user.id,
+              side,
+              joined_at: new Date(),
+            }
+          });
+        } catch (createError) {
+          console.warn("[JOIN_DEBATE] Failed with joined_at, trying even more minimal:", createError);
+          await (prisma as any).debateParticipant.create({
+            data: {
+              debate_id: id,
+              user_id: session.user.id,
+              side,
+            }
+          });
+        }
     }
 
     return NextResponse.json({ success: true });
