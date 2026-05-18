@@ -50,12 +50,14 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<"AUDIENCE" | "FOR" | "AGAINST" | "HOST">("AUDIENCE");
   const [showJoinOptions, setShowJoinOptions] = useState(false);
+  const [userVote, setUserVote] = useState<"FOR" | "AGAINST" | null>(null);
 
   // Media state
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const participantVideoRef = useRef<HTMLVideoElement>(null);
 
   // Mock participants for now
   const [forParticipants, setForParticipants] = useState<any[]>([]);
@@ -125,12 +127,21 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
+      if (participantVideoRef.current) {
+        participantVideoRef.current.srcObject = stream;
+      }
       
       toast.success("Camera and mic permissions granted!");
     } catch (error) {
       console.error("Failed to get media permissions:", error);
       toast.error("Could not access camera/microphone");
     }
+  };
+
+  // Handle voting
+  const handleVote = (side: "FOR" | "AGAINST") => {
+    setUserVote(side);
+    toast.success(`Voted for ${side.toLowerCase()}!`);
   };
 
   // Toggle mic
@@ -314,30 +325,46 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-3">
-                  {againstParticipants.map((p) => (
-                    <div
-                      key={p.id}
-                      className="relative flex-1 bg-[#0F172A] border-2 border-red-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]"
-                    >
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
-                        {p.user?.avatar_url ? (
-                          <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                  {againstParticipants.map((p) => {
+                    const isCurrentUser = p.user_id === session?.user?.id;
+                    return (
+                      <div
+                        key={p.id}
+                        className="relative flex-1 bg-[#0F172A] border-2 border-red-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px] overflow-hidden"
+                      >
+                        {isCurrentUser && localStream ? (
+                          <video
+                            ref={isCurrentUser ? participantVideoRef : null}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
                         ) : (
-                          <User size={40} className="text-gray-400" />
+                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                            {p.user?.avatar_url ? (
+                              <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              <User size={40} className="text-gray-400" />
+                            )}
+                          </div>
                         )}
+                        <p className={`text-white text-base font-semibold truncate w-full text-center ${isCurrentUser && localStream ? 'absolute bottom-4 left-4 right-4 bg-black/50 px-2 py-1 rounded-lg' : ''}`}>
+                          {p.user?.name}
+                        </p>
                       </div>
-                      <p className="text-white text-base font-semibold truncate w-full text-center">
-                        {p.user?.name}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {userRole === "AUDIENCE" && (
-                  <button className="w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white">
+                {(userRole === "AUDIENCE" || userRole === "HOST") && (
+                  <button 
+                    onClick={() => handleVote("AGAINST")}
+                    className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 ${userVote === "AGAINST" ? 'bg-red-500 border-red-500' : 'bg-white/5 border-white/10 hover:bg-white/10'} border text-gray-300 hover:text-white`}
+                  >
                     <span className="flex items-center justify-center gap-2">
                       <ThumbsUp size={20} />
-                      Vote Against
+                      {userVote === "AGAINST" ? 'Voted Against' : 'Vote Against'}
                     </span>
                   </button>
                 )}
@@ -366,30 +393,50 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-3">
-                  {forParticipants.map((p) => (
-                    <div
-                      key={p.id}
-                      className="relative flex-1 bg-[#0F172A] border-2 border-green-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px]"
-                    >
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
-                        {p.user?.avatar_url ? (
-                          <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                  {forParticipants.map((p) => {
+                    const isCurrentUser = p.user_id === session?.user?.id;
+                    return (
+                      <div
+                        key={p.id}
+                        className="relative flex-1 bg-[#0F172A] border-2 border-green-500/30 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[200px] overflow-hidden"
+                      >
+                        {isCurrentUser && localStream ? (
+                          <video
+                            autoPlay
+                            playsInline
+                            muted
+                            className="absolute inset-0 w-full h-full object-cover"
+                            ref={(el) => {
+                              if (el && isCurrentUser) {
+                                el.srcObject = localStream;
+                              }
+                            }}
+                          />
                         ) : (
-                          <User size={40} className="text-gray-400" />
+                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                            {p.user?.avatar_url ? (
+                              <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              <User size={40} className="text-gray-400" />
+                            )}
+                          </div>
                         )}
+                        <p className={`text-white text-base font-semibold truncate w-full text-center ${isCurrentUser && localStream ? 'absolute bottom-4 left-4 right-4 bg-black/50 px-2 py-1 rounded-lg' : ''}`}>
+                          {p.user?.name}
+                        </p>
                       </div>
-                      <p className="text-white text-base font-semibold truncate w-full text-center">
-                        {p.user?.name}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {userRole === "AUDIENCE" && (
-                  <button className="w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white">
+                {(userRole === "AUDIENCE" || userRole === "HOST") && (
+                  <button 
+                    onClick={() => handleVote("FOR")}
+                    className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 ${userVote === "FOR" ? 'bg-green-500 border-green-500' : 'bg-white/5 border-white/10 hover:bg-white/10'} border text-gray-300 hover:text-white`}
+                  >
                     <span className="flex items-center justify-center gap-2">
                       <ThumbsUp size={20} />
-                      Vote For
+                      {userVote === "FOR" ? 'Voted For' : 'Vote For'}
                     </span>
                   </button>
                 )}
