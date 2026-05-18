@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Share2, 
   User, 
@@ -33,10 +33,29 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [votesAgainst, setVotesAgainst] = useState(89);
   const [audienceCount, setAudienceCount] = useState(456);
   const [timeRemaining, setTimeRemaining] = useState("42:15");
+  const [isParticipant, setIsParticipant] = useState(true); // Assume participant for now, you'd get this from your data
+  const [permissionsRequested, setPermissionsRequested] = useState(false);
 
   const [isHost, setIsHost] = useState(true);
   const [isForSideMuted, setIsForSideMuted] = useState(false);
   const [isAgainstSideMuted, setIsAgainstSideMuted] = useState(false);
+
+  useEffect(() => {
+    const requestMediaPermissions = async () => {
+      if (!isParticipant || permissionsRequested) return;
+
+      try {
+        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log("Camera and microphone permissions granted!");
+      } catch (error) {
+        console.warn("Could not get camera/microphone permissions:", error);
+      } finally {
+        setPermissionsRequested(true);
+      }
+    };
+
+    requestMediaPermissions();
+  }, [isParticipant, permissionsRequested]);
 
   const [hostParticipant, setHostParticipant] = useState<Participant>({
     id: "host1",
