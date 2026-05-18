@@ -23,13 +23,31 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.newsdata.io',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: '**.thgim.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.indiatimes.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.hindustantimes.com',
+      },
     ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  httpAgentOptions: {
+    keepAlive: true,
   },
   experimental: {
-    turbo: {
-      root: __dirname,
-    },
+    optimizeCss: true,
   },
 }
 
