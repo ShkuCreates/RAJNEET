@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "@livekit/components-react/styles.css";
-
 @layer base {
   :root {
     --background: 222 47% 7%;
