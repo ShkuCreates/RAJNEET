@@ -291,9 +291,9 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [forParticipants, setForParticipants] = useState<any[]>([]);
   const [againstParticipants, setAgainstParticipants] = useState<any[]>([]);
 
-  // Fetch debate data
+  // Fetch debate data and LiveKit token for everyone
   useEffect(() => {
-    const fetchDebate = async () => {
+    const fetchDebateAndToken = async () => {
       try {
         const res = await fetch(`/api/debates/${params.id}`);
         if (res.ok) {
@@ -307,7 +307,6 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
             );
             if (participant) {
               setUserRole(participant.side as any);
-              fetchLiveKitToken();
             } else if (session.user.role === "ADMIN") {
               setShowJoinOptions(true);
             }
@@ -322,6 +321,11 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
               data.debate.participants.filter((p: DebateParticipant) => p.side === "AGAINST")
             );
           }
+
+          // Fetch LiveKit token for everyone (audience, host, panel)
+          if (session?.user) {
+            await fetchLiveKitToken();
+          }
         }
       } catch (error) {
         console.error("Failed to fetch debate:", error);
@@ -330,7 +334,7 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchDebate();
+    fetchDebateAndToken();
   }, [params.id, session?.user?.id, session?.user?.role]);
 
   // Handle voting
@@ -623,8 +627,8 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
           token={livekitToken}
           serverUrl={livekitWsUrl}
           connect={true}
-          video={true}
-          audio={true}
+          video={userRole !== "AUDIENCE"}
+          audio={userRole !== "AUDIENCE"}
         >
           <DebateContent
             debate={debate}
