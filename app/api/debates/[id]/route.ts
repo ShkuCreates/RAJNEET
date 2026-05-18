@@ -21,20 +21,12 @@ export async function GET(
               }
             }
           },
-          createdBy: {
-            select: { id: true, name: true, avatar_url: true }
-          }
-        }
+        },
       });
     } catch (includeError) {
       console.warn("[GET_DEBATE] Failed to include participants, fetching without:", includeError);
       debate = await prisma.debate.findUnique({
         where: { id },
-        include: {
-          createdBy: {
-            select: { id: true, name: true, avatar_url: true }
-          }
-        }
       });
     }
     
