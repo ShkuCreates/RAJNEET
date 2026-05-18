@@ -8,9 +8,6 @@ export async function GET() {
     console.log("[GET_DEBATES] Fetching all debates...");
     const debates = await prisma.debate.findMany({
       orderBy: { created_at: "desc" },
-      include: {
-        participants: true,
-      },
     });
     console.log("[GET_DEBATES] Found", debates.length, "debates!");
     console.log("[GET_DEBATES] Debates:", debates);
