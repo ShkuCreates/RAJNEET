@@ -77,8 +77,10 @@ model User {
   articles   Article[]
   reputationEvents ReputationEvent[]
   debateParticipants DebateParticipant[]
+  debateAudiences DebateAudience[]
+  debateVotes DebateVote[]
   juryVotes JuryVote[]
-  debateAudience DebateAudience[]
+}  debateAudience DebateAudience[]
   debateVotes DebateVote[]
   debateNotificationSubscriber DebateNotificationSubscriber[]
 }
@@ -297,6 +299,8 @@ model Debate {
   arguments DebateArgument[]
   participants DebateParticipant[]
   juryVotes JuryVote[]
+  audiences DebateAudience[]
+  votes DebateVote[]
 }
 
 model DebateArgument {
