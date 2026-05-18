@@ -67,10 +67,11 @@ export async function POST(
           return NextResponse.json({ error: "No slots left for this side" }, { status: 400 });
         }
         
-        // Check if already joined as participant
-        const existingParticipant = await (prisma as any).debateParticipant.findUnique({
-          where: { debate_id_user_id: { debate_id: id, user_id: session.user.id } }
-        }).catch(() => null);
+        // Check if already joined as participant using raw SQL
+        const existingParticipant = await prisma.$queryRaw`
+          SELECT id FROM "DebateParticipant" 
+          WHERE debate_id = ${id} AND user_id = ${session.user.id}
+        `.catch(() => null);
         
         if (existingParticipant) {
           return NextResponse.json({ error: "Already joined as participant" }, { status: 400 });
@@ -82,23 +83,17 @@ export async function POST(
         }).catch(() => null);
         
         try {
-          await (prisma as any).debateParticipant.create({
-            data: {
-              debate_id: id,
-              user_id: session.user.id,
-              side,
-              joined_at: new Date(),
-            }
-          });
-        } catch (createError) {
-          console.warn("[JOIN_DEBATE] Failed with joined_at, trying even more minimal:", createError);
-          await (prisma as any).debateParticipant.create({
-            data: {
-              debate_id: id,
-              user_id: session.user.id,
-              side,
-            }
-          });
+          await prisma.$executeRaw`
+            INSERT INTO "DebateParticipant" (debate_id, user_id, side)
+            VALUES (${id}, ${session.user.id}, ${side})
+            ON CONFLICT (debate_id, user_id) DO NOTHING
+          `;
+        } catch (sqlError) {
+          console.warn("[JOIN_DEBATE] Raw SQL failed, trying minimal prisma create:", sqlError);
+          await prisma.$executeRaw`
+            INSERT INTO "DebateParticipant" (debate_id, user_id, side)
+            VALUES (${id}, ${session.user.id}, ${side})
+          `;
         }
     }
 
