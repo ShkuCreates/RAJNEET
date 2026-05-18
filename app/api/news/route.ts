@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
+  const search = searchParams.get('search')
   const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 100) // Max 100 articles per page
 
   try {
@@ -29,6 +30,14 @@ export async function GET(request: Request) {
           category: { in: ['POLITICAL', 'FINANCE', 'SPORTS', 'WORLD', 'ENTERTAINMENT'] }
         }
       }
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { summary: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } }
+      ]
     }
 
     const articles = await prisma.news.findMany({

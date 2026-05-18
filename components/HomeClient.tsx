@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Loader2, Newspaper, X } from "lucide-react";
+import { Bell, Loader2, Newspaper, X, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import NewsFeed from "@/components/news/NewsFeed";
 import { NewsSkeleton } from "@/components/Skeletons";
@@ -17,10 +17,12 @@ type NewsResponse = {
 export default function HomeClient() {
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get("category") || null;
+  const initialSearch = searchParams.get("search") || "";
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [news, setNews] = useState<any[]>([]);
   const [latestFetchAt, setLatestFetchAt] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   const lastFetchedLabel = useMemo(() => {
     if (!latestFetchAt) return null;
@@ -28,11 +30,13 @@ export default function HomeClient() {
   }, [latestFetchAt]);
 
   useEffect(() => {
-    const fetchNews = async (category?: string) => {
-      const query = category
-        ? `/api/news?category=${encodeURIComponent(category)}&limit=100`
-        : "/api/news?limit=100";
-
+    const fetchNews = async (category?: string, search?: string) => {
+      const params = new URLSearchParams();
+      if (category) params.append("category", category);
+      if (search) params.append("search", search);
+      params.append("limit", "100");
+      
+      const query = `/api/news?${params.toString()}`;
       console.log('Fetching news from:', query);
       const res = await fetch(query, { cache: "no-store" });
       
@@ -57,7 +61,7 @@ export default function HomeClient() {
     const run = async () => {
       try {
         setLoading(true);
-        const newsData = await fetchNews(selectedCategory || undefined);
+        const newsData = await fetchNews(selectedCategory || undefined, searchQuery || undefined);
         if (cancelled) return;
         
         let sortedNews = Array.isArray(newsData.news) ? newsData.news : [];
@@ -84,23 +88,51 @@ export default function HomeClient() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery]);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-6 py-8">
       <div className="flex flex-col gap-8">
         <div className="flex-1">
-          {selectedCategory ? (
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search news articles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-[32px] border border-white/10 bg-[#111827] px-12 py-4 text-white placeholder:text-gray-500 focus:border-accent-blue/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/20"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {selectedCategory || searchQuery ? (
             <div className="mb-6 rounded-[32px] border border-white/10 bg-[#111827] px-8 py-4 text-center shadow-2xl">
               <p className="text-lg font-semibold text-white mb-2">
-                Showing: <span className="font-semibold">{selectedCategory}</span>
+                {selectedCategory && searchQuery ? (
+                  <>Searching for <span className="text-accent-blue">"{searchQuery}"</span> in <span className="font-semibold">{selectedCategory}</span></>
+                ) : searchQuery ? (
+                  <>Searching for <span className="text-accent-blue">"{searchQuery}"</span></>
+                ) : (
+                  <>Showing: <span className="font-semibold">{selectedCategory}</span></>
+                )}
               </p>
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
               >
                 <X size={16} />
-                Clear filter
+                Clear filters
               </Link>
             </div>
           ) : null}
