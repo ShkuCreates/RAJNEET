@@ -128,7 +128,13 @@ export default function ManageDebatesClient({ refreshKey }: ManageDebatesClientP
               <td className="p-6 text-center">
                 {debate.scheduled_at ? (
                   <span className="text-sm text-gray-300">
-                    {format(new Date(debate.scheduled_at), "MMM dd, HH:mm")}
+                    {new Date(debate.scheduled_at).toLocaleString("en-IN", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Asia/Kolkata",
+                    })}
                   </span>
                 ) : (
                   <span className="text-xs text-gray-600">Not scheduled</span>

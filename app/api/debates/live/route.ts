@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     // Fetch live debates (status = "live") and upcoming debates (status = "upcoming")
-    let debates;
+    let debates: any[];
     try {
-      debates = await prisma.debate.findMany({
+      debates = await (prisma as any).debate.findMany({
         where: {
           status: {
             in: ["live", "upcoming"]
@@ -32,7 +32,7 @@ export async function GET() {
       });
     } catch (includeError) {
       console.warn("[LIVE_DEBATES] Failed to include participants, fetching without:", includeError);
-      debates = await prisma.debate.findMany({
+      debates = await (prisma as any).debate.findMany({
         where: {
           status: {
             in: ["live", "upcoming"]
@@ -58,7 +58,7 @@ export async function GET() {
 
     return NextResponse.json({ 
       success: true, 
-      debates: debates.map(debate => ({
+      debates: debates.map((debate: any) => ({
         id: debate.id,
         topic: debate.topic,
         description: debate.description,
