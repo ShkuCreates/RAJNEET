@@ -9,7 +9,7 @@ export async function GET() {
       orderBy: { created_at: "desc" },
       include: {
         participants: true,
-        audience: true,
+        audiences: true,
       },
     });
     return NextResponse.json({ success: true, debates });

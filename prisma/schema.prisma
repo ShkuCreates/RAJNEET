@@ -293,6 +293,10 @@ model Debate {
   status           String   @default("upcoming") // upcoming, live, completed
   scheduled_at     DateTime?
   created_at       DateTime @default(now())
+  image_url        String?
+  duration_minutes Int      @default(60)
+  max_for_participants Int   @default(5)
+  max_against_participants Int @default(5)
 
   arguments DebateArgument[]
   participants DebateParticipant[]
