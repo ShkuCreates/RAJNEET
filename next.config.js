@@ -46,9 +46,6 @@ const nextConfig = {
   httpAgentOptions: {
     keepAlive: true,
   },
-  experimental: {
-    optimizeCss: true,
-  },
 }
 
 module.exports = nextConfig

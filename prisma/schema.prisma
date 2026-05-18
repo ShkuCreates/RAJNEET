@@ -80,9 +80,7 @@ model User {
   debateAudiences DebateAudience[]
   debateVotes DebateVote[]
   juryVotes JuryVote[]
-}  debateAudience DebateAudience[]
-  debateVotes DebateVote[]
-  debateNotificationSubscriber DebateNotificationSubscriber[]
+  debateNotificationSubscribers DebateNotificationSubscriber[]
 }
 
 model News {
