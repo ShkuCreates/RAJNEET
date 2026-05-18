@@ -1,184 +1,163 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Users, ThumbsUp, Send } from "lucide-react";
+import { Share2, User, Users, ThumbsUp, Timer } from "lucide-react";
 
 export default function DebateRoomPage({ params }: { params: { id: string } }) {
-  const [selectedSide, setSelectedSide] = useState<"FOR" | "AGAINST" | null>(null);
-  const [argument, setArgument] = useState("");
-  const [forArguments, setForArguments] = useState<any[]>([]);
-  const [againstArguments, setAgainstArguments] = useState<any[]>([]);
+  const [votedFor, setVotedFor] = useState<boolean | null>(null);
+  const [votesFor, setVotesFor] = useState(124);
+  const [votesAgainst, setVotesAgainst] = useState(89);
+  const [audienceCount, setAudienceCount] = useState(456);
+  const [timeRemaining, setTimeRemaining] = useState("42:15");
 
   const mockDebate = {
     id: params.id,
     topic: "Should India implement universal basic income?",
     description: "Discuss the economic and social implications of UBI in the Indian context.",
-    timeRemaining: "45:23",
-    participantCount: 24,
   };
 
-  const handleSubmitArgument = () => {
-    if (!selectedSide || !argument.trim()) return;
-    const newArgument = {
-      id: Date.now(),
-      username: "You",
-      content: argument,
-      like_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    if (selectedSide === "FOR") {
-      setForArguments([newArgument, ...forArguments]);
-    } else {
-      setAgainstArguments([newArgument, ...againstArguments]);
+  const handleVoteFor = () => {
+    if (votedFor === true) return;
+    if (votedFor === false) {
+      setVotesAgainst(v => v - 1);
     }
-    setArgument("");
+    setVotesFor(v => v + 1);
+    setVotedFor(true);
+  };
+
+  const handleVoteAgainst = () => {
+    if (votedFor === false) return;
+    if (votedFor === true) {
+      setVotesFor(v => v - 1);
+    }
+    setVotesAgainst(v => v + 1);
+    setVotedFor(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#050A14] py-8 px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 p-6 bg-white/[0.03] border border-white/10 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">{mockDebate.topic}</h1>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-accent-red">
-                <Clock size={16} />
-                <span className="font-mono font-bold">{mockDebate.timeRemaining}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-400">
-                <Users size={16} />
-                <span>{mockDebate.participantCount}</span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#050A14] text-white">
+      {/* Top Bar */}
+      <div className="border-b border-white/10 bg-[#050A14]/95 backdrop-blur-sm p-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
+            <Share2 size={18} className="text-gray-400" />
+            <span className="text-sm font-semibold text-gray-300">Share</span>
+          </button>
+
+          <div className="flex-1 px-4">
+            <h1 className="text-center text-lg md:text-xl font-bold text-white truncate">
+              {mockDebate.topic}
+            </h1>
           </div>
-          <p className="text-gray-400">{mockDebate.description}</p>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
+            <User size={18} className="text-gray-400" />
+            <span className="text-sm font-semibold text-gray-300">Profile</span>
+          </button>
         </div>
+      </div>
 
-        {/* Side Selection */}
-        {!selectedSide && (
-          <div className="mb-8 p-6 bg-white/[0.03] border border-white/10 rounded-xl">
-            <h2 className="text-xl font-bold text-white mb-4 text-center">Choose Your Side</h2>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => setSelectedSide("FOR")}
-                className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors"
-              >
-                FOR
-              </button>
-              <button
-                onClick={() => setSelectedSide("AGAINST")}
-                className="px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
-              >
-                AGAINST
-              </button>
-            </div>
+      {/* Stats Bar */}
+      <div className="border-b border-white/10 bg-[#111827] p-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-6 md:gap-12">
+          <div className="flex items-center gap-2">
+            <Users size={18} className="text-accent-blue" />
+            <span className="text-sm md:text-base font-semibold text-white">
+              {audienceCount} <span className="text-gray-400">Audience</span>
+            </span>
           </div>
-        )}
-
-        {/* Debate Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* FOR Side */}
-          <div className="space-y-4">
-            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-              <h3 className="text-lg font-bold text-green-500">FOR Arguments</h3>
-            </div>
-            <div className="space-y-4">
-              {forArguments.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No arguments yet</p>
-              ) : (
-                forArguments.map((arg) => (
-                  <div key={arg.id} className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="font-semibold text-white">@{arg.username}</span>
-                      <div className="flex items-center gap-1 text-gray-400">
-                        <ThumbsUp size={14} />
-                        <span>{arg.like_count}</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">{arg.content}</p>
-                  </div>
-                ))
-              )}
-              {/* Mock arguments */}
-              <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="font-semibold text-white">@economy_expert</span>
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <ThumbsUp size={14} />
-                    <span>45</span>
-                  </div>
-                </div>
-                <p className="text-gray-300">UBI would reduce poverty and provide economic security to millions of Indians, especially in the informal sector.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* AGAINST Side */}
-          <div className="space-y-4">
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-              <h3 className="text-lg font-bold text-red-500">AGAINST Arguments</h3>
-            </div>
-            <div className="space-y-4">
-              {againstArguments.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No arguments yet</p>
-              ) : (
-                againstArguments.map((arg) => (
-                  <div key={arg.id} className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="font-semibold text-white">@{arg.username}</span>
-                      <div className="flex items-center gap-1 text-gray-400">
-                        <ThumbsUp size={14} />
-                        <span>{arg.like_count}</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">{arg.content}</p>
-                  </div>
-                ))
-              )}
-              {/* Mock arguments */}
-              <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="font-semibold text-white">@fiscal_conservative</span>
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <ThumbsUp size={14} />
-                    <span>38</span>
-                  </div>
-                </div>
-                <p className="text-gray-300">The fiscal burden would be unsustainable. India needs targeted welfare programs, not blanket UPI.</p>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <Timer size={18} className="text-accent-red" />
+            <span className="text-sm md:text-base font-mono font-bold text-white">
+              {timeRemaining}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Argument Input */}
-        {selectedSide && (
-          <div className="mt-8 p-6 bg-white/[0.03] border border-white/10 rounded-xl">
-            <h3 className="text-lg font-bold text-white mb-4">
-              Post {selectedSide} Argument
-            </h3>
-            <textarea
-              value={argument}
-              onChange={(e) => setArgument(e.target.value)}
-              placeholder="Write your argument (50-500 words)..."
-              rows={5}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue/50 resize-none"
-            />
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-500">
-                {argument.split(/\s+/).filter(w => w.length > 0).length} / 500 words
-              </span>
+      {/* Main Debate Stage */}
+      <div className="p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 md:gap-8 items-stretch">
+            {/* AGAINST Side */}
+            <div className="flex flex-col gap-4">
+              <div className="text-center mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-red-500">Against</h2>
+              </div>
+              
+              <div className="flex-1 bg-[#111827] border-2 border-red-500/30 rounded-2xl p-4 md:p-8 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-4 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                    <Users size={48} className="text-gray-500" />
+                  </div>
+                  <p className="text-gray-400 text-sm md:text-base">Participants Section</p>
+                </div>
+              </div>
+
               <button
-                onClick={handleSubmitArgument}
-                disabled={argument.split(/\s+/).filter(w => w.length > 0).length < 50 || argument.split(/\s+/).filter(w => w.length > 0).length > 500}
-                className="flex items-center gap-2 px-6 py-3 bg-accent-blue hover:bg-accent-blue/90 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleVoteAgainst}
+                disabled={votedFor === false}
+                className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all ${
+                  votedFor === false
+                    ? "bg-red-500 text-white"
+                    : "bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
+                }`}
               >
-                <Send size={16} />
-                Submit Argument
+                <span className="flex items-center justify-center gap-2">
+                  <ThumbsUp size={20} />
+                  Vote Against ({votesAgainst})
+                </span>
+              </button>
+            </div>
+
+            {/* HOST Center */}
+            <div className="flex flex-col justify-center">
+              <div className="text-center mb-2">
+                <h2 className="text-xl md:text-2xl font-bold text-accent-blue">Host</h2>
+              </div>
+              
+              <div className="bg-[#111827] border-2 border-accent-blue/30 rounded-2xl p-4 md:p-6 flex items-center justify-center min-h-[200px] md:min-h-[300px]">
+                <div className="text-center">
+                  <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 rounded-full bg-accent-blue/10 border border-accent-blue/30 flex items-center justify-center">
+                    <User size={32} className="text-accent-blue" />
+                  </div>
+                  <p className="text-gray-400 text-sm">Host Section</p>
+                </div>
+              </div>
+            </div>
+
+            {/* FOR Side */}
+            <div className="flex flex-col gap-4">
+              <div className="text-center mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-green-500">For</h2>
+              </div>
+              
+              <div className="flex-1 bg-[#111827] border-2 border-green-500/30 rounded-2xl p-4 md:p-8 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-4 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                    <Users size={48} className="text-gray-500" />
+                  </div>
+                  <p className="text-gray-400 text-sm md:text-base">Participants Section</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleVoteFor}
+                disabled={votedFor === true}
+                className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all ${
+                  votedFor === true
+                    ? "bg-green-500 text-white"
+                    : "bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
+                }`}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <ThumbsUp size={20} />
+                  Vote For ({votesFor})
+                </span>
               </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
