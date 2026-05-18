@@ -78,6 +78,8 @@ model User {
   reputationEvents ReputationEvent[]
   debateParticipants DebateParticipant[]
   juryVotes JuryVote[]
+  debateAudience DebateAudience[]
+  debateVotes DebateVote[]
   debateNotificationSubscriber DebateNotificationSubscriber[]
 }
 
@@ -317,7 +319,35 @@ model DebateParticipant {
   debate_id String
   user_id   String
   side      String   // FOR, AGAINST
+  is_muted  Boolean  @default(false)
+  is_camera_on Boolean @default(true)
+  is_mic_on Boolean @default(true)
   joined_at DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, user_id])
+}
+
+model DebateAudience {
+  id        String   @id @default(cuid())
+  debate_id String
+  user_id   String
+  joined_at DateTime @default(now())
+
+  debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([debate_id, user_id])
+}
+
+model DebateVote {
+  id        String   @id @default(cuid())
+  debate_id String
+  user_id   String
+  side      String   // FOR, AGAINST
+  created_at DateTime @default(now())
 
   debate Debate @relation(fields: [debate_id], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)

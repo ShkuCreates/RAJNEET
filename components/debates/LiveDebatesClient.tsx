@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Calendar, Flame, Bell, Play } from "lucide-react";
+import { Calendar, Flame, Bell, Play, Users, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 
 type LiveDebatesClientProps = {
   currentUser: any;
@@ -15,16 +14,24 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
+  image_url?: string;
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
   created_at: string;
+  max_for_participants: number;
+  max_against_participants: number;
+  audience_count: number;
+  participant_count: number;
+  participants: { side: string }[];
 };
 
 export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProps) {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [joining, setJoining] = useState<string | null>(null);
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
     fetchDebates();
@@ -65,6 +72,32 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
     }
   };
 
+  const handleJoinAudience = async (debateId: string) => {
+    if (!session) {
+      toast.error("Please sign in first");
+      return;
+    }
+    setJoining(debateId);
+    try {
+      const res = await fetch(`/api/debates/${debateId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "AUDIENCE" }),
+      });
+      if (res.ok) {
+        toast.success("Joined as audience!");
+        router.push(`/debates/${debateId}`);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to join");
+      }
+    } catch (e) {
+      toast.error("Failed to join");
+    } finally {
+      setJoining(null);
+    }
+  };
+
   const liveDebates = debates.filter((d) => d.status === "live");
   const upcomingDebates = debates.filter((d) => d.status === "upcoming");
 
@@ -83,38 +116,63 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
         )}
 
         {!loading && liveDebates.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-6 mb-16">
             {liveDebates.map((debate) => {
               return (
-              <div key={debate.id} className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 shadow-2xl">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-red-500/20 rounded-full">
-                      <Flame size={16} className="text-red-400" />
-                      <span className="text-sm font-semibold text-red-400">LIVE NOW</span>
+                <div key={debate.id} className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 shadow-2xl">
+                  {debate.image_url && (
+                    <div className="mb-6 rounded-xl overflow-hidden h-48 bg-white/5">
+                      <img 
+                        src={debate.image_url} 
+                        alt={debate.topic} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-red-500/20 rounded-full">
+                        <Flame size={16} className="text-red-400" />
+                        <span className="text-sm font-semibold text-red-400">LIVE NOW</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => handleJoinAudience(debate.id)}
+                        disabled={joining === debate.id}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <Users size={16} />
+                        {joining === debate.id ? "Joining..." : "Join Audience"}
+                      </button>
+                      <button
+                        onClick={() => router.push(`/debates/${debate.id}`)}
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <Play size={16} />
+                        View Debate
+                      </button>
                     </div>
                   </div>
-                  <Link
-                    href={`/debates/${debate.id}`}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <Play size={16} />
-                    Join Debate
-                  </Link>
+                  
+                  <h2 className="text-2xl font-bold text-white mb-3">{debate.topic}</h2>
+                  {debate.description && (
+                    <p className="text-gray-300 mb-4">{debate.description}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <Users size={14} />
+                      <span>{debate.audience_count} audience</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <h2 className="text-2xl font-bold text-white mb-3">{debate.topic}</h2>
-                {debate.description && (
-                  <p className="text-gray-300 mb-4">{debate.description}</p>
-                )}
-              </div>
-            );
+              );
             })}
           </div>
         )}
 
         {!loading && liveDebates.length === 0 && (
-          <div className="text-center py-20">
+          <div className="text-center py-20 mb-16">
             <div className="mb-8 p-12 bg-white/[0.03] border border-white/10 rounded-2xl">
               <div className="w-32 h-32 mx-auto mb-6 bg-white/[0.05] rounded-full flex items-center justify-center">
                 <Flame size={48} className="text-gray-500" />
@@ -146,6 +204,15 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
             <div className="space-y-4">
               {upcomingDebates.map((debate) => (
                 <div key={debate.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-red-500/30 transition-all">
+                  {debate.image_url && (
+                    <div className="mb-4 rounded-xl overflow-hidden h-32 bg-white/5">
+                      <img 
+                        src={debate.image_url} 
+                        alt={debate.topic} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-white mb-2 group-hover:text-red-400 transition-colors">

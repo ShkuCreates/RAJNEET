@@ -12,7 +12,11 @@ export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps)
   const [formData, setFormData] = useState({
     topic: "",
     description: "",
+    image_url: "",
     scheduled_at: "",
+    duration_minutes: "60",
+    max_for_participants: "5",
+    max_against_participants: "5",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +32,12 @@ export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps)
       const res = await fetch("/api/debates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          duration_minutes: parseInt(formData.duration_minutes),
+          max_for_participants: parseInt(formData.max_for_participants),
+          max_against_participants: parseInt(formData.max_against_participants),
+        }),
       });
 
       if (res.ok) {
@@ -36,7 +45,11 @@ export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps)
         setFormData({
           topic: "",
           description: "",
+          image_url: "",
           scheduled_at: "",
+          duration_minutes: "60",
+          max_for_participants: "5",
+          max_against_participants: "5",
         });
         onClose?.();
       } else {
@@ -86,20 +99,85 @@ export default function ScheduleDebateForm({ onClose }: ScheduleDebateFormProps)
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Scheduled At */}
+            {/* Image URL */}
             <div>
               <label className="block text-sm font-semibold text-gray-400 mb-2">
-                <Calendar size={16} className="inline mr-2" />
-                Date & Time <span className="text-red-500">*</span>
+                <Image size={16} className="inline mr-2" />
+                Cover Image URL
               </label>
               <input
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-accent-blue transition-all"
-                required
+                type="url"
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                placeholder="https://..."
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue transition-all"
               />
             </div>
+
+            {/* Duration */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-400 mb-2">
+                <Clock size={16} className="inline mr-2" />
+                Duration (minutes)
+              </label>
+              <input
+                type="number"
+                min="15"
+                max="180"
+                value={formData.duration_minutes}
+                onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Max FOR Participants */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-400 mb-2">
+                <Users size={16} className="inline mr-2" />
+                Max FOR the Motion
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={formData.max_for_participants}
+                onChange={(e) => setFormData({ ...formData, max_for_participants: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue transition-all"
+              />
+            </div>
+
+            {/* Max AGAINST Participants */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-400 mb-2">
+                <Users size={16} className="inline mr-2" />
+                Max AGAINST the Motion
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={formData.max_against_participants}
+                onChange={(e) => setFormData({ ...formData, max_against_participants: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-blue transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Scheduled At */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-400 mb-2">
+              <Calendar size={16} className="inline mr-2" />
+              Date & Time <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={formData.scheduled_at}
+              onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-accent-blue transition-all"
+              required
+            />
           </div>
 
           {/* Submit Button */}
