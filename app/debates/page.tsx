@@ -9,16 +9,29 @@ import ManageDebatesClient from "@/components/debates/ManageDebatesClient";
 
 type Tab = "ongoing" | "calendar" | "admin";
 type AdminTab = "schedule" | "manage";
+type Debate = {
+  id: string;
+  topic: string;
+  description?: string;
+  image_url?: string;
+  scheduled_at?: string;
+  duration_minutes?: number;
+  max_for_participants?: number;
+  max_against_participants?: number;
+  status: string;
+};
 
 export default function DebatesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("ongoing");
   const [adminSubTab, setAdminSubTab] = useState<AdminTab>("schedule");
   const [refreshDebatesKey, setRefreshDebatesKey] = useState(0);
+  const [editingDebate, setEditingDebate] = useState<Debate | null>(null);
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
   
   const handleDebateScheduled = () => {
     setRefreshDebatesKey(prev => prev + 1);
+    setEditingDebate(null);
   };
 
   const tabs: { id: Tab; label: string; isAdmin?: boolean }[] = [
@@ -85,8 +98,20 @@ export default function DebatesPage() {
                 </button>
               </div>
               
-              {adminSubTab === "schedule" && <ScheduleDebateForm onSuccess={handleDebateScheduled} />}
-              {adminSubTab === "manage" && <ManageDebatesClient refreshKey={refreshDebatesKey} />}
+              {editingDebate ? (
+                <ScheduleDebateForm 
+                  debate={editingDebate} 
+                  onSuccess={handleDebateScheduled} 
+                  onClose={() => setEditingDebate(null)} 
+                />
+              ) : adminSubTab === "schedule" ? (
+                <ScheduleDebateForm onSuccess={handleDebateScheduled} />
+              ) : (
+                <ManageDebatesClient 
+                  refreshKey={refreshDebatesKey} 
+                  onEdit={setEditingDebate} 
+                />
+              )}
             </div>
           )}
         </div>

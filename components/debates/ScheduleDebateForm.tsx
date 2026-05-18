@@ -1,15 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Clock, Image, Users, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+type Debate = {
+  id: string;
+  topic: string;
+  description?: string;
+  image_url?: string;
+  scheduled_at?: string;
+  duration_minutes?: number;
+  max_for_participants?: number;
+  max_against_participants?: number;
+  status: string;
+};
 
 type ScheduleDebateFormProps = {
   onClose?: () => void;
   onSuccess?: () => void;
+  debate?: Debate;
 };
 
-export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebateFormProps) {
+export default function ScheduleDebateForm({ onClose, onSuccess, debate }: ScheduleDebateFormProps) {
   const [formData, setFormData] = useState({
     topic: "",
     description: "",
@@ -21,6 +34,20 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (debate) {
+      setFormData({
+        topic: debate.topic || "",
+        description: debate.description || "",
+        image_url: debate.image_url || "",
+        scheduled_at: debate.scheduled_at ? new Date(debate.scheduled_at).toISOString().slice(0, 16) : "",
+        duration_minutes: String(debate.duration_minutes || 60),
+        max_for_participants: String(debate.max_for_participants || 5),
+        max_against_participants: String(debate.max_against_participants || 5),
+      });
+    }
+  }, [debate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.topic || !formData.scheduled_at) {
@@ -30,8 +57,10 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/debates", {
-        method: "POST",
+      const url = debate ? `/api/debates/${debate.id}` : "/api/debates";
+      const method = debate ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
@@ -42,7 +71,7 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
       });
 
       if (res.ok) {
-        toast.success("Debate scheduled successfully!");
+        toast.success(debate ? "Debate updated successfully!" : "Debate scheduled successfully!");
         setFormData({
           topic: "",
           description: "",
@@ -56,10 +85,10 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
         onClose?.();
       } else {
         const data = await res.json();
-        toast.error(data.error || "Failed to schedule debate");
+        toast.error(data.error || "Failed to save debate");
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to schedule debate");
+      toast.error(error.message || "Failed to save debate");
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +97,7 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
   return (
     <div className="min-h-[600px] rounded-[32px] border border-white/10 bg-[#111827] px-8 py-12 shadow-2xl">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-8">Schedule New Debate</h2>
+        <h2 className="text-3xl font-bold text-white mb-8">{debate ? "Edit Debate" : "Schedule New Debate"}</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Topic */}
@@ -189,8 +218,14 @@ export default function ScheduleDebateForm({ onClose, onSuccess }: ScheduleDebat
               disabled={isSubmitting}
               className="flex-1 px-6 py-4 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <Plus size={18} />
-              {isSubmitting ? "Scheduling..." : "Schedule Debate"}
+              {debate ? (
+                isSubmitting ? "Saving..." : "Save Changes"
+              ) : (
+                <>
+                  <Plus size={18} />
+                  {isSubmitting ? "Scheduling..." : "Schedule Debate"}
+                </>
+              )}
             </button>
             
             {onClose && (

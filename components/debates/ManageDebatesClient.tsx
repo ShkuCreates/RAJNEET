@@ -9,17 +9,22 @@ type Debate = {
   id: string;
   topic: string;
   description?: string;
-  status: string;
+  image_url?: string;
   scheduled_at?: string;
+  duration_minutes?: number;
+  max_for_participants?: number;
+  max_against_participants?: number;
+  status: string;
   created_at: string;
 };
 
 type ManageDebatesClientProps = {
   refreshKey?: number;
+  onEdit?: (debate: Debate) => void;
 };
 
-export default function ManageDebatesClient({ refreshKey }: ManageDebatesClientProps) {
-  const [debates, setDebates] = useState<Debate[]>([]);
+export default function ManageDebatesClient({ refreshKey, onEdit }: ManageDebatesClientProps) {
+  const [debates, setDebates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -161,6 +166,7 @@ export default function ManageDebatesClient({ refreshKey }: ManageDebatesClientP
                     </button>
                   )}
                   <button 
+                    onClick={() => onEdit?.(debate)}
                     className="p-2 hover:bg-accent-blue/10 text-gray-500 hover:text-accent-blue rounded-lg transition-all"
                     title="Edit"
                   >
