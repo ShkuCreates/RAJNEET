@@ -68,10 +68,12 @@ export async function POST(
         }
         
         // Check if already joined as participant using raw SQL
-        const existingParticipant = await prisma.$queryRaw`
+        const existingParticipantResults = await prisma.$queryRaw`
           SELECT id FROM "DebateParticipant" 
           WHERE debate_id = ${id} AND user_id = ${session.user.id}
-        `.catch(() => null);
+        `.catch(() => []);
+        
+        const existingParticipant = Array.isArray(existingParticipantResults) && existingParticipantResults.length > 0;
         
         if (existingParticipant) {
           return NextResponse.json({ error: "Already joined as participant" }, { status: 400 });
