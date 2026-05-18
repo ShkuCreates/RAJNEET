@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 100) // Max 100 articles per page
 
   try {
-    const where: any = { status: 'PUBLISHED' }
+    const where: any = {}
     
     if (category) {
       // Map category names to database values
