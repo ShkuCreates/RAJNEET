@@ -4,17 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import {
   Share2,
   User,
-  Users,
   ThumbsUp,
-  Timer,
   Mic,
   MicOff,
   Video,
   VideoOff,
-  Hand,
-  HandHelping,
-  Volume2,
-  VolumeX,
   Loader2,
   X
 } from "lucide-react";
@@ -76,7 +70,6 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   // Mock participants for now
   const [forParticipants, setForParticipants] = useState<any[]>([]);
   const [againstParticipants, setAgainstParticipants] = useState<any[]>([]);
-  const [hostParticipant, setHostParticipant] = useState<any>(null);
 
   // Fetch debate data
   useEffect(() => {
@@ -474,42 +467,48 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
               <div className="bg-[#111827] border border-white/10 rounded-[32px] p-6 shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-6">{currentPoll.question}</h3>
                 <div className="space-y-3">
-                  {currentPoll.options.map((option, index) => {
-                    const voteCount = Object.values(currentPoll.votes).filter(v => v === option).length;
+                  {(() => {
                     const totalVotes = Object.keys(currentPoll.votes).length;
-                    const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-                    const isSelected = userPollVote === option;
-                    
                     return (
-                      <button
-                        key={index}
-                        onClick={() => userRole === "AUDIENCE" && voteInPoll(option)}
-                        disabled={userRole !== "AUDIENCE"}
-                        className={`w-full p-4 rounded-xl border transition-all text-left ${
-                          isSelected 
-                            ? 'bg-accent-blue/20 border-accent-blue/50' 
-                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                        } ${userRole !== "AUDIENCE" ? 'cursor-default' : ''}`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white font-semibold">{option}</span>
-                          <span className="text-sm text-gray-400">{voteCount} {voteCount === 1 ? 'vote' : 'votes'}</span>
-                        </div>
-                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full transition-all duration-500 ${isSelected ? 'bg-accent-blue' : 'bg-white/30'}`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </button>
+                      <>
+                        {currentPoll.options.map((option, index) => {
+                          const voteCount = Object.values(currentPoll.votes).filter(v => v === option).length;
+                          const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+                          const isSelected = userPollVote === option;
+                          
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => userRole === "AUDIENCE" && voteInPoll(option)}
+                              disabled={userRole !== "AUDIENCE"}
+                              className={`w-full p-4 rounded-xl border transition-all text-left ${
+                                isSelected 
+                                  ? 'bg-accent-blue/20 border-accent-blue/50' 
+                                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                              } ${userRole !== "AUDIENCE" ? 'cursor-default' : ''}`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-white font-semibold">{option}</span>
+                                <span className="text-sm text-gray-400">{voteCount} {voteCount === 1 ? 'vote' : 'votes'}</span>
+                              </div>
+                              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full transition-all duration-500 ${isSelected ? 'bg-accent-blue' : 'bg-white/30'}`}
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </button>
+                          );
+                        })}
+                        {totalVotes > 0 && (
+                          <p className="text-center text-sm text-gray-400 mt-4">
+                            {totalVotes} {totalVotes === 1 ? 'person voted' : 'people voted'}
+                          </p>
+                        )}
+                      </>
                     );
-                  })}
+                  })()}
                 </div>
-                {totalVotes > 0 && (
-                  <p className="text-center text-sm text-gray-400 mt-4">
-                    {totalVotes} {totalVotes === 1 ? 'person voted' : 'people voted'}
-                  </p>
-                )}
               </div>
             </div>
           )}
