@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Loader2, Newspaper, X, Search } from "lucide-react";
+import { Newspaper, X, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import NewsFeed from "@/components/news/NewsFeed";
 import { NewsSkeleton } from "@/components/Skeletons";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-
-type NewsResponse = {
-  news: any[];
-  latestFetchAt: string | null;
-};
 
 export default function HomeClient() {
   const searchParams = useSearchParams();
@@ -65,7 +60,7 @@ export default function HomeClient() {
         if (cancelled) return;
         
         let sortedNews = Array.isArray(newsData.news) ? newsData.news : [];
-        sortedNews = sortedNews.sort((a, b) => {
+        sortedNews = sortedNews.sort((a: any, b: any) => {
           if (a.is_pinned && !b.is_pinned) return -1;
           if (!a.is_pinned && b.is_pinned) return 1;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
