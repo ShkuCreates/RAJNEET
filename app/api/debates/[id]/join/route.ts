@@ -18,10 +18,20 @@ export async function POST(
     const body = await req.json();
     const { role, side } = body; // role: "FOR | "AGAINST" | "AUDIENCE"
 
-    const debate = await prisma.debate.findUnique({
-      where: { id },
-      include: { participants: true },
-    });
+    let debate;
+    let participants = [];
+    try {
+      debate = await prisma.debate.findUnique({
+        where: { id },
+        include: { participants: true },
+      });
+      if (debate) participants = debate.participants;
+    } catch (includeError) {
+      console.warn("[JOIN_DEBATE] Failed to include participants, fetching without:", includeError);
+      debate = await prisma.debate.findUnique({
+        where: { id },
+      });
+    }
 
     if (!debate) {
       return NextResponse.json({ error: "Debate not found" }, { status: 404 });
@@ -51,7 +61,7 @@ export async function POST(
         const maxAgainst = (debate as any).max_against_participants || 5;
         const maxParticipants = side === "FOR" ? maxFor : maxAgainst;
         
-        const currentCount = debate.participants.filter((p: any) => p.side === side).length;
+        const currentCount = participants.filter((p: any) => p.side === side).length;
         
         if (currentCount >= maxParticipants) {
           return NextResponse.json({ error: "No slots left for this side" }, { status: 400 });

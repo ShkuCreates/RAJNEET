@@ -6,28 +6,55 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     // Fetch live debates (status = "live") and upcoming debates (status = "upcoming")
-    const debates = await prisma.debate.findMany({
-      where: {
-        status: {
-          in: ["live", "upcoming"]
-        }
-      },
-      include: {
-        created_by: {
-          select: {
-            id: true,
-            name: true,
-            avatar_url: true
+    let debates;
+    try {
+      debates = await prisma.debate.findMany({
+        where: {
+          status: {
+            in: ["live", "upcoming"]
           }
         },
-        arguments: true,
-        participants: true,
-      },
-      orderBy: [
-        { status: "asc" }, // live first, then upcoming
-        { scheduled_at: "asc" }
-      ]
-    });
+        include: {
+          created_by: {
+            select: {
+              id: true,
+              name: true,
+              avatar_url: true
+            }
+          },
+          arguments: true,
+          participants: true,
+        },
+        orderBy: [
+          { status: "asc" }, // live first, then upcoming
+          { scheduled_at: "asc" }
+        ]
+      });
+    } catch (includeError) {
+      console.warn("[LIVE_DEBATES] Failed to include participants, fetching without:", includeError);
+      debates = await prisma.debate.findMany({
+        where: {
+          status: {
+            in: ["live", "upcoming"]
+          }
+        },
+        include: {
+          created_by: {
+            select: {
+              id: true,
+              name: true,
+              avatar_url: true
+            }
+          },
+          arguments: true,
+        },
+        orderBy: [
+          { status: "asc" }, // live first, then upcoming
+          { scheduled_at: "asc" }
+        ]
+      });
+      debates = debates.map(d => ({ ...d, participants: [] }));
+    }
 
     return NextResponse.json({ 
       success: true, 
