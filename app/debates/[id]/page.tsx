@@ -14,6 +14,15 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import {
+  LiveKitRoom,
+  VideoConference,
+  useToken,
+  useLocalParticipant,
+  useParticipants,
+  useRoomContext,
+} from "@livekit/components-react";
+import { Room, Track } from "livekit-client";
 
 type DebateParticipant = {
   id: string;
@@ -70,6 +79,10 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   // Mock participants for now
   const [forParticipants, setForParticipants] = useState<any[]>([]);
   const [againstParticipants, setAgainstParticipants] = useState<any[]>([]);
+
+  // LiveKit state
+  const [livekitToken, setLivekitToken] = useState<string | null>(null);
+  const [livekitWsUrl, setLivekitWsUrl] = useState<string | null>(null);
 
   // Fetch debate data
   useEffect(() => {
@@ -226,11 +239,36 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
     }
   };
 
+  // Fetch LiveKit token
+  const fetchLiveKitToken = async () => {
+    try {
+      const res = await fetch("/api/livekit/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomName: `debate-${params.id}`,
+          participantName: session?.user?.name || "Anonymous",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLivekitToken(data.token);
+        setLivekitWsUrl(data.wsUrl);
+      } else {
+        console.error("Failed to get LiveKit token");
+      }
+    } catch (error) {
+      console.error("Error fetching LiveKit token:", error);
+    }
+  };
+
   // Join as host
   const joinAsHost = () => {
     setUserRole("HOST");
     setShowJoinOptions(false);
     startLocalStream();
+    fetchLiveKitToken();
   };
 
   // Join as participant (for or against)
@@ -246,6 +284,7 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
         setUserRole(side);
         setShowJoinOptions(false);
         startLocalStream();
+        fetchLiveKitToken();
         toast.success(`Joined as ${side.toLowerCase()}!`);
         
         // Refresh debate data
@@ -296,6 +335,19 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-[#050A14] text-white">
+      {/* LiveKit Room */}
+      {livekitToken && livekitWsUrl && (
+        <LiveKitRoom
+          token={livekitToken}
+          serverUrl={livekitWsUrl}
+          connect={true}
+          video={isCameraOn}
+          audio={isMicOn}
+        >
+          {/* LiveKit VideoConference (optional, but we'll use our own UI) */}
+          {/* <VideoConference /> */}
+        </LiveKitRoom>
+      )}
       {/* Top Bar */}
       <div className="border-b border-white/10 bg-[#050A14]/95 backdrop-blur-sm p-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
