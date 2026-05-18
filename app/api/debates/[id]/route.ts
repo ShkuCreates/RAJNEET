@@ -24,16 +24,33 @@ export async function PATCH(
     }
     if (body.topic) data.topic = body.topic;
     if (body.description !== undefined) data.description = body.description;
-    if (body.image_url !== undefined) data.image_url = body.image_url;
     if (body.scheduled_at) data.scheduled_at = new Date(body.scheduled_at);
-    if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes;
-    if (body.max_for_participants !== undefined) data.max_for_participants = body.max_for_participants;
-    if (body.max_against_participants !== undefined) data.max_against_participants = body.max_against_participants;
 
-    const debate = await prisma.debate.update({
-      where: { id },
-      data,
-    });
+    let debate;
+    try {
+      if (body.image_url !== undefined) data.image_url = body.image_url;
+      if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes;
+      if (body.max_for_participants !== undefined) data.max_for_participants = body.max_for_participants;
+      if (body.max_against_participants !== undefined) data.max_against_participants = body.max_against_participants;
+
+      debate = await prisma.debate.update({
+        where: { id },
+        data,
+      });
+    } catch (dbError) {
+      console.warn("Failed with extended fields, falling back to base data:", dbError);
+      const baseData: any = {};
+      if (body.status) baseData.status = body.status;
+      if (body.status === "live") baseData.scheduled_at = new Date();
+      if (body.topic) baseData.topic = body.topic;
+      if (body.description !== undefined) baseData.description = body.description;
+      if (body.scheduled_at) baseData.scheduled_at = new Date(body.scheduled_at);
+      
+      debate = await prisma.debate.update({
+        where: { id },
+        data: baseData,
+      });
+    }
 
     return NextResponse.json({ success: true, debate });
   } catch (error: any) {

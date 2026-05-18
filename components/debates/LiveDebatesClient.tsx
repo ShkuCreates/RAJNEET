@@ -18,10 +18,10 @@ type Debate = {
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
   created_at: string;
-  max_for_participants: number;
-  max_against_participants: number;
-  audience_count: number;
-  participant_count: number;
+  max_for_participants?: number;
+  max_against_participants?: number;
+  audience_count?: number;
+  participant_count?: number;
   participants: { side: string }[];
 };
 
@@ -162,7 +162,7 @@ export default function LiveDebatesClient({ currentUser }: LiveDebatesClientProp
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                     <div className="flex items-center gap-1">
                       <Users size={14} />
-                      <span>{debate.audience_count} audience</span>
+                      <span>{debate.audience_count || 0} audience</span>
                     </div>
                   </div>
                 </div>

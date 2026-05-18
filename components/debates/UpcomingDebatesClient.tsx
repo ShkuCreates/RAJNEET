@@ -13,8 +13,8 @@ type Debate = {
   status: "live" | "upcoming" | "completed";
   scheduled_at?: string;
   created_at: string;
-  max_for_participants: number;
-  max_against_participants: number;
+  max_for_participants?: number;
+  max_against_participants?: number;
   participants: { side: string }[];
 };
 
@@ -97,10 +97,12 @@ export default function UpcomingDebatesClient() {
       {upcomingDebates.map((debate) => {
         const forCount = debate.participants.filter(p => p.side === "FOR").length;
         const againstCount = debate.participants.filter(p => p.side === "AGAINST").length;
-        const forPercentage = (forCount / debate.max_for_participants) * 100;
-        const againstPercentage = (againstCount / debate.max_against_participants) * 100;
-        const forFull = forCount >= debate.max_for_participants;
-        const againstFull = againstCount >= debate.max_against_participants;
+        const maxFor = debate.max_for_participants || 5;
+        const maxAgainst = debate.max_against_participants || 5;
+        const forPercentage = (forCount / maxFor) * 100;
+        const againstPercentage = (againstCount / maxAgainst) * 100;
+        const forFull = forCount >= maxFor;
+        const againstFull = againstCount >= maxAgainst;
 
         return (
           <div key={debate.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-accent-blue/30 transition-all shadow-xl">
@@ -143,7 +145,7 @@ export default function UpcomingDebatesClient() {
               <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-bold text-green-400">FOR the Motion</h4>
-                  <span className="text-sm text-gray-400">{forCount} / {debate.max_for_participants}</span>
+                  <span className="text-sm text-gray-400">{forCount} / {maxFor}</span>
                 </div>
                 <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                   <div 
@@ -162,7 +164,7 @@ export default function UpcomingDebatesClient() {
               <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-bold text-red-400">AGAINST the Motion</h4>
-                  <span className="text-sm text-gray-400">{againstCount} / {debate.max_against_participants}</span>
+                  <span className="text-sm text-gray-400">{againstCount} / {maxAgainst}</span>
                 </div>
                 <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                   <div 

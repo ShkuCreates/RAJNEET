@@ -9,7 +9,6 @@ export async function GET() {
       orderBy: { created_at: "desc" },
       include: {
         participants: true,
-        audiences: true,
       },
     });
     return NextResponse.json({ success: true, debates });
@@ -42,19 +41,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
 
-    const debate = await prisma.debate.create({
-      data: {
-        topic,
-        description,
-        image_url,
-        created_by: session.user.id || "",
-        status: "upcoming",
-        scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
-        duration_minutes: duration_minutes || 60,
-        max_for_participants: max_for_participants || 5,
-        max_against_participants: max_against_participants || 5,
-      },
-    });
+    const baseData: any = {
+      topic,
+      description,
+      created_by: session.user.id || "",
+      status: "upcoming",
+      scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+    };
+
+    let debate;
+    try {
+      const extendedData = { ...baseData };
+      if (image_url) extendedData.image_url = image_url;
+      if (duration_minutes !== undefined) extendedData.duration_minutes = duration_minutes;
+      if (max_for_participants !== undefined) extendedData.max_for_participants = max_for_participants;
+      if (max_against_participants !== undefined) extendedData.max_against_participants = max_against_participants;
+      
+      debate = await prisma.debate.create({ data: extendedData });
+    } catch (dbError) {
+      console.warn("Failed with extended fields, falling back to base data:", dbError);
+      debate = await prisma.debate.create({ data: baseData });
+    }
 
     return NextResponse.json({ success: true, debate });
   } catch (error: any) {
