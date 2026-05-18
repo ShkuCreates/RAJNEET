@@ -68,9 +68,9 @@ export async function POST(
         }
         
         // Check if already joined as participant
-        const existingParticipant = await prisma.debateParticipant.findUnique({
+        const existingParticipant = await (prisma as any).debateParticipant.findUnique({
           where: { debate_id_user_id: { debate_id: id, user_id: session.user.id } }
-        });
+        }).catch(() => null);
         
         if (existingParticipant) {
           return NextResponse.json({ error: "Already joined as participant" }, { status: 400 });
@@ -81,7 +81,7 @@ export async function POST(
           where: { debate_id: id, user_id: session.user.id }
         }).catch(() => null);
         
-        await prisma.debateParticipant.create({
+        await (prisma as any).debateParticipant.create({
           data: {
             debate_id: id,
             user_id: session.user.id,

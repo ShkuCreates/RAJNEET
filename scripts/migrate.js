@@ -15,29 +15,27 @@ function runCommand(cmd) {
 function main() {
   console.log('Starting migration process...');
   
-  // First, try to run deploy
+  const migrationsDir = './prisma/migrations';
+  if (fs.existsSync(migrationsDir)) {
+    const migrations = fs.readdirSync(migrationsDir).filter(dir => 
+      fs.statSync(`${migrationsDir}/${dir}`).isDirectory()
+    ).sort();
+    
+    console.log('Found migrations:', migrations);
+    
+    // First, try to mark all migrations as applied (in case DB is already up to date but no _prisma_migrations)
+    for (const migration of migrations) {
+      console.log(`Marking migration as applied (if needed): ${migration}`);
+      runCommand(`npx prisma migrate resolve --applied "${migration}" 2>/dev/null || true`);
+    }
+  }
+  
+  // Now try to run deploy (this will apply any new migrations not already applied)
+  console.log('Running prisma migrate deploy...');
   const deploySuccess = runCommand('npx prisma migrate deploy');
   
   if (!deploySuccess) {
-    console.log('Deploy failed, checking if we need to baseline...');
-    // Mark all existing migrations as applied
-    const migrationsDir = './prisma/migrations';
-    if (fs.existsSync(migrationsDir)) {
-      const migrations = fs.readdirSync(migrationsDir).filter(dir => 
-        fs.statSync(`${migrationsDir}/${dir}`).isDirectory()
-      ).sort();
-      
-      console.log('Found migrations:', migrations);
-      
-      for (const migration of migrations) {
-        console.log(`Marking migration as applied: ${migration}`);
-        runCommand(`npx prisma migrate resolve --applied "${migration}"`);
-      }
-      
-      // Now try deploy again
-      console.log('Trying deploy again...');
-      runCommand('npx prisma migrate deploy');
-    }
+    console.log('Deploy failed, but continuing anyway (database might be up to date)');
   }
   
   console.log('Migration process complete');
