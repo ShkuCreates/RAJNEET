@@ -44,6 +44,13 @@ type Debate = {
   participants?: DebateParticipant[];
 };
 
+type Poll = {
+  id: string;
+  question: string;
+  options: string[];
+  votes: Record<string, string>;
+};
+
 export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const [debate, setDebate] = useState<Debate | null>(null);
@@ -51,6 +58,13 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [userRole, setUserRole] = useState<"AUDIENCE" | "FOR" | "AGAINST" | "HOST">("AUDIENCE");
   const [showJoinOptions, setShowJoinOptions] = useState(false);
   const [userVote, setUserVote] = useState<"FOR" | "AGAINST" | null>(null);
+  
+  // Poll state
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [currentPoll, setCurrentPoll] = useState<Poll | null>(null);
+  const [userPollVote, setUserPollVote] = useState<string | null>(null);
 
   // Media state
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -142,6 +156,59 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const handleVote = (side: "FOR" | "AGAINST") => {
     setUserVote(side);
     toast.success(`Voted for ${side.toLowerCase()}!`);
+  };
+
+  // Add poll option
+  const addPollOption = () => {
+    setPollOptions([...pollOptions, ""]);
+  };
+
+  // Remove poll option
+  const removePollOption = (index: number) => {
+    if (pollOptions.length > 2) {
+      const newOptions = [...pollOptions];
+      newOptions.splice(index, 1);
+      setPollOptions(newOptions);
+    }
+  };
+
+  // Create poll
+  const createPoll = () => {
+    if (!pollQuestion.trim()) {
+      toast.error("Please enter a poll question");
+      return;
+    }
+    const validOptions = pollOptions.filter(opt => opt.trim() !== "");
+    if (validOptions.length < 2) {
+      toast.error("Please add at least 2 options");
+      return;
+    }
+    const newPoll: Poll = {
+      id: Date.now().toString(),
+      question: pollQuestion,
+      options: validOptions,
+      votes: {},
+    };
+    setCurrentPoll(newPoll);
+    setShowPollModal(false);
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    toast.success("Poll created!");
+  };
+
+  // Vote in poll
+  const voteInPoll = (option: string) => {
+    if (!session?.user?.id) return;
+    if (!currentPoll) return;
+    setCurrentPoll({
+      ...currentPoll,
+      votes: {
+        ...currentPoll.votes,
+        [session.user.id]: option,
+      },
+    });
+    setUserPollVote(option);
+    toast.success(`Voted for: ${option}`);
   };
 
   // Toggle mic
@@ -292,6 +359,81 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
+      {/* Poll Creation Modal */}
+      {showPollModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111827] rounded-[32px] border border-white/10 p-8 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Create Poll</h2>
+              <button
+                onClick={() => setShowPollModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Poll Question
+                </label>
+                <input
+                  type="text"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  placeholder="Enter your poll question..."
+                  className="w-full px-4 py-3 bg-[#0F172A] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-accent-blue/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/20"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-gray-300">
+                    Options
+                  </label>
+                  <button
+                    onClick={addPollOption}
+                    className="text-sm font-semibold text-accent-blue hover:text-accent-blue/80 transition-colors"
+                  >
+                    + Add Option
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {pollOptions.map((option, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...pollOptions];
+                          newOptions[index] = e.target.value;
+                          setPollOptions(newOptions);
+                        }}
+                        placeholder={`Option ${index + 1}`}
+                        className="flex-1 px-4 py-3 bg-[#0F172A] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-accent-blue/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/20"
+                      />
+                      {pollOptions.length > 2 && (
+                        <button
+                          onClick={() => removePollOption(index)}
+                          className="p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={createPoll}
+                className="w-full px-6 py-4 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-all"
+              >
+                Create Poll
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Take Your Seat Screen */}
       {(userRole === "FOR" || userRole === "AGAINST" || userRole === "HOST") && !localStream && (
         <div className="min-h-[80vh] flex items-center justify-center">
@@ -316,6 +458,62 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
       {/* Main Debate Stage */}
       {(userRole === "AUDIENCE" || localStream) && (
         <div className="p-4 md:p-8">
+          {userRole === "HOST" && (
+            <div className="max-w-7xl mx-auto mb-6">
+              <button
+                onClick={() => setShowPollModal(true)}
+                className="px-6 py-3 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-all flex items-center gap-2"
+              >
+                + Create Poll
+              </button>
+            </div>
+          )}
+          
+          {currentPoll && (
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="bg-[#111827] border border-white/10 rounded-[32px] p-6 shadow-2xl">
+                <h3 className="text-xl font-bold text-white mb-6">{currentPoll.question}</h3>
+                <div className="space-y-3">
+                  {currentPoll.options.map((option, index) => {
+                    const voteCount = Object.values(currentPoll.votes).filter(v => v === option).length;
+                    const totalVotes = Object.keys(currentPoll.votes).length;
+                    const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+                    const isSelected = userPollVote === option;
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => userRole === "AUDIENCE" && voteInPoll(option)}
+                        disabled={userRole !== "AUDIENCE"}
+                        className={`w-full p-4 rounded-xl border transition-all text-left ${
+                          isSelected 
+                            ? 'bg-accent-blue/20 border-accent-blue/50' 
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        } ${userRole !== "AUDIENCE" ? 'cursor-default' : ''}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white font-semibold">{option}</span>
+                          <span className="text-sm text-gray-400">{voteCount} {voteCount === 1 ? 'vote' : 'votes'}</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 ${isSelected ? 'bg-accent-blue' : 'bg-white/30'}`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {totalVotes > 0 && (
+                  <p className="text-center text-sm text-gray-400 mt-4">
+                    {totalVotes} {totalVotes === 1 ? 'person voted' : 'people voted'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
               {/* AGAINST Side */}
