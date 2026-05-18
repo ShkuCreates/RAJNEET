@@ -1,208 +1,217 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  Share2, 
-  User, 
-  Users, 
-  ThumbsUp, 
-  Timer, 
-  Mic, 
-  MicOff, 
-  Video, 
-  VideoOff, 
-  Hand, 
+import { useState, useEffect, useRef } from "react";
+import {
+  Share2,
+  User,
+  Users,
+  ThumbsUp,
+  Timer,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Hand,
   HandHelping,
   Volume2,
-  VolumeX
+  VolumeX,
+  Loader2,
+  X
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
-type Participant = {
+type DebateParticipant = {
   id: string;
-  name: string;
-  avatar?: string;
-  side: "FOR" | "AGAINST" | "HOST";
-  isMicOn: boolean;
-  isCameraOn: boolean;
-  isHandRaised: boolean;
+  user_id: string;
+  debate_id: string;
+  side: string;
+  joined_at: string;
+  user: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+  };
+};
+
+type Debate = {
+  id: string;
+  topic: string;
+  description?: string;
+  status: string;
+  max_for_participants?: number;
+  max_against_participants?: number;
+  participants?: DebateParticipant[];
 };
 
 export default function DebateRoomPage({ params }: { params: { id: string } }) {
-  const [votedFor, setVotedFor] = useState<boolean | null>(null);
-  const [votesFor, setVotesFor] = useState(124);
-  const [votesAgainst, setVotesAgainst] = useState(89);
-  const [audienceCount] = useState(456);
-  const [timeRemaining] = useState("42:15");
-  const [isParticipant] = useState(true); // Assume participant for now, you'd get this from your data
-  const [permissionsRequested, setPermissionsRequested] = useState(false);
+  const { data: session } = useSession();
+  const [debate, setDebate] = useState<Debate | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<"AUDIENCE" | "FOR" | "AGAINST" | "HOST">("AUDIENCE");
+  const [showJoinOptions, setShowJoinOptions] = useState(false);
 
-  const [isHost] = useState(true);
-  const [isForSideMuted, setIsForSideMuted] = useState(false);
-  const [isAgainstSideMuted, setIsAgainstSideMuted] = useState(false);
+  // Media state
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
 
+  // Mock participants for now
+  const [forParticipants, setForParticipants] = useState<any[]>([]);
+  const [againstParticipants, setAgainstParticipants] = useState<any[]>([]);
+  const [hostParticipant, setHostParticipant] = useState<any>(null);
+
+  // Fetch debate data
   useEffect(() => {
-    const requestMediaPermissions = async () => {
-      if (!isParticipant || permissionsRequested) return;
-
+    const fetchDebate = async () => {
       try {
-        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        console.log("Camera and microphone permissions granted!");
+        const res = await fetch(`/api/debates/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setDebate(data.debate);
+          
+          // Determine user role
+          if (data.debate.participants && session?.user?.id) {
+            const participant = data.debate.participants.find(
+              (p: DebateParticipant) => p.user_id === session.user.id
+            );
+            if (participant) {
+              setUserRole(participant.side as any);
+            } else if (session.user.role === "ADMIN") {
+              setShowJoinOptions(true);
+            }
+          }
+
+          // Set participants
+          if (data.debate.participants) {
+            setForParticipants(
+              data.debate.participants.filter((p: DebateParticipant) => p.side === "FOR")
+            );
+            setAgainstParticipants(
+              data.debate.participants.filter((p: DebateParticipant) => p.side === "AGAINST")
+            );
+          }
+        }
       } catch (error) {
-        console.warn("Could not get camera/microphone permissions:", error);
+        console.error("Failed to fetch debate:", error);
       } finally {
-        setPermissionsRequested(true);
+        setLoading(false);
       }
     };
 
-    requestMediaPermissions();
-  }, [isParticipant, permissionsRequested]);
+    fetchDebate();
+  }, [params.id, session?.user?.id, session?.user?.role]);
 
-  const [hostParticipant, setHostParticipant] = useState<Participant>({
-    id: "host1",
-    name: "Host Name",
-    side: "HOST",
-    isMicOn: true,
-    isCameraOn: true,
-    isHandRaised: false,
-  });
-
-  const [forParticipants, setForParticipants] = useState<Participant[]>([
-    { id: "for1", name: "Participant 1", side: "FOR", isMicOn: true, isCameraOn: true, isHandRaised: false },
-    { id: "for2", name: "Participant 2", side: "FOR", isMicOn: false, isCameraOn: true, isHandRaised: true },
-    { id: "for3", name: "Participant 3", side: "FOR", isMicOn: true, isCameraOn: false, isHandRaised: false },
-  ]);
-
-  const [againstParticipants, setAgainstParticipants] = useState<Participant[]>([
-    { id: "against1", name: "Participant A", side: "AGAINST", isMicOn: true, isCameraOn: true, isHandRaised: false },
-    { id: "against2", name: "Participant B", side: "AGAINST", isMicOn: false, isCameraOn: true, isHandRaised: false },
-  ]);
-
-  const mockDebate = {
-    id: params.id,
-    topic: "Should India implement universal basic income?",
-  };
-
-  const handleVoteFor = () => {
-    if (votedFor === true) return;
-    if (votedFor === false) {
-      setVotesAgainst(v => v - 1);
-    }
-    setVotesFor(v => v + 1);
-    setVotedFor(true);
-  };
-
-  const handleVoteAgainst = () => {
-    if (votedFor === false) return;
-    if (votedFor === true) {
-      setVotesFor(v => v - 1);
-    }
-    setVotesAgainst(v => v + 1);
-    setVotedFor(false);
-  };
-
-  const toggleParticipantMic = (id: string, side: "FOR" | "AGAINST" | "HOST") => {
-    if (side === "HOST") {
-      setHostParticipant(p => ({ ...p, isMicOn: !p.isMicOn }));
-    } else if (side === "FOR") {
-      setForParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isMicOn: !p.isMicOn } : p
-      ));
-    } else {
-      setAgainstParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isMicOn: !p.isMicOn } : p
-      ));
+  // Request media permissions and start local stream
+  const startLocalStream = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      setLocalStream(stream);
+      
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      toast.success("Camera and mic permissions granted!");
+    } catch (error) {
+      console.error("Failed to get media permissions:", error);
+      toast.error("Could not access camera/microphone");
     }
   };
 
-  const toggleParticipantCamera = (id: string, side: "FOR" | "AGAINST" | "HOST") => {
-    if (side === "HOST") {
-      setHostParticipant(p => ({ ...p, isCameraOn: !p.isCameraOn }));
-    } else if (side === "FOR") {
-      setForParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isCameraOn: !p.isCameraOn } : p
-      ));
-    } else {
-      setAgainstParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isCameraOn: !p.isCameraOn } : p
-      ));
+  // Toggle mic
+  const toggleMic = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMicOn(audioTrack.enabled);
+      }
     }
   };
 
-  const toggleHandRaise = (id: string, side: "FOR" | "AGAINST") => {
-    if (side === "FOR") {
-      setForParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isHandRaised: !p.isHandRaised } : p
-      ));
-    } else {
-      setAgainstParticipants(ps => ps.map(p => 
-        p.id === id ? { ...p, isHandRaised: !p.isHandRaised } : p
-      ));
+  // Toggle camera
+  const toggleCamera = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsCameraOn(videoTrack.enabled);
+      }
     }
   };
 
-  const toggleSideMute = (side: "FOR" | "AGAINST") => {
-    if (side === "FOR") {
-      setIsForSideMuted(!isForSideMuted);
-    } else {
-      setIsAgainstSideMuted(!isAgainstSideMuted);
-    }
+  // Join as host
+  const joinAsHost = () => {
+    setUserRole("HOST");
+    setShowJoinOptions(false);
+    startLocalStream();
   };
 
-  const ParticipantCard = ({ participant }: { participant: Participant }) => {
-    const isMuted = participant.side === "FOR" && isForSideMuted || 
-                     participant.side === "AGAINST" && isAgainstSideMuted ||
-                     !participant.isMicOn;
+  // Join as participant (for or against)
+  const joinAsParticipant = async (side: "FOR" | "AGAINST") => {
+    try {
+      const res = await fetch(`/api/debates/${params.id}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "PARTICIPANT", side }),
+      });
 
-    return (
-      <div className={`relative flex-1 bg-[#0F172A] border-2 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px] ${
-        participant.side === "HOST" ? "border-accent-blue/30" :
-        participant.side === "FOR" ? "border-green-500/30" :
-        "border-red-500/30"
-      }`}>
-        <div className="relative">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-            {participant.isCameraOn ? (
-              <User size={32} className="text-gray-400" />
-            ) : (
-              <VideoOff size={32} className="text-gray-500" />
-            )}
-          </div>
-          {participant.isHandRaised && (
-            <div className="absolute -top-2 -right-2 bg-yellow-500 text-black rounded-full p-1">
-              <HandHelping size={14} />
-            </div>
-          )}
-        </div>
+      if (res.ok) {
+        setUserRole(side);
+        setShowJoinOptions(false);
+        startLocalStream();
+        toast.success(`Joined as ${side.toLowerCase()}!`);
         
-        <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
-          {participant.name}
-        </p>
+        // Refresh debate data
+        const refreshRes = await fetch(`/api/debates/${params.id}`);
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          setDebate(data.debate);
+          if (data.debate.participants) {
+            setForParticipants(
+              data.debate.participants.filter((p: DebateParticipant) => p.side === "FOR")
+            );
+            setAgainstParticipants(
+              data.debate.participants.filter((p: DebateParticipant) => p.side === "AGAINST")
+            );
+          }
+        }
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to join debate");
+      }
+    } catch (error) {
+      console.error("Failed to join debate:", error);
+      toast.error("Failed to join debate");
+    }
+  };
 
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            onClick={() => toggleParticipantMic(participant.id, participant.side)}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
-          >
-            {isMuted ? <MicOff size={16} className="text-red-400" /> : <Mic size={16} className="text-green-400" />}
-          </button>
-          <button
-            onClick={() => toggleParticipantCamera(participant.id, participant.side)}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
-          >
-            {participant.isCameraOn ? <Video size={16} className="text-green-400" /> : <VideoOff size={16} className="text-gray-400" />}
-          </button>
-          {participant.side !== "HOST" && (
-            <button
-              onClick={() => toggleHandRaise(participant.id, participant.side as "FOR" | "AGAINST")}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
-            >
-              <Hand size={16} className={participant.isHandRaised ? "text-yellow-400" : "text-gray-400"} />
-            </button>
-          )}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050A14] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-accent-blue" />
+          <p className="text-gray-400">Loading debate...</p>
         </div>
       </div>
     );
-  };
+  }
+
+  if (!debate) {
+    return (
+      <div className="min-h-screen bg-[#050A14] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Debate not found</h2>
+          <p className="text-gray-400">The debate you're looking for doesn't exist.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050A14] text-white">
@@ -216,7 +225,7 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
 
           <div className="flex-1 px-4">
             <h1 className="text-center text-lg md:text-xl font-bold text-white truncate">
-              {mockDebate.topic}
+              {debate.topic}
             </h1>
           </div>
 
@@ -227,117 +236,189 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="border-b border-white/10 bg-[#111827] p-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-6 md:gap-12">
-          <div className="flex items-center gap-2">
-            <Users size={18} className="text-accent-blue" />
-            <span className="text-sm md:text-base font-semibold text-white">
-              {audienceCount} <span className="text-gray-400">Audience</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Timer size={18} className="text-accent-red" />
-            <span className="text-sm md:text-base font-mono font-bold text-white">
-              {timeRemaining}
-            </span>
+      {/* Join Options for Admins */}
+      {showJoinOptions && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111827] rounded-[32px] border border-white/10 p-8 max-w-md w-full shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Join Debate</h2>
+            <div className="space-y-4">
+              <button
+                onClick={joinAsHost}
+                className="w-full px-6 py-4 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-all"
+              >
+                Join as Host
+              </button>
+              <button
+                onClick={() => joinAsParticipant("FOR")}
+                className="w-full px-6 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all"
+              >
+                Join as For
+              </button>
+              <button
+                onClick={() => joinAsParticipant("AGAINST")}
+                className="w-full px-6 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
+              >
+                Join as Against
+              </button>
+              <button
+                onClick={() => setShowJoinOptions(false)}
+                className="w-full px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl transition-all"
+              >
+                Join as Audience
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Take Your Seat Screen */}
+      {(userRole === "FOR" || userRole === "AGAINST" || userRole === "HOST") && !localStream && (
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="text-center rounded-[32px] border border-white/10 bg-[#111827] p-12 shadow-2xl max-w-lg">
+            <div className="w-20 h-20 mx-auto mb-6 bg-accent-blue/10 rounded-full flex items-center justify-center">
+              <Video size={40} className="text-accent-blue" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Take Your Seat</h2>
+            <p className="text-gray-400 mb-8">
+              To participate in the debate, we need access to your camera and microphone.
+            </p>
+            <button
+              onClick={startLocalStream}
+              className="w-full px-8 py-4 bg-accent-blue hover:bg-accent-blue/90 text-white font-bold rounded-xl transition-all text-lg"
+            >
+              Allow Camera & Microphone
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Debate Stage */}
-      <div className="p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 md:gap-8 items-start">
-            {/* AGAINST Side */}
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl md:text-3xl font-bold text-red-500">Against</h2>
-                {isHost && (
-                  <button
-                    onClick={() => toggleSideMute("AGAINST")}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10"
-                  >
-                    {isAgainstSideMuted ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-gray-400" />}
-                    <span className="text-sm">
-                      {isAgainstSideMuted ? "Unmute Side" : "Mute Side"}
+      {(userRole === "AUDIENCE" || localStream) && (
+        <div className="p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 md:gap-8 items-start">
+              {/* AGAINST Side */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl md:text-3xl font-bold text-red-500">Against</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {againstParticipants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="relative flex-1 bg-[#0F172A] border-2 border-red-500/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]"
+                    >
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                        {p.user?.avatar_url ? (
+                          <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <User size={32} className="text-gray-400" />
+                        )}
+                      </div>
+                      <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                        {p.user?.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {userRole === "AUDIENCE" && (
+                  <button className="w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white">
+                    <span className="flex items-center justify-center gap-2">
+                      <ThumbsUp size={20} />
+                      Vote Against
                     </span>
                   </button>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {againstParticipants.map(p => (
-                  <ParticipantCard key={p.id} participant={p} />
-                ))}
+
+              {/* HOST Center */}
+              <div className="flex flex-col justify-center w-full lg:w-auto">
+                <div className="text-center mb-2">
+                  <h2 className="text-xl md:text-2xl font-bold text-accent-blue">Host</h2>
+                </div>
+                
+                <div className="relative flex-1 bg-[#0F172A] border-2 border-accent-blue/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                    <User size={32} className="text-gray-400" />
+                  </div>
+                  <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                    Host
+                  </p>
+                </div>
               </div>
 
-              <button
-                onClick={handleVoteAgainst}
-                disabled={votedFor === false}
-                className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 ${
-                  votedFor === false
-                    ? "bg-red-500 text-white"
-                    : "bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
-                }`}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <ThumbsUp size={20} />
-                  Vote Against ({votesAgainst})
-                </span>
-              </button>
-            </div>
+              {/* FOR Side */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl md:text-3xl font-bold text-green-500">For</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {forParticipants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="relative flex-1 bg-[#0F172A] border-2 border-green-500/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[150px]"
+                    >
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                        {p.user?.avatar_url ? (
+                          <img src={p.user.avatar_url} alt={p.user.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <User size={32} className="text-gray-400" />
+                        )}
+                      </div>
+                      <p className="text-white text-sm font-semibold mt-2 truncate w-full text-center">
+                        {p.user?.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
 
-            {/* HOST Center */}
-            <div className="flex flex-col justify-center w-full lg:w-auto">
-              <div className="text-center mb-2">
-                <h2 className="text-xl md:text-2xl font-bold text-accent-blue">Host</h2>
-              </div>
-              
-              <ParticipantCard participant={hostParticipant} />
-            </div>
-
-            {/* FOR Side */}
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl md:text-3xl font-bold text-green-500">For</h2>
-                {isHost && (
-                  <button
-                    onClick={() => toggleSideMute("FOR")}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10"
-                  >
-                    {isForSideMuted ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-gray-400" />}
-                    <span className="text-sm">
-                      {isForSideMuted ? "Unmute Side" : "Mute Side"}
+                {userRole === "AUDIENCE" && (
+                  <button className="w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white">
+                    <span className="flex items-center justify-center gap-2">
+                      <ThumbsUp size={20} />
+                      Vote For
                     </span>
                   </button>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {forParticipants.map(p => (
-                  <ParticipantCard key={p.id} participant={p} />
-                ))}
-              </div>
-
-              <button
-                onClick={handleVoteFor}
-                disabled={votedFor === true}
-                className={`w-full py-4 md:py-6 rounded-2xl font-bold text-lg md:text-xl transition-all mt-2 ${
-                  votedFor === true
-                    ? "bg-green-500 text-white"
-                    : "bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
-                }`}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <ThumbsUp size={20} />
-                  Vote For ({votesFor})
-                </span>
-              </button>
             </div>
           </div>
+
+          {/* Local Controls for Participants */}
+          {localStream && (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#111827] border border-white/10 rounded-2xl p-4 flex items-center gap-4 shadow-2xl">
+              <button
+                onClick={toggleMic}
+                className="p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                {isMicOn ? <Mic size={24} className="text-green-400" /> : <MicOff size={24} className="text-red-400" />}
+              </button>
+              <button
+                onClick={toggleCamera}
+                className="p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                {isCameraOn ? <Video size={24} className="text-green-400" /> : <VideoOff size={24} className="text-gray-400" />}
+              </button>
+            </div>
+          )}
+
+          {/* Local Video Preview */}
+          {localStream && (
+            <div className="fixed bottom-8 right-8 w-48 h-36 rounded-xl overflow-hidden border border-white/10 bg-black shadow-2xl">
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

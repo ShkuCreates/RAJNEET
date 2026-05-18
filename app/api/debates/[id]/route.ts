@@ -3,6 +3,52 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    let debate;
+    try {
+      debate = await prisma.debate.findUnique({
+        where: { id },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: { id: true, name: true, avatar_url: true }
+              }
+            }
+          },
+          createdBy: {
+            select: { id: true, name: true, avatar_url: true }
+          }
+        }
+      });
+    } catch (includeError) {
+      console.warn("[GET_DEBATE] Failed to include participants, fetching without:", includeError);
+      debate = await prisma.debate.findUnique({
+        where: { id },
+        include: {
+          createdBy: {
+            select: { id: true, name: true, avatar_url: true }
+          }
+        }
+      });
+    }
+    
+    if (!debate) {
+      return NextResponse.json({ error: "Debate not found" }, { status: 404 });
+    }
+    
+    return NextResponse.json({ debate });
+  } catch (error: any) {
+    console.error("[GET_DEBATE_ERROR]", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
