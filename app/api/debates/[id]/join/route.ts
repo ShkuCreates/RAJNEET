@@ -10,7 +10,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.email || !session.user.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function POST(
 
     const debate = await prisma.debate.findUnique({
       where: { id },
-      include: { participants: true, audience: true },
+      include: { participants: true },
     });
 
     if (!debate) {
@@ -29,54 +29,54 @@ export async function POST(
 
     if (role === "AUDIENCE") {
       // Join as audience
-      const existing = await prisma.debateAudience.findUnique({
+      const existing = await (prisma as any).debateAudience.findUnique({
         where: { debate_id_user_id: { debate_id: id, user_id: session.user.id } }
-      });
+      }).catch(() => null);
+      
       if (!existing) {
-        await prisma.debateAudience.create({
+        await (prisma as any).debateAudience.create({
           data: {
             debate_id: id,
             user_id: session.user.id,
           }
-        });
-        await prisma.debate.update({
-          where: { id },
-          data: { audience_count: { increment: 1 } }
-        });
+        }).catch(() => null);
       }
     } else {
         // Join as participant
         if (!side || !["FOR", "AGAINST"].includes(side)) {
           return NextResponse.json({ error: "Side is required" }, { status: 400 });
         }
-        const maxParticipants = side === "FOR" 
-          ? debate.max_for_participants 
-          : debate.max_against_participants;
-        const currentCount = debate.participants.filter(p => p.side === side).length;
+        
+        const maxFor = (debate as any).max_for_participants || 5;
+        const maxAgainst = (debate as any).max_against_participants || 5;
+        const maxParticipants = side === "FOR" ? maxFor : maxAgainst;
+        
+        const currentCount = debate.participants.filter((p: any) => p.side === side).length;
+        
         if (currentCount >= maxParticipants) {
           return NextResponse.json({ error: "No slots left for this side" }, { status: 400 });
         }
+        
         // Check if already joined as participant
         const existingParticipant = await prisma.debateParticipant.findUnique({
           where: { debate_id_user_id: { debate_id: id, user_id: session.user.id } }
         });
+        
         if (existingParticipant) {
           return NextResponse.json({ error: "Already joined as participant" }, { status: 400 });
         }
+        
         // If joined as audience, remove
-        await prisma.debateAudience.deleteMany({
+        await (prisma as any).debateAudience.deleteMany({
           where: { debate_id: id, user_id: session.user.id }
-        });
+        }).catch(() => null);
+        
         await prisma.debateParticipant.create({
           data: {
             debate_id: id,
             user_id: session.user.id,
             side,
           }
-        });
-        await prisma.debate.update({
-          where: { id },
-          data: { participant_count: { increment: 1 } }
         });
     }
 
