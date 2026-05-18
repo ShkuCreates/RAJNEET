@@ -291,9 +291,9 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
   const [forParticipants, setForParticipants] = useState<any[]>([]);
   const [againstParticipants, setAgainstParticipants] = useState<any[]>([]);
 
-  // Fetch debate data and LiveKit token for everyone
+  // Fetch debate data
   useEffect(() => {
-    const fetchDebateAndToken = async () => {
+    const fetchDebate = async () => {
       try {
         const res = await fetch(`/api/debates/${params.id}`);
         if (res.ok) {
@@ -307,8 +307,12 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
             );
             if (participant) {
               setUserRole(participant.side as any);
+              fetchLiveKitToken();
             } else if (session.user.role === "ADMIN") {
               setShowJoinOptions(true);
+            } else {
+              // Audience
+              fetchLiveKitToken();
             }
           }
 
@@ -321,11 +325,6 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
               data.debate.participants.filter((p: DebateParticipant) => p.side === "AGAINST")
             );
           }
-
-          // Fetch LiveKit token for everyone (audience, host, panel)
-          if (session?.user) {
-            await fetchLiveKitToken();
-          }
         }
       } catch (error) {
         console.error("Failed to fetch debate:", error);
@@ -334,7 +333,7 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchDebateAndToken();
+    fetchDebate();
   }, [params.id, session?.user?.id, session?.user?.role]);
 
   // Handle voting
@@ -536,7 +535,11 @@ export default function DebateRoomPage({ params }: { params: { id: string } }) {
                 Join as Against
               </button>
               <button
-                onClick={() => setShowJoinOptions(false)}
+                onClick={() => {
+                  setShowJoinOptions(false);
+                  setUserRole("AUDIENCE");
+                  fetchLiveKitToken();
+                }}
                 className="w-full px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl transition-all"
               >
                 Join as Audience
