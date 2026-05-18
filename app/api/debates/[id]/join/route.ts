@@ -85,18 +85,6 @@ export async function POST(
         }).catch(() => null);
         
         try {
-          await prisma.debateParticipant.create({
-            data: {
-              debate_id: id,
-              user_id: session.user.id,
-              side,
-              is_muted: false,
-              is_camera_on: true,
-              is_mic_on: true,
-            },
-          });
-        } catch (createError: any) {
-          console.warn("[JOIN_DEBATE] First create failed, trying without extra fields:", createError);
           await (prisma as any).debateParticipant.create({
             data: {
               debate_id: id,
@@ -104,6 +92,9 @@ export async function POST(
               side,
             },
           });
+        } catch (createError: any) {
+          console.error("[JOIN_DEBATE] Create failed:", createError);
+          throw createError;
         }
     }
 

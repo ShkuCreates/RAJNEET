@@ -18,6 +18,14 @@ export default function HomeClient() {
   const [news, setNews] = useState<any[]>([]);
   const [latestFetchAt, setLatestFetchAt] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(initialSearch);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const lastFetchedLabel = useMemo(() => {
     if (!latestFetchAt) return null;
@@ -56,7 +64,7 @@ export default function HomeClient() {
     const run = async () => {
       try {
         setLoading(true);
-        const newsData = await fetchNews(selectedCategory || undefined, searchQuery || undefined);
+        const newsData = await fetchNews(selectedCategory || undefined, debouncedSearchQuery || undefined);
         if (cancelled) return;
         
         let sortedNews = Array.isArray(newsData.news) ? newsData.news : [];
@@ -83,7 +91,7 @@ export default function HomeClient() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, debouncedSearchQuery]);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-6 py-8">
