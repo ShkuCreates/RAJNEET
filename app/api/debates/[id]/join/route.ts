@@ -85,17 +85,25 @@ export async function POST(
         }).catch(() => null);
         
         try {
-          await prisma.$executeRaw`
-            INSERT INTO "DebateParticipant" (debate_id, user_id, side)
-            VALUES (${id}, ${session.user.id}, ${side})
-            ON CONFLICT (debate_id, user_id) DO NOTHING
-          `;
-        } catch (sqlError) {
-          console.warn("[JOIN_DEBATE] Raw SQL failed, trying minimal prisma create:", sqlError);
-          await prisma.$executeRaw`
-            INSERT INTO "DebateParticipant" (debate_id, user_id, side)
-            VALUES (${id}, ${session.user.id}, ${side})
-          `;
+          await prisma.debateParticipant.create({
+            data: {
+              debate_id: id,
+              user_id: session.user.id,
+              side,
+              is_muted: false,
+              is_camera_on: true,
+              is_mic_on: true,
+            },
+          });
+        } catch (createError: any) {
+          console.warn("[JOIN_DEBATE] First create failed, trying without extra fields:", createError);
+          await (prisma as any).debateParticipant.create({
+            data: {
+              debate_id: id,
+              user_id: session.user.id,
+              side,
+            },
+          });
         }
     }
 
